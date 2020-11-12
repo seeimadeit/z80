@@ -1,0 +1,43 @@
+%SIGNAL
+PIN   5 =  a11 
+PIN   6 =  a12 
+PIN   7 =  a13 
+PIN   8 =  a14 
+PIN   9 =  a15 
+PIN  12 =  cs1 
+PIN  13 =  cs2 
+PIN  17 =  ioreq 
+PIN  16 =  isvalid 
+PIN  11 =  mreq 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+cs1 =>
+    !a11 & !a12 & !a13 & !a14 & !a15 & isvalid
+
+cs2 =>
+    a11 & isvalid
+  # a12 & isvalid
+  # a13 & isvalid
+  # a14 & isvalid
+  # a15 & isvalid
+
+isvalid =>
+    ioreq & !mreq
+
+cs1.oe  =>
+    1 
+
+cs2.oe  =>
+    1 
+
+ioreq.oe  =>
+    0 
+
+isvalid.oe  =>
+    1 
+
+%END

@@ -1,0 +1,56 @@
+Name     MemChipSelect ;
+PartNo   00 ;
+Date     11/2/2020 ;
+Revision 01 ;
+Designer Peter Hall ;
+Company  none ;
+Assembly None ;
+Location none;
+Device   g16v8a;
+
+/* 
+	configured with 0000-07ff (2048) ROM 
+		    with 0800-ffff (63488) RAM
+*/
+/* cs1, cs2 */
+$define LO 'b'01
+$define HI 'b'10
+$define OFF 'b'11
+
+Pin 5 = a11; /* mem A11 from z80 input */
+Pin 6 = a12; /* mem A12 from z80 input */
+Pin 7 =a13; /* mem A13 from z80 input */
+Pin 8 =a14; /* mem A14 from z80 input */
+Pin 9 =a15; /* mem A15 from z80 input */
+
+Pinnode 16 = isvalid;
+Pin 17 = ioreq; /* _ioreq active low */
+Pin 13 = cs2; /* RAM SELECT active low output*/
+Pin 12 = cs1; /* ROM SELECT active low output*/
+Pin 11 = mreq; /* _mreq active low input */
+
+
+/*
+	if no address lines active assume low memory ROM chip is selected
+	output enabled active low
+	z80 memory read or write = mreq + (rd # wr)
+	z80 oireq display cs1 and cs2
+	z80 refresh memory       = mreq + rfsh
+
+
+
+cs1 = a11 # a12 # a13 # a14 # a15;
+cs1.oe = !mreq & activereadwrite & ioreq;
+
+cs2.oe = !mreq & activereadwrite & ioreq;
+cs2 = !(a11 # a12 # a13 # a14 # a15);
+*/
+cs1 = !(isvalid & !(a11 # a12 # a13 # a14 # a15));
+cs2 = !(isvalid & (a11 # a12 # a13 # a14 # a15));
+
+table ioreq,mreq => isvalid {
+	'b'00 => 0;
+	'b'01 => 0;
+	'b'10 => 1;
+	'b'11 => 0;
+	}

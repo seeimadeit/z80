@@ -1,0 +1,76 @@
+
+*******************************************************************************
+                                 MemChipSelect
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# 60008009
+Device          g16v8ma  Library DLIB-h-40-8
+Created         Thu Nov 12 16:27:31 2020
+Name            MemChipSelect 
+Partno          00 
+Revision        01 
+Date            11/2/2020 
+Designer        Peter Hall 
+Company         none 
+Assembly        None 
+Location        none
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+cs1 =>
+    !a11 & !a12 & !a13 & !a14 & !a15 & isvalid
+
+cs2 =>
+    a11 & isvalid
+  # a12 & isvalid
+  # a13 & isvalid
+  # a14 & isvalid
+  # a15 & isvalid
+
+isvalid =>
+    ioreq & !mreq
+
+cs1.oe  =>
+    1 
+
+cs2.oe  =>
+    1 
+
+ioreq.oe  =>
+    0 
+
+isvalid.oe  =>
+    1 
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+    a11                         5        V        -       -       -     
+    a12                         6        V        -       -       -     
+    a13                         7        V        -       -       -     
+    a14                         8        V        -       -       -     
+    a15                         9        V        -       -       -     
+    cs1                         12       V        1       7       1     
+    cs2                         13       V        5       7       1     
+    ioreq                       17       V        -       -       -     
+    isvalid                     16       N        1       7       1     
+    mreq                        11       V        -       -       -     
+    cs1                 oe      12       D        1       1       0     
+    cs2                 oe      13       D        1       1       0     
+    ioreq               oe      17       D        1       1       0     
+    isvalid             oe      16       D        1       1       0     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+
