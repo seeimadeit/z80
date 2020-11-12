@@ -12,8 +12,8 @@ int cycledsinceio=0;
 #define SUPPLYCLK
 #define DELAY 0
 // PLAY,STEP,CLK,WAIT arduino pins used
-#define PLAY 6
-#define STEP 7
+//#define PLAY 6
+//#define STEP 7
 #define CLK 12
 #define WAIT 13
 #define HASPOWER 11
@@ -50,10 +50,10 @@ void setup() {
   // put your setup code here, to run once:
 
   setMode(INPUT);
-  pinMode(STEP, INPUT_PULLUP);
-  pinMode(PLAY, INPUT_PULLUP);
+//  pinMode(STEP, INPUT_PULLUP);
+ // pinMode(PLAY, INPUT_PULLUP);
   pinMode(HASPOWER, INPUT);
-  pinMode(INT, OUTPUT); digitalWrite(INT, HIGH); DWRITE("INT HIGH");
+  pinMode(INT, OUTPUT); digitalWrite(INT, HIGH);// DWRITE("INT HIGH");
   pinMode(IOREQ, INPUT);
   pinMode(M1, INPUT);
   pinMode(IOREAD, INPUT);
