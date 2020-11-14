@@ -22,63 +22,61 @@ F00:0018       		im 2 ;/* interrupt mode 2*/
                S01:00000009:  ED 5E
 F00:0019       		ei   ;#/* enable interrupts*/
                S01:0000000B:  FB
-F00:0020       		ld a,65
-               S01:0000000C:  3E 41
-F00:0021       		out (0x01),a
-               S01:0000000E:  D3 01
+F00:0020       	;	ld a,65
+F00:0021       	;	out (0x01),a
 F00:0022       		ld hl,label1
-               S01:00000010:  21 32 00
+               S01:0000000C:  21 2E 00
 F00:0023       		ld b, endlabel1-label1
-               S01:00000013:  06 1D
+               S01:0000000F:  06 1D
 F00:0024       		ld c,99
-               S01:00000015:  0E 63
+               S01:00000011:  0E 63
 F00:0025       		otir
-               S01:00000017:  ED B3
+               S01:00000013:  ED B3
 F00:0026       	again:	halt
-               S01:00000019:  76
+               S01:00000015:  76
 F00:0027       		jp again
-               S01:0000001A:  C3 19 00
+               S01:00000016:  C3 15 00
 F00:0028       
 F00:0029       		
 F00:0030       		int1:
 F00:0031       		di
-               S01:0000001D:  F3
+               S01:00000019:  F3
 F00:0032       		ld a,(count)
-               S01:0000001E:  3A 00 40
+               S01:0000001A:  3A 00 40
 F00:0033       		inc a
-               S01:00000021:  3C
+               S01:0000001D:  3C
 F00:0034       		ld (count),a
-               S01:00000022:  32 00 40
-F00:0035       		out (0x03),a
-               S01:00000025:  D3 03
+               S01:0000001E:  32 00 40
+F00:0035       		out (0x01),a
+               S01:00000021:  D3 01
 F00:0036       		ei
-               S01:00000027:  FB
+               S01:00000023:  FB
 F00:0037       		reti
-               S01:00000028:  ED 4D
+               S01:00000024:  ED 4D
 F00:0038       	int2: ;#/* interrupt 2, echo what was sent*/
 F00:0039       		di
-               S01:0000002A:  F3
+               S01:00000026:  F3
 F00:0040       		in a,(0x02)
-               S01:0000002B:  DB 02
-F00:0041       		out (0x02),a
-               S01:0000002D:  D3 02
+               S01:00000027:  DB 02
+F00:0041       		out (0x03),a
+               S01:00000029:  D3 03
 F00:0042       		ei
-               S01:0000002F:  FB
+               S01:0000002B:  FB
 F00:0043       		reti
-               S01:00000030:  ED 4D
+               S01:0000002C:  ED 4D
 F00:0044       	label1:
 F00:0045       		.string "Welcome to my pleasure dome."
-               S01:00000032:  57 65 6C 63 6F 6D 65 20 74 6F 20 6D 79 20 70 6C
-               S01:00000042:  65 61 73 75 72 65 20 64 6F 6D 65 2E
+               S01:0000002E:  57 65 6C 63 6F 6D 65 20 74 6F 20 6D 79 20 70 6C
+               S01:0000003E:  65 61 73 75 72 65 20 64 6F 6D 65 2E
 F00:0046       	endlabel1:
 F00:0047       
 F00:0048       		.org 0x0100
 F00:0049       	jumptable:
 F00:0050       	.align 2
-F00:0051       	.2byte int2
-               S01:00000100:  2A 00
-F00:0052       	.2byte int1
-               S01:00000102:  1D 00
+F00:0051       	.2byte int1
+               S01:00000100:  19 00
+F00:0052       	.2byte int2
+               S01:00000102:  26 00
 F00:0053       	
 F00:0054       	
 F00:0055       	
@@ -93,11 +91,11 @@ F00  testz80.s
 
 
 Symbols:
-int2 EXPR(42=0x2a) ABS 
-int1 EXPR(29=0x1d) ABS 
-again EXPR(25=0x19) ABS 
-endlabel1 EXPR(79=0x4f) ABS 
-label1 EXPR(50=0x32) ABS 
+int2 EXPR(38=0x26) ABS 
+int1 EXPR(25=0x19) ABS 
+again EXPR(21=0x15) ABS 
+endlabel1 EXPR(75=0x4b) ABS 
+label1 EXPR(46=0x2e) ABS 
 jumptable EXPR(256=0x100) ABS 
 start EXPR(0=0x0) UNUSED ABS 
 count EXPR(16384=0x4000) 

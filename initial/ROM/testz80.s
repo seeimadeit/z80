@@ -32,13 +32,13 @@
 		ld a,(count)
 		inc a
 		ld (count),a
-		out (0x03),a
+		out (0x01),a
 		ei
 		reti
 	int2: ;#/* interrupt 2, echo what was sent*/
 		di
 		in a,(0x02)
-		out (0x02),a
+		out (0x03),a
 		ei
 		reti
 	label1:
@@ -48,8 +48,8 @@
 		.org 0x0100
 	jumptable:
 	.align 2
-	.2byte int2
 	.2byte int1
+	.2byte int2
 	
 	
 	
