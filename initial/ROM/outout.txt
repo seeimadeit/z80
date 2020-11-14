@@ -1,85 +1,86 @@
 F00:0001       .equ count ,0x4000
-F00:0002       #define LOWORD(l) ((WORD)(l))
-F00:0003       #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
-F00:0004       #define LOBYTE(w) ((BYTE)(w))
-F00:0005       #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
-F00:0006       
-F00:0007       .macro HIBYTE www 
-F00:0009       
-F00:0010       	
-F00:0011       
-F00:0012       	.org 0x0000
-F00:0013       	start:
-F00:0014       		ld a,'0'-1
+F00:0002       .equ SERIALPORT , 0x01
+F00:0003       #define LOWORD(l) ((WORD)(l))
+F00:0004       #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
+F00:0005       #define LOBYTE(w) ((BYTE)(w))
+F00:0006       #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
+F00:0007       
+F00:0008       .macro HIBYTE www 
+F00:0010       
+F00:0011       	
+F00:0012       
+F00:0013       	.org 0x0000
+F00:0014       	start:
+F00:0015       		ld a,'0'-1
                S01:00000000:  3E 2F
-F00:0015       		ld (count),a
+F00:0016       		ld (count),a
                S01:00000002:  32 00 40
-F00:0016       		ld a, jumptable >> 8 ;0x01 ;// hibyte
+F00:0017       		ld a, jumptable >> 8 ;0x01 ;// hibyte
                S01:00000005:  3E 01
-F00:0017       		ld i,a
+F00:0018       		ld i,a
                S01:00000007:  ED 47
-F00:0018       		im 2 ;/* interrupt mode 2*/
+F00:0019       		im 2 ;/* interrupt mode 2*/
                S01:00000009:  ED 5E
-F00:0019       		ei   ;#/* enable interrupts*/
+F00:0020       		ei   ;#/* enable interrupts*/
                S01:0000000B:  FB
-F00:0020       	;	ld a,65
-F00:0021       	;	out (0x01),a
-F00:0022       		ld hl,label1
+F00:0021       	;	ld a,65
+F00:0022       	;	out (0x01),a
+F00:0023       		ld hl,label1
                S01:0000000C:  21 2E 00
-F00:0023       		ld b, endlabel1-label1
+F00:0024       		ld b, endlabel1-label1
                S01:0000000F:  06 1D
-F00:0024       		ld c,99
-               S01:00000011:  0E 63
-F00:0025       		otir
+F00:0025       		ld c,SERIALPORT
+               S01:00000011:  0E 01
+F00:0026       		otir
                S01:00000013:  ED B3
-F00:0026       	again:	halt
+F00:0027       	again:	halt
                S01:00000015:  76
-F00:0027       		jp again
+F00:0028       		jp again
                S01:00000016:  C3 15 00
-F00:0028       
-F00:0029       		
-F00:0030       		int1:
-F00:0031       		di
+F00:0029       
+F00:0030       		
+F00:0031       		int1:
+F00:0032       		di
                S01:00000019:  F3
-F00:0032       		ld a,(count)
+F00:0033       		ld a,(count)
                S01:0000001A:  3A 00 40
-F00:0033       		inc a
+F00:0034       		inc a
                S01:0000001D:  3C
-F00:0034       		ld (count),a
+F00:0035       		ld (count),a
                S01:0000001E:  32 00 40
-F00:0035       		out (0x01),a
+F00:0036       		out (SERIALPORT),a
                S01:00000021:  D3 01
-F00:0036       		ei
+F00:0037       		ei
                S01:00000023:  FB
-F00:0037       		reti
+F00:0038       		reti
                S01:00000024:  ED 4D
-F00:0038       	int2: ;#/* interrupt 2, echo what was sent*/
-F00:0039       		di
+F00:0039       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0040       		di
                S01:00000026:  F3
-F00:0040       		in a,(0x02)
-               S01:00000027:  DB 02
-F00:0041       		out (0x03),a
-               S01:00000029:  D3 03
-F00:0042       		ei
+F00:0041       		in a,(SERIALPORT)
+               S01:00000027:  DB 01
+F00:0042       		out (SERIALPORT),a
+               S01:00000029:  D3 01
+F00:0043       		ei
                S01:0000002B:  FB
-F00:0043       		reti
+F00:0044       		reti
                S01:0000002C:  ED 4D
-F00:0044       	label1:
-F00:0045       		.string "Welcome to my pleasure dome."
+F00:0045       	label1:
+F00:0046       		.string "Welcome to my pleasure dome."
                S01:0000002E:  57 65 6C 63 6F 6D 65 20 74 6F 20 6D 79 20 70 6C
                S01:0000003E:  65 61 73 75 72 65 20 64 6F 6D 65 2E
-F00:0046       	endlabel1:
-F00:0047       
-F00:0048       		.org 0x0100
-F00:0049       	jumptable:
-F00:0050       	.align 2
-F00:0051       	.2byte int1
+F00:0047       	endlabel1:
+F00:0048       
+F00:0049       		.org 0x0100
+F00:0050       	jumptable:
+F00:0051       	.align 2
+F00:0052       	.2byte int1
                S01:00000100:  19 00
-F00:0052       	.2byte int2
+F00:0053       	.2byte serialport
                S01:00000102:  26 00
-F00:0053       	
 F00:0054       	
 F00:0055       	
+F00:0056       	
 
 
 Sections:
@@ -91,13 +92,14 @@ F00  testz80.s
 
 
 Symbols:
-int2 EXPR(38=0x26) ABS 
+serialport EXPR(38=0x26) ABS 
 int1 EXPR(25=0x19) ABS 
 again EXPR(21=0x15) ABS 
 endlabel1 EXPR(75=0x4b) ABS 
 label1 EXPR(46=0x2e) ABS 
 jumptable EXPR(256=0x100) ABS 
 start EXPR(0=0x0) UNUSED ABS 
+SERIALPORT EXPR(1=0x1) 
 count EXPR(16384=0x4000) 
 __VASM EXPR(0=0x0) INTERNAL 
 __MSDOSFS EXPR(0=0x0) INTERNAL 

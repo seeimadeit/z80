@@ -1,4 +1,5 @@
 .equ count ,0x4000
+.equ SERIALPORT , 0x01
 #define LOWORD(l) ((WORD)(l))
 #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
 #define LOBYTE(w) ((BYTE)(w))
@@ -21,7 +22,7 @@
 	;	out (0x01),a
 		ld hl,label1
 		ld b, endlabel1-label1
-		ld c,99
+		ld c,SERIALPORT
 		otir
 	again:	halt
 		jp again
@@ -32,13 +33,13 @@
 		ld a,(count)
 		inc a
 		ld (count),a
-		out (0x01),a
+		out (SERIALPORT),a
 		ei
 		reti
-	int2: ;#/* interrupt 2, echo what was sent*/
+	serialport: ;#/* interrupt 2, echo what was sent*/
 		di
-		in a,(0x02)
-		out (0x03),a
+		in a,(SERIALPORT)
+		out (SERIALPORT),a
 		ei
 		reti
 	label1:
@@ -49,7 +50,7 @@
 	jumptable:
 	.align 2
 	.2byte int1
-	.2byte int2
+	.2byte serialport
 	
 	
 	

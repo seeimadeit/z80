@@ -1,12 +1,13 @@
-#define VERSION "\nReady v0.ad"
+#define SERIALPORT 1
+#define VERSION "\nSerialPort Ready v0.0.0,Device id 0x01"
+// IO device port 0x01
+
 int capture = 0;
-volatile boolean captured = false;
-volatile uint8_t device = 0;
+boolean captured = false;
+int character = 0; // the character we want to send to the z80
+
 int iostate = 0; // tracks the initiated interrupt we created
-volatile int character = 0; // the character we want to send to the z80
-
 int cycledsinceio = 0;
-
 
 #define DELAY 0
 // CLK,WAIT arduino pins used
@@ -47,7 +48,7 @@ void setup() {
   // put your setup code here, to run once:
 
   setMode(INPUT);
- 
+
   pinMode(HASPOWER, INPUT);
   pinMode(INT, OUTPUT); digitalWrite(INT, HIGH);// DWRITE("INT HIGH");
   pinMode(IOREQ, INPUT);
@@ -136,6 +137,8 @@ void write(uint8_t c)
 
 void readchannel(uint8_t *_d, uint8_t *_c)
 {
+  // problem with compiler not setting variables. so needed to create
+  // local variables here. argggg
   uint8_t c = 0;
   uint8_t d = 0;
   DoRead(INPUT);
@@ -159,24 +162,53 @@ void readchannel(uint8_t *_d, uint8_t *_c)
 
   *_c = c;
   *_d = d;
+  // DWRITE("Device:"); DWRITE(d);
+}
+
+void performIO(uint8_t c)
+{
+  bool IsRead = digitalRead(IOREAD);
+  if (!IsRead) {
+    // DWRITE("Read from Z80");
+    capture = c;
+    captured = true;
+    // after the read perform 2 more clock cycles
+    clock(false); clock(false);
+    if (iostate == 3) {
+      // this can only happen if we initiated the ioreq
+      iostate = 4;
+    }
+    // }
+  } else {
+    /* before we write the data we should validate the IO address but we don't do that yet. oops*/
+    if (iostate == 2) {
+      // we can only write the data the iostate is 2 because that tells me
+      // we initiated the ioreq
+      //DWRITE("Write to Z80");
+      write(character);
+      // after the character has been sent we clear it out.
+      character = 0;
+
+      clock(false);
+      DoRead(INPUT);
+      iostate = 3;
+    } // iostate 2
+  }
+
 }
 
 void IORequest()
 {
-
-
   int m1 = digitalRead(M1);
   int ioreq = digitalRead(IOREQ);
 
   bool InterruptACK =  (m1 == LOW && ioreq == LOW) ? HIGH : LOW;
 
-  // if we didn't send an interrupt request we should be getting an iterrupt ackowledge
-  // if we do get an interrupt ack we we didnt ask for it than it's not ours and we should
-  // ignore it.
+  // if we do get an interrupt ack when we didnt ask for it than it's not ours and we should
+  // ignore it. so we check the iostate to see it we should respond
   // *****
   if (InterruptACK && iostate == 1)
   {
-
     /*
       // read from z80 = low, write to z80 = high;
       this appears odd. the _WR pin from the Z80 is connected the arduino IOREAD. so if the _WR is low
@@ -195,63 +227,25 @@ void IORequest()
 
     */
 
-
     //DWRITE("interrupt ack ");
-
-    uint8_t vector = 2; // default vector is to receive data from z80 for display
-    if (character == '~') {
-      character = 0;
-      vector = 0; // vector is to write character to the z80
-    }
+    uint8_t vector = 2; // mode 2 interrupt vector.
     write(vector);
-    /* clock(false); clock(false); clock(false);*/
     clock(false);
     // set it back to input or we will be writing data on who knows what.
     DoRead(INPUT);
     iostate = 2;
 
   } else {
-    bool IsRead = digitalRead(IOREAD);
+
     uint8_t d = 0;
     uint8_t c = 0;
     readchannel(&d, &c);
 
-    //Serial.print("device:"); DWRITE(d); Serial.print("character data:"); DWRITE(c);
-    //Serial.print("IsRead:"); DWRITE(!IsRead);
-
-    /* before we read the data we should validate the IO address but we don't do that yet. oops*/
-    if (!IsRead) {
-
-
-      // DWRITE("Read from Z80");
-      capture = c;
-      device = d;
-
-
-      captured = true;
-      // after the read perform 2 more clock cycles
-      clock(false); clock(false);
-      if (iostate == 3) {
-        // this can only happen if we initiated the ioreq
-        iostate = 4;
-      }
-      // }
-    } else {
-      /* before we write the data we should validate the IO address but we don't do that yet. oops*/
-
-      if (iostate == 2) {
-        // we can only write the data the iostate is 2 because that tells me
-        // we initiated the ioreq
-        //DWRITE("Write to Z80");
-        write(character);
-        // after the character has been sent we clear it out.
-        character = 0;
-
-        clock(false);
-        DoRead(INPUT);
-        iostate = 3;
-      }
-    }
+    if (d == SERIALPORT)
+    {
+      /* before we read the data we should validate the IO address*/
+      performIO(c);
+    } // if device == serialport
   } // end interrupt write
 
   return ;
@@ -267,9 +261,7 @@ void loop() {
   if (captured)
   {
     captured = false;
-
     Serial.print((char)capture);
-
     iostate = 0;
   }
   if (iostate == 0)
