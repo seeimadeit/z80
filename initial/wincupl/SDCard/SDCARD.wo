@@ -1,0 +1,18 @@
+#WAVEFORM
+#H Name     SDCardController;
+#H PartNo   00;
+#H Date     11/14/2020;
+#H Revision 01;
+#H Designer Peter Hall;
+#H Company  none;
+#H Assembly None;
+#H Location ;
+#H Device   g16v8a;
+#H 
+#H 
+#H ORDER: _ioreq, a3a, a2a, a1a, a0a, _active; 
+#H 
+#H 
+#V 0001 11010H
+#V 0002 01110H
+#V 0003 00101L

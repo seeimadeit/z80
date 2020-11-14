@@ -1,0 +1,18 @@
+Name     SDCardController;
+PartNo   00;
+Date     11/14/2020;
+Revision 01;
+Designer Peter Hall;
+Company  none;
+Assembly None;
+Location ;
+Device   g16v8a;
+
+
+ORDER: _ioreq, a3a, a2a, a1a, a0a, _active; 
+
+
+VECTORS:
+11010*
+01110*
+00101*

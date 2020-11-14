@@ -1,0 +1,24 @@
+%SIGNAL
+PIN  19 =  _active 
+PIN   5 =  _ioreq 
+PIN   1 =  a0a 
+PIN   2 =  a1a 
+PIN   3 =  a2a 
+PIN   4 =  a3a 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+_active =>
+    _ioreq & a0a & a1a & a2a & a3a
+  # !a1a & !a2a & !a3a
+  # a0a & !a1a & a3a
+  # a1a & !a2a
+  # !a0a & !a1a & !a2a & a3a
+  # !_ioreq & a0a & a1a & a2a
+  # _ioreq & a0a & a2a & !a3a
+  # !a0a & a2a
+
+%END
