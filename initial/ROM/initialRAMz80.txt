@@ -1,0 +1,89 @@
+F00:0001       .equ SERIALPORT , 0x01
+F00:0002       #define LOWORD(l) ((WORD)(l))
+F00:0003       #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
+F00:0004       #define LOBYTE(w) ((BYTE)(w))
+F00:0005       #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
+F00:0006       
+F00:0007       .macro HIBYTE www 
+F00:0009       
+F00:0010       	
+F00:0011       
+F00:0012       	.org 0x8000
+F00:0013       	start:
+F00:0014       
+F00:0015       		ld a, (jumptable >> 8) ;// hibyte
+               S01:00008000:  3A 80 00
+F00:0016       		ld i,a
+               S01:00008003:  ED 47
+F00:0017       		im 2 ;/* interrupt mode 2*/
+               S01:00008005:  ED 5E
+F00:0018       		ei   ;#/* enable interrupts*/
+               S01:00008007:  FB
+F00:0019       
+F00:0020       		ld hl,label1
+               S01:00008008:  21 21 80
+F00:0021       		ld b, endlabel1-label1
+               S01:0000800B:  06 10
+F00:0022       		ld c,SERIALPORT
+               S01:0000800D:  0E 01
+F00:0023       		otir
+               S01:0000800F:  ED B3
+F00:0024       	again:	halt
+               S01:00008011:  76
+F00:0025       		jp again
+               S01:00008012:  C3 11 80
+F00:0026       
+F00:0027       	int0: halt
+               S01:00008015:  76
+F00:0028       		jp int0
+               S01:00008016:  C3 15 80
+F00:0029       		
+F00:0030       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0031       		di
+               S01:00008019:  F3
+F00:0032       		in a,(SERIALPORT)
+               S01:0000801A:  DB 01
+F00:0033       		out (SERIALPORT),a
+               S01:0000801C:  D3 01
+F00:0034       		ei
+               S01:0000801E:  FB
+F00:0035       		reti
+               S01:0000801F:  ED 4D
+F00:0036       	label1:
+F00:0037       		.string "Z80 Ram loaded."
+               S01:00008021:  5A 38 30 20 52 61 6D 20 6C 6F 61 64 65 64 2E
+F00:0038       	endlabel1:
+F00:0039       
+F00:0040       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0041       	jumptable:
+F00:0042       	.align 2
+F00:0043       	.2byte int0 ;0
+               S01:00008034:  15 80
+F00:0044       	.2byte serialport ;2
+               S01:00008036:  19 80
+F00:0045       	
+F00:0046       	
+F00:0047       	
+
+
+Sections:
+S01  seg8000
+
+
+Sources:
+F00  initialRAMz80.s
+
+
+Symbols:
+serialport EXPR(32793=0x8019) ABS 
+int0 EXPR(32789=0x8015) ABS 
+again EXPR(32785=0x8011) ABS 
+endlabel1 EXPR(32817=0x8031) ABS 
+label1 EXPR(32801=0x8021) ABS 
+jumptable EXPR(32817=0x8031) ABS 
+start EXPR(32768=0x8000) UNUSED ABS 
+SERIALPORT EXPR(1=0x1) 
+__VASM EXPR(0=0x0) INTERNAL 
+__MSDOSFS EXPR(0=0x0) INTERNAL 
+
+There have been no errors.

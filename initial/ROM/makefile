@@ -1,17 +1,20 @@
 
-CC = vasm\vasm.exe -L outout.txt
+CC = vasm\vasm.exe 
 DEL = del
 CCOUT = -Fbin
 COPTS = $(CCOUT)
 INC   = -I.
-TARGET = testprog
+TARGET = ROM
+TARGET2 = RAM
 
-
-all: clean $(TARGET)
+all: clean $(TARGET) $(TARGET2)
 
 clean:
-	$(DEL) $(TARGET)
+	$(DEL) $(TARGET) $(TARGET2)
 
 
 $(TARGET):
-	$(CC) $(OPTS) $(INC) $(CCOUT) testz80.s -o $(TARGET)
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L initialROMz80.txt -o $(TARGET) initialROMz80.s
+
+$(TARGET2):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L initialRAMz80.txt -o $(TARGET2) initialRAMz80.s
