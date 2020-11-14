@@ -12,6 +12,7 @@ int cycledsinceio = 0;
 #define DELAY 0
 // CLK,WAIT arduino pins used
 
+#define RESETZ80 8
 #define CLK 12
 #define WAIT 13
 #define HASPOWER 11
@@ -65,12 +66,21 @@ void setup() {
   pinMode(I6, INPUT);
   pinMode(I7, INPUT);
 
+  
+
 #ifdef DEBUG
   Serial.begin(9600);
   while (!Serial) ;
   DWRITE(VERSION);
 #endif
 
+  // reset the z80
+  pinMode(RESETZ80,OUTPUT);
+  digitalWrite(RESETZ80,LOW);
+  for (int i=0; i < 4;i++)
+    clock(false);
+  digitalWrite(RESETZ80,HIGH);
+  pinMode(RESETZ80,INPUT);
 }
 void clock(bool half)
 {
