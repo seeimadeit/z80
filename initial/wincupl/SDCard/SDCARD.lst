@@ -3,7 +3,7 @@ LISTING FOR LOGIC DESCRIPTION FILE: SDCARD.pld                       Page 1
 CUPL(WM): Universal Compiler for Programmable Logic
 Version 5.0a Serial# 60008009
 Copyright (c) 1983, 1998 Logical Devices, Inc.
-Created Sat Nov 14 13:09:43 2020
+Created Sat Nov 14 13:14:01 2020
 
   1:Name     SDCardController ;
   2:PartNo   00 ;
@@ -64,7 +64,7 @@ LISTING FOR LOGIC DESCRIPTION FILE: SDCARD.pld                       Page 2
 CUPL(WM): Universal Compiler for Programmable Logic
 Version 5.0a Serial# 60008009
 Copyright (c) 1983, 1998 Logical Devices, Inc.
-Created Sat Nov 14 13:09:43 2020
+Created Sat Nov 14 13:14:01 2020
 
  54:'b'11111 => 1;
  55:
@@ -75,4 +75,4 @@ Created Sat Nov 14 13:09:43 2020
 
 
 Jedec Fuse Checksum       (27e4)
-Jedec Transmit Checksum   (aef9)
+Jedec Transmit Checksum   (aeef)
