@@ -143,6 +143,10 @@
     <None Include="initialROMz80.s" />
     <None Include="makefile" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="initialRAMz80.txt" />
+    <Text Include="initialROMz80.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

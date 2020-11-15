@@ -19,4 +19,8 @@
     <None Include="initialRAMz80.s" />
     <None Include="initialROMz80.s" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="initialRAMz80.txt" />
+    <Text Include="initialROMz80.txt" />
+  </ItemGroup>
 </Project>
