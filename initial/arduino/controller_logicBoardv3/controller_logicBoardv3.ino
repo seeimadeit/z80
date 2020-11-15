@@ -1,5 +1,5 @@
 #define SERIALPORT 1
-#define VERSION "\nSerialPort Ready v0.0.0,Device id 0x01"
+#define VERSION "\nSerialPort Ready v0.0.0,Device id 0x01a"
 // IO device port 0x01
 
 int capture = 0;
