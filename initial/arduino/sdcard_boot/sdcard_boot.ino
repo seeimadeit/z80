@@ -1,4 +1,4 @@
-#define VERSION "SD Card Reader v0.0.0xas, Device id = 0x05"
+#define VERSION "SD Card Reader v0.0.0, Device id = 0x05"
 
 /* z80 out only*/
 #define NOTHING 0
@@ -159,7 +159,7 @@ void readchannel( uint8_t *_c)
 
 unsigned char WriteCmd(int command)
 {
-    int result = 0;
+    uint8_t result = 0;
     switch (state)
     {
         case NOTHING:
@@ -206,8 +206,8 @@ unsigned char WriteCmd(int command)
         case AVAILABLE:
         {
           
-            result = file.available();
-     //       DWRITE("DOING AVAILABLE"); DWRITE(result); DWRITE("++++");
+            result = (file.available())?1:0;
+            //DWRITE("DOING AVAILABLE"); DWRITE(result); DWRITE("++++");
             state = NOTHING;
         }
         break;
