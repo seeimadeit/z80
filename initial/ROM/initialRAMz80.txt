@@ -5,69 +5,153 @@ F00:0004       #define LOBYTE(w) ((BYTE)(w))
 F00:0005       #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
 F00:0006       
 F00:0007       .macro HIBYTE www 
-F00:0009       
-F00:0010       	
-F00:0011       
-F00:0012       	.org 0x8000
-F00:0013       	start:
 F00:0014       
-F00:0015       		ld a, (jumptable >> 8) ;// hibyte
-               S01:00008000:  3A 80 00
-F00:0016       		ld i,a
-               S01:00008003:  ED 47
-F00:0017       		im 2 ;/* interrupt mode 2*/
-               S01:00008005:  ED 5E
-F00:0018       		ei   ;#/* enable interrupts*/
-               S01:00008007:  FB
-F00:0019       
-F00:0020       		ld hl,label1
-               S01:00008008:  21 21 80
-F00:0021       		ld b, endlabel1-label1
-               S01:0000800B:  06 10
-F00:0022       		ld c,SERIALPORT
-               S01:0000800D:  0E 01
-F00:0023       		otir
-               S01:0000800F:  ED B3
-F00:0024       	again:	halt
-               S01:00008011:  76
-F00:0025       		jp again
-               S01:00008012:  C3 11 80
-F00:0026       
-F00:0027       	int0: halt
-               S01:00008015:  76
-F00:0028       		jp int0
-               S01:00008016:  C3 15 80
-F00:0029       		
-F00:0030       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0031       		di
-               S01:00008019:  F3
-F00:0032       		in a,(SERIALPORT)
-               S01:0000801A:  DB 01
-F00:0033       		out (SERIALPORT),a
-               S01:0000801C:  D3 01
-F00:0034       		ei
-               S01:0000801E:  FB
-F00:0035       		reti
-               S01:0000801F:  ED 4D
-F00:0036       	label1:
-F00:0037       		.string "Z80 Ram loaded."
-               S01:00008021:  5A 38 30 20 52 61 6D 20 6C 6F 61 64 65 64 2E
-F00:0038       	endlabel1:
-F00:0039       
-F00:0040       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0041       	jumptable:
-F00:0042       	.align 2
-F00:0043       	.2byte int0 ;0
-               S01:00008034:  15 80
-F00:0044       	.2byte serialport ;2
-               S01:00008036:  19 80
-F00:0045       	
-F00:0046       	
-F00:0047       	
+F00:0015       
+F00:0016       
+F00:0017       	org 0x800
+F00:0018       	start:
+F00:0019       	ld sp,0xffff
+               S01:00000800:  31 FF FF
+F00:0020       
+F00:0021       	di
+               S01:00000803:  F3
+F00:0022       	ld hl,readymsg
+               S01:00000804:  21 60 08
+F00:0023       	call print
+               S01:00000807:  CD 1C 08
+F00:0024       		;ld b, endlabel2-label2
+F00:0025       		;ld c,SERIALPORT
+F00:0026       		;otir
+F00:0027       
+F00:0028       		ld a, (jumptable >> 8) ;// hibyte
+               S01:0000080A:  3A 09 00
+F00:0029       		ld i,a
+               S01:0000080D:  ED 47
+F00:0030       		im 2 ;/* interrupt mode 2*/
+               S01:0000080F:  ED 5E
+F00:0031       		ei   ;#/* enable interrupts*/
+               S01:00000811:  FB
+F00:0032       
+F00:0033       		ld hl,loadedmsg
+               S01:00000812:  21 4C 08
+F00:0034       		call print
+               S01:00000815:  CD 1C 08
+F00:0035       		;ld b, endlabel1-label1
+F00:0036       		;ld c,SERIALPORT
+F00:0037       		;otir
+F00:0038       	again:	halt
+               S01:00000818:  76
+F00:0039       		jp again
+               S01:00000819:  C3 18 08
+F00:0040       		
+F00:0041       		;// subroutines
+F00:0042       	print: ;// expecting a zero terminated string
+F00:0043       		push hl
+               S01:0000081C:  E5
+F00:0044       		push af
+               S01:0000081D:  F5
+F00:0045       		_$1:
+F00:0046       			ld a,(hl)
+               S01:0000081E:  7E
+F00:0047       			cp 0
+               S01:0000081F:  FE 00
+F00:0048       			jr z,_$2
+               S01:00000821:  28 06
+F00:0049       			out (SERIALPORT),a
+               S01:00000823:  D3 01
+F00:0050       			inc hl
+               S01:00000825:  23
+F00:0051       			jp _$1
+               S01:00000826:  C3 1E 08
+F00:0052       _$2:			
+F00:0053       		pop af
+               S01:00000829:  F1
+F00:0054       		pop hl
+               S01:0000082A:  E1
+F00:0055       		ret
+               S01:0000082B:  C9
+F00:0056       
+F00:0057       		;Display 8-bit number in hex.
+F00:0058       		; 	ld a,0xaa
+F00:0059       	;       call printhex
+F00:0060       printhex:
+F00:0061       
+F00:0062       ; Input: a
+F00:0063         push af
+               S01:0000082C:  F5
+F00:0064         ;// remove low nibble
+F00:0065          rra
+               S01:0000082D:  1F
+F00:0066          rra
+               S01:0000082E:  1F
+F00:0067          rra
+               S01:0000082F:  1F
+F00:0068          rra
+               S01:00000830:  1F
+F00:0069          call  _$
+               S01:00000831:  CD 35 08
+F00:0070          ;// restore low nibble
+F00:0071          pop af
+               S01:00000834:  F1
+F00:0072          
+F00:0073       _$:
+F00:0074       	;// remove high nibble
+F00:0075          and  0x0F
+               S01:00000835:  E6 0F
+F00:0076          add  a,0x90
+               S01:00000837:  C6 90
+F00:0077          ;; bcd adjust
+F00:0078          daa
+               S01:00000839:  27
+F00:0079          adc  a,0x40
+               S01:0000083A:  CE 40
+F00:0080          daa
+               S01:0000083C:  27
+F00:0081          out (SERIALPORT),a 
+               S01:0000083D:  D3 01
+F00:0082          ret
+               S01:0000083F:  C9
+F00:0083       
+F00:0084       
+F00:0085       		;// end subroutines
+F00:0086       
+F00:0087       	int0: halt
+               S01:00000840:  76
+F00:0088       		jp int0
+               S01:00000841:  C3 40 08
+F00:0089       		
+F00:0090       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0091       		di
+               S01:00000844:  F3
+F00:0092       		in a,(SERIALPORT)
+               S01:00000845:  DB 01
+F00:0093       		out (SERIALPORT),a
+               S01:00000847:  D3 01
+F00:0094       		ei
+               S01:00000849:  FB
+F00:0095       		reti
+               S01:0000084A:  ED 4D
+F00:0096       	loadedmsg: .string "my Z80 Ram loaded.\0"
+               S01:0000084C:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
+               S01:0000085C:  64 2E 00
+F00:0097       	readymsg: .string "_ready\0"
+               S01:00000860:  5F 72 65 61 64 79 00
+F00:0098       
+F00:0099       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0100       	org 0x900-start
+F00:0101       	.align 2
+F00:0102       	jumptable:
+F00:0103       	.2byte int0 ;0
+               S01:00000900:  40 08
+F00:0104       	.2byte serialport ;2
+               S01:00000902:  44 08
+F00:0105       	
+F00:0106       	
+F00:0107       	
 
 
 Sections:
-S01  seg8000
+S01  seg800
 
 
 Sources:
@@ -75,13 +159,18 @@ F00  initialRAMz80.s
 
 
 Symbols:
-serialport EXPR(32793=0x8019) ABS 
-int0 EXPR(32789=0x8015) ABS 
-again EXPR(32785=0x8011) ABS 
-endlabel1 EXPR(32817=0x8031) ABS 
-label1 EXPR(32801=0x8021) ABS 
-jumptable EXPR(32817=0x8031) ABS 
-start EXPR(32768=0x8000) UNUSED ABS 
+serialport EXPR(2116=0x844) ABS 
+int0 EXPR(2112=0x840) ABS 
+_$ EXPR(2101=0x835) ABS 
+printhex EXPR(2092=0x82c) UNUSED ABS 
+_$2 EXPR(2089=0x829) ABS 
+_$1 EXPR(2078=0x81e) ABS 
+again EXPR(2072=0x818) ABS 
+loadedmsg EXPR(2124=0x84c) ABS 
+jumptable EXPR(2304=0x900) ABS 
+print EXPR(2076=0x81c) ABS 
+readymsg EXPR(2144=0x860) ABS 
+start EXPR(2048=0x800) ABS 
 SERIALPORT EXPR(1=0x1) 
 __VASM EXPR(0=0x0) INTERNAL 
 __MSDOSFS EXPR(0=0x0) INTERNAL 

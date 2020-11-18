@@ -1,5 +1,5 @@
 #define SERIALPORT 1
-#define VERSION "\nSerialPort Ready v0.0.0,Device id 0x01a"
+#define VERSION "\nSerialPort Ready v0.0.0a,Device id 0x01"
 // IO device port 0x01
 
 int capture = 0;
@@ -49,8 +49,18 @@ void setup() {
   // put your setup code here, to run once:
 
   setMode(INPUT);
-
+#ifdef DEBUG
+  Serial.begin(9600);
+  while (!Serial) ;
+  DWRITE(VERSION);
+#endif
   pinMode(HASPOWER, INPUT);
+/*  if (digitalRead(HASPOWER)==0) 
+  {
+    Serial.print("Exit on power up");
+    exit(0);
+  }*/
+  
   pinMode(INT, OUTPUT); digitalWrite(INT, HIGH);// DWRITE("INT HIGH");
   pinMode(IOREQ, INPUT);
   pinMode(M1, INPUT);
@@ -68,11 +78,7 @@ void setup() {
 
   
 
-#ifdef DEBUG
-  Serial.begin(9600);
-  while (!Serial) ;
-  DWRITE(VERSION);
-#endif
+
 
   // reset the z80
   pinMode(RESETZ80,OUTPUT);
@@ -262,6 +268,11 @@ void IORequest()
 }
 void loop() {
   // clock signal
+ /* if (digitalRead(HASPOWER)==0) 
+  {
+    Serial.print("Exit on power up");
+    exit(0);
+  }*/
   clock(false);
 
   if (digitalRead(IOREQ) == LOW)

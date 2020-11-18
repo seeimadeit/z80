@@ -2,161 +2,216 @@ F00:0001       .equ count ,0x4000
 F00:0002       .equ SERIALPORT , 0x01
 F00:0003       .equ SDCARD,0x05
 F00:0004       
-F00:0005       ; ******* SDCARD *********
-F00:0006       ; z80 out only
-F00:0007       .equ FILENAMECLEAR ,1
-F00:0008       .equ OPEN ,2
-F00:0009       .equ CLOSE ,3
-F00:0010       .equ FILENAMEAPPEND ,4
-F00:0011       ; z80 out + in
-F00:0012       .equ READNEXTBYTE ,5
-F00:0013       .equ AVAILABLE ,6
-F00:0014       
-F00:0015       
-F00:0016       #define LOWORD(l) ((WORD)(l))
-F00:0017       #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
-F00:0018       #define LOBYTE(w) ((BYTE)(w))
-F00:0019       #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
-F00:0020       
-F00:0021       .macro HIBYTE www 
-F00:0023       
-F00:0024       	
+F00:0005       .equ OSLOAD,0x800 ; // start address for loading the OS.
+F00:0006       
+F00:0007       ; ******* SDCARD *********
+F00:0008       ; z80 out only
+F00:0009       .equ FILENAMECLEAR ,1
+F00:0010       .equ OPEN ,2
+F00:0011       .equ CLOSE ,3
+F00:0012       .equ FILENAMEAPPEND ,4
+F00:0013       ; z80 out + in
+F00:0014       .equ READNEXTBYTE ,5
+F00:0015       .equ AVAILABLE ,6
+F00:0016       
+F00:0017       
+F00:0018       #define LOWORD(l) ((WORD)(l))
+F00:0019       #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
+F00:0020       #define LOBYTE(w) ((BYTE)(w))
+F00:0021       #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
+F00:0022       
+F00:0023       .macro HIBYTE www 
 F00:0025       
-F00:0026       	.org 0x0000
-F00:0027       	start:
-F00:0028       		ld a,'0'-1
-               S01:00000000:  3E 2F
-F00:0029       		ld (count),a
+F00:0026       	
+F00:0027       
+F00:0028       	.org 0x0000
+F00:0029       	start:
+F00:0030       		ld a,0
+               S01:00000000:  3E 00
+F00:0031       		ld (count),a
                S01:00000002:  32 00 40
-F00:0030       		ld a, (jumptable >> 8) ;0x01 ;// hibyte
-               S01:00000005:  3A 00 00
-F00:0031       		ld i,a
+F00:0032       		ld a, (jumptable >> 8) ;0x01 ;// hibyte
+               S01:00000005:  3A 01 00
+F00:0033       		ld i,a
                S01:00000008:  ED 47
-F00:0032       		im 2 ;/* interrupt mode 2*/
+F00:0034       		im 2 ;/* interrupt mode 2*/
                S01:0000000A:  ED 5E
-F00:0033       		ei   ;#/* enable interrupts*/
+F00:0035       		ei   ;#/* enable interrupts*/
                S01:0000000C:  FB
-F00:0034       	;	ld a,65
-F00:0035       	;	out (0x01),a
-F00:0036       		ld hl,label1
-               S01:0000000D:  21 69 00
-F00:0037       		ld b, endlabel1-label1
-               S01:00000010:  06 04
-F00:0038       		ld c,SERIALPORT
-               S01:00000012:  0E 01
-F00:0039       		otir
-               S01:00000014:  ED B3
-F00:0040       		; try to open the SD card and read some data
-F00:0041       		ld a,FILENAMECLEAR ; // filenameclear
-               S01:00000016:  3E 01
-F00:0042       		out (SDCARD),a
-               S01:00000018:  D3 05
-F00:0043       		ld a,FILENAMEAPPEND
-               S01:0000001A:  3E 04
-F00:0044       		out (SDCARD),a ; // filenameappend
-               S01:0000001C:  D3 05
-F00:0045       		ld a,'R'
-               S01:0000001E:  3E 52
-F00:0046       		out (SDCARD),a 
-               S01:00000020:  D3 05
-F00:0047       		ld a,FILENAMEAPPEND
-               S01:00000022:  3E 04
-F00:0048       		out (SDCARD),a ; // filenameappend
-               S01:00000024:  D3 05
-F00:0049       		ld a,'A'
-               S01:00000026:  3E 41
-F00:0050       		out (SDCARD),a
-               S01:00000028:  D3 05
-F00:0051       		ld a,FILENAMEAPPEND
-               S01:0000002A:  3E 04
-F00:0052       		out (SDCARD),a ; // filenameappend
-               S01:0000002C:  D3 05
-F00:0053       		ld a,'M'
-               S01:0000002E:  3E 4D
-F00:0054       		out (SDCARD),a
-               S01:00000030:  D3 05
-F00:0055       		ld a,OPEN	;// Open
-               S01:00000032:  3E 02
-F00:0056       		out (SDCARD),a
-               S01:00000034:  D3 05
-F00:0057       		available:
-F00:0058       		ld a, AVAILABLE ; // available
-               S01:00000036:  3E 06
+F00:0036       	;	ld a,65
+F00:0037       	;	out (0x01),a
+F00:0038       	;	ld hl,label1
+F00:0039       ;		ld b, endlabel1-label1
+F00:0040       ;		ld c,SERIALPORT
+F00:0041       ;		otir
+F00:0042       		ld hl,z80msg
+               S01:0000000D:  21 89 00
+F00:0043       		call print
+               S01:00000010:  CD 5A 00
+F00:0044       ;=================================================================
+F00:0045       		; try to open the SD card and read some data
+F00:0046       		ld a,FILENAMECLEAR ; // filenameclear
+               S01:00000013:  3E 01
+F00:0047       		out (SDCARD),a
+               S01:00000015:  D3 05
+F00:0048       		ld a,FILENAMEAPPEND
+               S01:00000017:  3E 04
+F00:0049       		out (SDCARD),a ; // filenameappend
+               S01:00000019:  D3 05
+F00:0050       		ld a,'R'
+               S01:0000001B:  3E 52
+F00:0051       		out (SDCARD),a 
+               S01:0000001D:  D3 05
+F00:0052       		ld a,FILENAMEAPPEND
+               S01:0000001F:  3E 04
+F00:0053       		out (SDCARD),a ; // filenameappend
+               S01:00000021:  D3 05
+F00:0054       		ld a,'A'
+               S01:00000023:  3E 41
+F00:0055       		out (SDCARD),a
+               S01:00000025:  D3 05
+F00:0056       		ld a,FILENAMEAPPEND
+               S01:00000027:  3E 04
+F00:0057       		out (SDCARD),a ; // filenameappend
+               S01:00000029:  D3 05
+F00:0058       		ld a,'M'
+               S01:0000002B:  3E 4D
 F00:0059       		out (SDCARD),a
-               S01:00000038:  D3 05
-F00:0060       		in a,(SDCARD) ;// read the value from the device
-               S01:0000003A:  DB 05
-F00:0061       		ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
-               S01:0000003C:  47
-F00:0062       		add a,'0' ;// make it printable
-               S01:0000003D:  C6 30
-F00:0063       		out (SERIALPORT),a ;// print response
-               S01:0000003F:  D3 01
-F00:0064       		ld a,b
-               S01:00000041:  78
-F00:0065       		cp 0 ;// compare the A reg returned by the device
+               S01:0000002D:  D3 05
+F00:0060       		ld a,OPEN	;// Open
+               S01:0000002F:  3E 02
+F00:0061       		out (SDCARD),a
+               S01:00000031:  D3 05
+F00:0062       		in a,(SDCARD)
+               S01:00000033:  DB 05
+F00:0063       		cp 0
+               S01:00000035:  FE 00
+F00:0064       		jr z,reboot
+               S01:00000037:  28 31
+F00:0065       		ld hl,OSLOAD
+               S01:00000039:  21 00 08
+F00:0066       		available:
+F00:0067       		ld a, AVAILABLE ; // available
+               S01:0000003C:  3E 06
+F00:0068       		out (SDCARD),a
+               S01:0000003E:  D3 05
+F00:0069       		in a,(SDCARD) ;// read the value from the device
+               S01:00000040:  DB 05
+F00:0070       	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
+F00:0071       	;	add a,'0' ;// make it printable
+F00:0072       	;	out (SERIALPORT),a ;// print response
+F00:0073       	;	ld a,b
+F00:0074       		cp 0 ;// compare the A reg returned by the device
                S01:00000042:  FE 00
-F00:0066       		jr z, again
-               S01:00000044:  28 0A
-F00:0067       		;// if we get here then there is data to read
-F00:0068       		ld a,READNEXTBYTE
+F00:0075       		jr z, again
+               S01:00000044:  28 0E
+F00:0076       		;// if we get here then there is data to read
+F00:0077       		ld a,READNEXTBYTE
                S01:00000046:  3E 05
-F00:0069       		out (SDCARD),a ;// read nextbyte
+F00:0078       		out (SDCARD),a ;// read nextbyte
                S01:00000048:  D3 05
-F00:0070       		in a,(SDCARD)
+F00:0079       		in a,(SDCARD)
                S01:0000004A:  DB 05
-F00:0071       		out (SERIALPORT),a ;// just echo it back for now
-               S01:0000004C:  D3 01
-F00:0072       		jr available ;
-               S01:0000004E:  18 E6
-F00:0073       
-F00:0074       	again:	halt
-               S01:00000050:  76
-F00:0075       		jp again
-               S01:00000051:  C3 50 00
-F00:0076       
-F00:0077       		
-F00:0078       		int1:
-F00:0079       		di
-               S01:00000054:  F3
-F00:0080       		ld a,(count)
-               S01:00000055:  3A 00 40
-F00:0081       		inc a
-               S01:00000058:  3C
-F00:0082       		ld (count),a
-               S01:00000059:  32 00 40
-F00:0083       		out (SERIALPORT),a
-               S01:0000005C:  D3 01
-F00:0084       		ei
-               S01:0000005E:  FB
-F00:0085       		reti
-               S01:0000005F:  ED 4D
-F00:0086       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0087       		di
-               S01:00000061:  F3
-F00:0088       		in a,(SERIALPORT)
-               S01:00000062:  DB 01
-F00:0089       		out (SERIALPORT),a
-               S01:00000064:  D3 01
-F00:0090       		ei
-               S01:00000066:  FB
-F00:0091       		reti
-               S01:00000067:  ED 4D
-F00:0092       	label1:
-F00:0093       		.string "Z80"
-               S01:00000069:  5A 38 30
-F00:0094       	endlabel1:
-F00:0095       
-F00:0096       	;//	.org 0x0100
-F00:0097       	jumptable:
-F00:0098       	.align 2
-F00:0099       	.2byte int1
-               S01:00000070:  54 00
-F00:0100       	.2byte serialport
-               S01:00000072:  61 00
-F00:0101       	
-F00:0102       	
-F00:0103       	
+F00:0080       		ld (hl),a ; // store byte in RAM (OSLOAD)
+               S01:0000004C:  77
+F00:0081       		inc hl 
+               S01:0000004D:  23
+F00:0082       		ld a,'.'
+               S01:0000004E:  3E 2E
+F00:0083       		out (SERIALPORT),a ;// just echo it back for now
+               S01:00000050:  D3 01
+F00:0084       		jr available ;
+               S01:00000052:  18 E8
+F00:0085       ;================================
+F00:0086       	again:	
+F00:0087       ;	ld hl,label2
+F00:0088       ;		ld b, endlabel2-label2
+F00:0089       ;		ld c,SERIALPORT
+F00:0090       ;		otir
+F00:0091       		;halt
+F00:0092       		jp OSLOAD
+               S01:00000054:  C3 00 08
+F00:0093       		jp again
+               S01:00000057:  C3 54 00
+F00:0094       	;// subroutines
+F00:0095       	print: ;// expecting a zero terminated string
+F00:0096       		;ld hl,label1
+F00:0097       		;	call print
+F00:0098       		push hl
+               S01:0000005A:  E5
+F00:0099       		push af
+               S01:0000005B:  F5
+F00:0100       		_$1:
+F00:0101       			ld a,(hl)
+               S01:0000005C:  7E
+F00:0102       			cp 0
+               S01:0000005D:  FE 00
+F00:0103       			jr z,_$2
+               S01:0000005F:  28 06
+F00:0104       			out (SERIALPORT),a
+               S01:00000061:  D3 01
+F00:0105       			inc hl
+               S01:00000063:  23
+F00:0106       			jp _$1
+               S01:00000064:  C3 5C 00
+F00:0107       _$2:			
+F00:0108       		pop af
+               S01:00000067:  F1
+F00:0109       		pop hl
+               S01:00000068:  E1
+F00:0110       		ret
+               S01:00000069:  C9
+F00:0111       reboot:
+F00:0112       	ld hl,failedtoloadRAMimagemsg
+               S01:0000006A:  21 8F 00
+F00:0113       	call print
+               S01:0000006D:  CD 5A 00
+F00:0114       	halt
+               S01:00000070:  76
+F00:0115       	jp reboot
+               S01:00000071:  C3 6A 00
+F00:0116       		
+F00:0117       		int1:
+F00:0118       		di
+               S01:00000074:  F3
+F00:0119       		ld a,(count)
+               S01:00000075:  3A 00 40
+F00:0120       		inc a
+               S01:00000078:  3C
+F00:0121       		ld (count),a
+               S01:00000079:  32 00 40
+F00:0122       		out (SERIALPORT),a
+               S01:0000007C:  D3 01
+F00:0123       		ei
+               S01:0000007E:  FB
+F00:0124       		reti
+               S01:0000007F:  ED 4D
+F00:0125       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0126       		di
+               S01:00000081:  F3
+F00:0127       		in a,(SERIALPORT)
+               S01:00000082:  DB 01
+F00:0128       		out (SERIALPORT),a
+               S01:00000084:  D3 01
+F00:0129       		ei
+               S01:00000086:  FB
+F00:0130       		reti
+               S01:00000087:  ED 4D
+F00:0131       	z80msg:	.string "Z80:\0"
+               S01:00000089:  5A 38 30 3A 00
+F00:0132       	failedtoloadRAMimagemsg: .string "in memory\0"
+               S01:0000008F:  69 6E 20 6D 65 6D 6F 72 79 00
+F00:0133       
+F00:0134       	.org 0x0100-start
+F00:0135       	jumptable:
+F00:0136       	.align 2
+F00:0137       	.2byte int1
+               S01:00000100:  74 00
+F00:0138       	.2byte serialport
+               S01:00000102:  81 00
+F00:0139       	
+F00:0140       	
+F00:0141       	
 
 
 Sections:
@@ -168,20 +223,25 @@ F00  initialROMz80.s
 
 
 Symbols:
-serialport EXPR(97=0x61) ABS 
-int1 EXPR(84=0x54) ABS 
-again EXPR(80=0x50) ABS 
-available EXPR(54=0x36) ABS 
-endlabel1 EXPR(109=0x6d) ABS 
-label1 EXPR(105=0x69) ABS 
-jumptable EXPR(109=0x6d) ABS 
-start EXPR(0=0x0) UNUSED ABS 
+serialport EXPR(129=0x81) ABS 
+int1 EXPR(116=0x74) ABS 
+failedtoloadRAMimagemsg EXPR(143=0x8f) ABS 
+_$2 EXPR(103=0x67) ABS 
+_$1 EXPR(92=0x5c) ABS 
+again EXPR(84=0x54) ABS 
+available EXPR(60=0x3c) ABS 
+reboot EXPR(106=0x6a) ABS 
+print EXPR(90=0x5a) ABS 
+z80msg EXPR(137=0x89) ABS 
+jumptable EXPR(256=0x100) ABS 
+start EXPR(0=0x0) ABS 
 AVAILABLE EXPR(6=0x6) 
 READNEXTBYTE EXPR(5=0x5) 
 FILENAMEAPPEND EXPR(4=0x4) 
 CLOSE EXPR(3=0x3) UNUSED 
 OPEN EXPR(2=0x2) 
 FILENAMECLEAR EXPR(1=0x1) 
+OSLOAD EXPR(2048=0x800) 
 SDCARD EXPR(5=0x5) 
 SERIALPORT EXPR(1=0x1) 
 count EXPR(16384=0x4000) 

@@ -179,10 +179,11 @@ unsigned char WriteCmd(int command)
             case OPEN:
     //        DWRITE("OPEN"); DWRITE((char*)filename); DWRITE("****");
                 file = SD.open(filename);
+                state=OPEN;
                 break;
             case CLOSE:
     //        DWRITE("CLOSE");
-                file.close();
+               if (file) file.close();
                 break;
             case READNEXTBYTE:
      //       DWRITE("READNEXTBYTE");
@@ -195,6 +196,10 @@ unsigned char WriteCmd(int command)
             }
         }
         break;
+        case OPEN:
+          result = (file)?1:0;
+          state=NOTHING;
+          break;
         case FILENAMEAPPEND:
         {
      //     DWRITE("DOING APPEND"); DWRITE((char)command); DWRITE("----");
