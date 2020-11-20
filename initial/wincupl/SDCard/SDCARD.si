@@ -9,10 +9,10 @@ Location ;
 Device   g16v8a;
 
 
-ORDER: _ioreq, a3a, a2a, a1a, a0a, _active; 
+ORDER: a0a, a1a, a2a, a3a, _ioreq, sdactive, serialactive; 
 
 
 VECTORS:
-11010*
-01110*
-00101*
+11111**
+10100**
+10000**

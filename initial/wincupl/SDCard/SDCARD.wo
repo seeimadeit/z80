@@ -10,9 +10,11 @@
 #H Device   g16v8a;
 #H 
 #H 
-#H ORDER: _ioreq, a3a, a2a, a1a, a0a, _active; 
+#F output = [sdactive,serialactive];
+
+#H ORDER: a0a, a1a, a2a, a3a, _ioreq, sdactive, serialactive; 
 #H 
 #H 
-#V 0001 11010H
-#V 0002 01110H
-#V 0003 00101L
+#V 0001 11111HH
+#V 0002 10100LH
+#V 0003 10000HL
