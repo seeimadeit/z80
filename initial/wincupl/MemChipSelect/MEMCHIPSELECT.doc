@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# 60008009
 Device          g16v8ma  Library DLIB-h-40-8
-Created         Sat Nov 14 11:25:31 2020
+Created         Mon Nov 23 14:13:57 2020
 Name            MemChipSelect 
 Partno          00 
 Revision        01 
@@ -30,7 +30,7 @@ cs2 =>
   # a15 & isvalid
 
 isvalid =>
-    ioreq & !mreq
+    ioreq & !mreq & rfsh
 
 cs1.oe  =>
     1 
@@ -43,6 +43,9 @@ ioreq.oe  =>
 
 isvalid.oe  =>
     1 
+
+rfsh.oe  =>
+    0 
 
 
 ===============================================================================
@@ -61,12 +64,14 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
     cs1                         12       V        1       7       1     
     cs2                         13       V        5       7       1     
     ioreq                       17       V        -       -       -     
-    isvalid                     16       N        1       7       1     
+    isvalid                     16       V        1       7       1     
     mreq                        11       V        -       -       -     
+    rfsh                        15       V        -       -       -     
     cs1                 oe      12       D        1       1       0     
     cs2                 oe      13       D        1       1       0     
     ioreq               oe      17       D        1       1       0     
     isvalid             oe      16       D        1       1       0     
+    rfsh                oe      15       D        1       1       0     
 
 
 LEGEND    D : default variable         F : field      G : group

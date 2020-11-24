@@ -5,7 +5,7 @@
   {Program "CUPL(WM) Version 5.0a"}
   {DBtype "Schematic"}
   {DBvrev 1.01}
-  {DBtime "Sat Nov 14 11:25:31 2020 "}
+  {DBtime "Mon Nov 23 14:13:57 2020 "}
   {DBunit "MIL"}
   {DBgrid 10}
   {Lyrstr "WIRES" 1 "BUS" 1 "GATE" 2 "IEEE" 2 "PINFUN" 3 "PINNUM" 1 
@@ -33,24 +33,27 @@
  {SYMBOL
   {PIN_DEF
    [Ly "PINCON"]
-   {P A11 {Pt "INPUT"}{Lq 0}{Ploc 100 140}}
-   {P A12 {Pt "INPUT"}{Lq 0}{Ploc 100 120}}
-   {P A13 {Pt "INPUT"}{Lq 0}{Ploc 100 100}}
-   {P A14 {Pt "INPUT"}{Lq 0}{Ploc 100 80}}
-   {P A15 {Pt "INPUT"}{Lq 0}{Ploc 100 60}}
-   {P MREQ {Pt "INPUT"}{Lq 0}{Ploc 100 40}}
+   {P A11 {Pt "INPUT"}{Lq 0}{Ploc 100 160}}
+   {P A12 {Pt "INPUT"}{Lq 0}{Ploc 100 140}}
+   {P A13 {Pt "INPUT"}{Lq 0}{Ploc 100 120}}
+   {P A14 {Pt "INPUT"}{Lq 0}{Ploc 100 100}}
+   {P A15 {Pt "INPUT"}{Lq 0}{Ploc 100 80}}
+   {P MREQ {Pt "INPUT"}{Lq 0}{Ploc 100 60}}
+   {P RFSH {Pt "INPUT"}{Lq 0}{Ploc 100 40}}
    {P IOREQ {Pt "INPUT"}{Lq 0}{Ploc 100 20}}
-   {P CS1 {Pt "I/O"}{Lq 0}{Ploc 280 20}}
-   {P CS2 {Pt "I/O"}{Lq 0}{Ploc 280 40}}
+   {P CS1 {Pt "I/O"}{Lq 0}{Ploc 320 20}}
+   {P CS2 {Pt "I/O"}{Lq 0}{Ploc 320 40}}
+   {P ISVALID {Pt "I/O"}{Lq 0}{Ploc 320 60}}
   }
 
   {PKG
    [Ly "REFDES"]
    [Ts 25][Tj "CB"][Tr 0][Tm "N"]
-   {Rdl 190 170}
+   {Rdl 210 190}
 
    [Ly "PINNUM"]
    [Ts 15][Tj "RC"]
+   {Pnl 120 170}
    {Pnl 120 150}
    {Pnl 120 130}
    {Pnl 120 110}
@@ -59,16 +62,18 @@
    {Pnl 120 50}
    {Pnl 120 30}
    [Ts 15][Tj "LC"]
-   {Pnl 260 30}
-   {Pnl 260 50}
+   {Pnl 300 30}
+   {Pnl 300 50}
+   {Pnl 300 70}
 
-   {Sd A 5 6 7 8 9 11 17 12 13}
+   {Sd A 5 6 7 8 9 11 15 17 12 13 16}
   }
 
   {PIC
    [Ly "GATE"]
    [Ts 15][Tj "LC"][Tr 0][Tm "N"]
-   {R 130 160 250 0}
+   {R 130 180 290 0}
+   {L 130 160 100 160}
    {L 130 140 100 140}
    {L 130 120 100 120}
    {L 130 100 100 100}
@@ -76,23 +81,26 @@
    {L 130 60 100 60}
    {L 130 40 100 40}
    {L 130 20 100 20}
-   {L 250 20 280 20}
-   {L 250 40 280 40}
+   {L 290 20 320 20}
+   {L 290 40 320 40}
+   {L 290 60 320 60}
    [Ly "PINNAM"]
    [Tj "LC"]
-   {T "A11" 140 140}
-   {T "A12" 140 120}
-   {T "A13" 140 100}
-   {T "A14" 140 80}
-   {T "A15" 140 60}
-   {T "MREQ" 140 40}
+   {T "A11" 140 160}
+   {T "A12" 140 140}
+   {T "A13" 140 120}
+   {T "A14" 140 100}
+   {T "A15" 140 80}
+   {T "MREQ" 140 60}
+   {T "RFSH" 140 40}
    {T "IOREQ" 140 20}
    [Tj "RC"]
-   {T "CS1" 240 20}
-   {T "CS2" 240 40}
+   {T "CS1" 280 20}
+   {T "CS2" 280 40}
+   {T "ISVALID" 280 60}
    [Ly "DEVICE"]
    [Tj "CT"]
-   {T "G16V8MA" 190 -10}
+   {T "G16V8MA" 210 -10}
   }
 
   {ATR
@@ -103,7 +111,7 @@
    {EX
     [Ly "ATTR2"]
     [Ts 12][Tj "CT"][Tr 0][Tm "N"]
-    {At PLD C:\USERS\WHIZ1\DOCUMENTS\GITHUB\TRUNK\INITIAL\WINCUPL\MEMCHIPSELECT\MEMCHIPSELECT 190 160}
+    {At PLD C:\USERS\WHIZ1\DOCUMENTS\GITHUB\TRUNK\INITIAL\WINCUPL\MEMCHIPSELECT\MEMCHIPSELECT 210 180}
    }
   }
  }
@@ -125,11 +133,15 @@
    }
    {N MREQ
    }
+   {N RFSH
+   }
    {N IOREQ
    }
    {N CS1
    }
    {N CS2
+   }
+   {N ISVALID
    }
   }
 

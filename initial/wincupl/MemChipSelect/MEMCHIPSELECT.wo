@@ -1,1 +1,21 @@
 #WAVEFORM
+#H Name     MemChipSelect;
+#H PartNo   00;
+#H Date     11/2/2020;
+#H Revision 01;
+#H Designer Peter Hall;
+#H Company  none;
+#H Assembly None;
+#H Location none;
+#H Device   g16v8a;
+#H 
+#H 
+#H ORDER: a15, a14, a13, a12, a11, ioreq, mreq, rfsh, isvalid, cs1, cs2; 
+#H 
+#H 
+#V 0001 00000111LHH
+#V 0002 00000101HLH
+#V 0003 00001101HHL
+#V 0004 10001001LHH
+#V 0005 00010100LHH
+#V 0006 00010101HHL

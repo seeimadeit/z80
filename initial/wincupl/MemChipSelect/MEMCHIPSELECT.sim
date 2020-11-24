@@ -9,6 +9,7 @@ PIN  13 =  cs2
 PIN  17 =  ioreq 
 PIN  16 =  isvalid 
 PIN  11 =  mreq 
+PIN  15 =  rfsh 
 %END
 
 %FIELD
@@ -26,7 +27,7 @@ cs2 =>
   # a15 & isvalid
 
 isvalid =>
-    ioreq & !mreq
+    ioreq & !mreq & rfsh
 
 cs1.oe  =>
     1 
@@ -39,5 +40,8 @@ ioreq.oe  =>
 
 isvalid.oe  =>
     1 
+
+rfsh.oe  =>
+    0 
 
 %END

@@ -23,8 +23,9 @@ Pin 7 =a13; /* mem A13 from z80 input */
 Pin 8 =a14; /* mem A14 from z80 input */
 Pin 9 =a15; /* mem A15 from z80 input */
 
-Pinnode 16 = isvalid;
+Pin 16 = isvalid; /* acive high if the input line contain a valid condition for chipselect*/
 Pin 17 = ioreq; /* _ioreq active low */
+Pin 15 = rfsh; /* _refresh active low*/
 Pin 13 = cs2; /* RAM SELECT active low output*/
 Pin 12 = cs1; /* ROM SELECT active low output*/
 Pin 11 = mreq; /* _mreq active low input */
@@ -48,9 +49,14 @@ cs2 = !(a11 # a12 # a13 # a14 # a15);
 cs1 = !(isvalid & !(a11 # a12 # a13 # a14 # a15));
 cs2 = !(isvalid & (a11 # a12 # a13 # a14 # a15));
 
-table ioreq,mreq => isvalid {
-	'b'00 => 0;
-	'b'01 => 0;
-	'b'10 => 1;
-	'b'11 => 0;
+/* invalid is a positive flag, ie. active high */
+table rfsh,ioreq,mreq => isvalid {
+	'b'000 => 0;
+	'b'001 => 0;
+	'b'010 => 0;
+	'b'011 => 0;
+	'b'100 => 0;
+	'b'101 => 0;
+	'b'110 => 1;
+	'b'111 => 0;
 	}
