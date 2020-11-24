@@ -1,0 +1,84 @@
+LISTING FOR LOGIC DESCRIPTION FILE: MEMCHIPSELECT.pld                Page 1
+
+CUPL(WM): Universal Compiler for Programmable Logic
+Version 5.0a Serial# 60008009
+Copyright (c) 1983, 1998 Logical Devices, Inc.
+Created Mon Nov 23 14:13:57 2020
+
+  1:Name     MemChipSelect ;
+  2:PartNo   00 ;
+  3:Date     11/2/2020 ;
+  4:Revision 01 ;
+  5:Designer Peter Hall ;
+  6:Company  none ;
+  7:Assembly None ;
+  8:Location none;
+  9:Device   g16v8a;
+ 10:
+ 11:/* 
+ 12:        configured with 0000-07ff (2048) ROM 
+ 13:                    with 0800-ffff (63488) RAM
+ 14:*/
+ 15:/* cs1, cs2 */
+ 16:$define LO 'b'01
+ 17:$define HI 'b'10
+ 18:$define OFF 'b'11
+ 19:
+ 20:Pin 5 = a11; /* mem A11 from z80 input */
+ 21:Pin 6 = a12; /* mem A12 from z80 input */
+ 22:Pin 7 =a13; /* mem A13 from z80 input */
+ 23:Pin 8 =a14; /* mem A14 from z80 input */
+ 24:Pin 9 =a15; /* mem A15 from z80 input */
+ 25:
+ 26:Pin 16 = isvalid; /* acive high if the input line contain a valid condition for chipselect*/
+ 27:Pin 17 = ioreq; /* _ioreq active low */
+ 28:Pin 15 = rfsh; /* _refresh active low*/
+ 29:Pin 13 = cs2; /* RAM SELECT active low output*/
+ 30:Pin 12 = cs1; /* ROM SELECT active low output*/
+ 31:Pin 11 = mreq; /* _mreq active low input */
+ 32:
+ 33:
+ 34:/*
+ 35:        if no address lines active assume low memory ROM chip is selected
+ 36:        output enabled active low
+ 37:        z80 memory read or write = mreq + (rd # wr)
+ 38:        z80 oireq display cs1 and cs2
+ 39:        z80 refresh memory       = mreq + rfsh
+ 40:
+ 41:
+ 42:
+ 43:cs1 = a11 # a12 # a13 # a14 # a15;
+ 44:cs1.oe = !mreq & activereadwrite & ioreq;
+ 45:
+ 46:cs2.oe = !mreq & activereadwrite & ioreq;
+ 47:cs2 = !(a11 # a12 # a13 # a14 # a15);
+ 48:*/
+ 49:cs1 = !(isvalid & !(a11 # a12 # a13 # a14 # a15));
+ 50:cs2 = !(isvalid & (a11 # a12 # a13 # a14 # a15));
+ 51:
+ 52:/* invalid is a positive flag, ie. active high */
+ 53:table rfsh,ioreq,mreq => isvalid {
+
+LISTING FOR LOGIC DESCRIPTION FILE: MEMCHIPSELECT.pld                Page 2
+
+CUPL(WM): Universal Compiler for Programmable Logic
+Version 5.0a Serial# 60008009
+Copyright (c) 1983, 1998 Logical Devices, Inc.
+Created Mon Nov 23 14:13:57 2020
+
+ 54:        'b'000 => 0;
+ 55:        'b'001 => 0;
+ 56:        'b'010 => 0;
+ 57:        'b'011 => 0;
+ 58:        'b'100 => 0;
+ 59:        'b'101 => 0;
+ 60:        'b'110 => 1;
+ 61:        'b'111 => 0;
+ 62:        }
+ 63:
+ 64:
+
+
+
+Jedec Fuse Checksum       (2e58)
+Jedec Transmit Checksum   (bf25)

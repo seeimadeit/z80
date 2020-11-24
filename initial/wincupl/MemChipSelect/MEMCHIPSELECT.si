@@ -1,0 +1,21 @@
+Name     MemChipSelect;
+PartNo   00;
+Date     11/2/2020;
+Revision 01;
+Designer Peter Hall;
+Company  none;
+Assembly None;
+Location none;
+Device   g16v8a;
+
+
+ORDER: a15, a14, a13, a12, a11, ioreq, mreq, rfsh, isvalid, cs1, cs2; 
+
+
+VECTORS:
+00000111***
+00000101***
+00001101***
+10001001***
+00010100***
+00010101***
