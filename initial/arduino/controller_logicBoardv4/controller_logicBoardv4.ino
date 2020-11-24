@@ -161,22 +161,14 @@ void loop() {
        Serial.print(",M1=");Serial.println(m1);
   */
   if (ioreq == LOW && m1 == LOW) {
-    //Serial.print("IntAck ignored:"); Serial.println(c, HEX);
-    /* if (character!=0 ) {
-       // only process the interrupt if we originated it.
-       digitalWrite(INT,HIGH); // remove the interrupt flag.
-       write(2); // vector
-        digitalWrite(WAIT,HIGH);
-        while (digitalRead(IOREQ)==LOW); // wait for the low state to change
-        DoRead(INPUT);
-      }
-    */
-    //  if (character!=0 ) { // this is for interrupt mode 1
+ 
+      if (character!=0 ) { // this is for interrupt mode 1 or mode 2
     digitalWrite(INT, HIGH); // remove the interrupt flag.
+      write(2); // vector for mode 2, note this code will also work with mode1
     digitalWrite(WAIT, HIGH);
     while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
     DoRead(INPUT);
-    // }
+     }
   } else {
     if (active == LOW) {
       digitalWrite(WAIT, LOW);
@@ -186,15 +178,15 @@ void loop() {
 
       bool IsRead = digitalRead(IOREAD);
       if (!IsRead) {
-        //DWRITE("read");
+        
         Serial.print((char)c);
         digitalWrite(WAIT, HIGH);
         while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
       } else {// !isread
-        //Serial.print("NOT read:"); Serial.println(c,HEX);
+        
         if (character != 0) {
           digitalWrite(WAIT, LOW);
-         // DWRITE("writing");
+         
           write(character);
           character = 0;
         } // !isread

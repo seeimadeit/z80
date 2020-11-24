@@ -114,13 +114,34 @@ reboot:
 		
 	z80msg:	.string "Z80:\r\n\0"
 	failedtoloadRAMimagemsg: .string "in memory\r\n\0"
-		
+	mode1: .string "mode1\0"
+	mode2: .string "mode2\0"
+	vector0: .string "vector0\0"
+
+serialport0:
+	ld hl,vector0
+	call print
 serialport: ;#/* interrupt 2, echo what was sent*/
-		di
+		#di
 		ld a,'*'
 		out (SERIALPORT),a
 		in a,(SERIALPORT)
 		out (SERIALPORT),a
+		cp '1'
+		jr nz, trymode2
+		im 1
+		ld hl,mode1
+		call print
+	trymode2:
+		cp '2'
+		jr nz, trynothing
+		im 2 #; is vital that the sequece for enabling mode 2 is correct
+		ld a,jumptable/256 #; for turn on mode 2 (im 2), then
+		ld i,a #; load the vector table into i register. ld a,jumptable/256; ld i,a
+
+		ld hl,mode2
+		call print
+	trynothing:
 		ei
 		reti
 	
@@ -128,6 +149,6 @@ serialport: ;#/* interrupt 2, echo what was sent*/
 	.align 2
 	jumptable:
 		.2byte serialport ;0
-		.2byte serialport ;2
+		.2byte serialport0 ;2
 
 	

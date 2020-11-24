@@ -47,7 +47,7 @@ F00:0040       		jp again
                S01:00000011:  C3 00 01
 F00:0041       		.org 0x038-start
 F00:0042       		jp serialport
-               S01:00000038:  C3 37 01
+               S01:00000038:  C3 54 01
 F00:0043       ;=================================================================
 F00:0044       ;		; try to open the SD card and read some data
 F00:0045       ;		ld a,FILENAMECLEAR ; // filenameclear
@@ -143,32 +143,69 @@ F00:0115       	z80msg:	.string "Z80:\r\n\0"
                S01:00000122:  5A 38 30 3A 0D 0A 00
 F00:0116       	failedtoloadRAMimagemsg: .string "in memory\r\n\0"
                S01:0000012A:  69 6E 20 6D 65 6D 6F 72 79 0D 0A 00
-F00:0117       		
-F00:0118       serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0119       		di
-               S01:00000137:  F3
-F00:0120       		ld a,'*'
-               S01:00000138:  3E 2A
-F00:0121       		out (SERIALPORT),a
-               S01:0000013A:  D3 01
-F00:0122       		in a,(SERIALPORT)
-               S01:0000013C:  DB 01
-F00:0123       		out (SERIALPORT),a
-               S01:0000013E:  D3 01
-F00:0124       		ei
-               S01:00000140:  FB
-F00:0125       		reti
-               S01:00000141:  ED 4D
-F00:0126       	
-F00:0127       	.org 0x200-start
-F00:0128       	.align 2
-F00:0129       	jumptable:
-F00:0130       		.2byte serialport ;0
-               S01:00000200:  37 01
-F00:0131       		.2byte serialport ;2
-               S01:00000202:  37 01
-F00:0132       
-F00:0133       	
+F00:0117       	mode1: .string "mode1\0"
+               S01:00000137:  6D 6F 64 65 31 00
+F00:0118       	mode2: .string "mode2\0"
+               S01:0000013E:  6D 6F 64 65 32 00
+F00:0119       	vector0: .string "vector0\0"
+               S01:00000145:  76 65 63 74 6F 72 30 00
+F00:0120       
+F00:0121       serialport0:
+F00:0122       	ld hl,vector0
+               S01:0000014E:  21 45 01
+F00:0123       	call print
+               S01:00000151:  CD 08 01
+F00:0124       serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0125       		#di
+F00:0126       		ld a,'*'
+               S01:00000154:  3E 2A
+F00:0127       		out (SERIALPORT),a
+               S01:00000156:  D3 01
+F00:0128       		in a,(SERIALPORT)
+               S01:00000158:  DB 01
+F00:0129       		out (SERIALPORT),a
+               S01:0000015A:  D3 01
+F00:0130       		cp '1'
+               S01:0000015C:  FE 31
+F00:0131       		jr nz, trymode2
+               S01:0000015E:  20 08
+F00:0132       		im 1
+               S01:00000160:  ED 56
+F00:0133       		ld hl,mode1
+               S01:00000162:  21 37 01
+F00:0134       		call print
+               S01:00000165:  CD 08 01
+F00:0135       	trymode2:
+F00:0136       		cp '2'
+               S01:00000168:  FE 32
+F00:0137       		jr nz, trynothing
+               S01:0000016A:  20 0C
+F00:0138       		im 2 #; is vital that the sequece for enabling mode 2 is correct
+               S01:0000016C:  ED 5E
+F00:0139       		ld a,jumptable/256 #; for turn on mode 2 (im 2), then
+               S01:0000016E:  3E 02
+F00:0140       		ld i,a #; load the vector table into i register. ld a,jumptable/256; ld i,a
+               S01:00000170:  ED 47
+F00:0141       
+F00:0142       		ld hl,mode2
+               S01:00000172:  21 3E 01
+F00:0143       		call print
+               S01:00000175:  CD 08 01
+F00:0144       	trynothing:
+F00:0145       		ei
+               S01:00000178:  FB
+F00:0146       		reti
+               S01:00000179:  ED 4D
+F00:0147       	
+F00:0148       	.org 0x200-start
+F00:0149       	.align 2
+F00:0150       	jumptable:
+F00:0151       		.2byte serialport ;0
+               S01:00000200:  54 01
+F00:0152       		.2byte serialport0 ;2
+               S01:00000202:  4E 01
+F00:0153       
+F00:0154       	
 
 
 Sections:
@@ -180,11 +217,17 @@ F00  initialROMz80.s
 
 
 Symbols:
+trynothing EXPR(376=0x178) ABS 
+trymode2 EXPR(360=0x168) ABS 
+serialport0 EXPR(334=0x14e) ABS 
+vector0 EXPR(325=0x145) ABS 
+mode2 EXPR(318=0x13e) ABS 
+mode1 EXPR(311=0x137) ABS 
 failedtoloadRAMimagemsg EXPR(298=0x12a) ABS 
 reboot EXPR(280=0x118) ABS 
 _$2 EXPR(277=0x115) ABS 
 _$1 EXPR(266=0x10a) ABS 
-serialport EXPR(311=0x137) ABS 
+serialport EXPR(340=0x154) ABS 
 again EXPR(256=0x100) ABS 
 jumptable EXPR(512=0x200) ABS 
 print EXPR(264=0x108) ABS 
