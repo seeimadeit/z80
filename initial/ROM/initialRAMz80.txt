@@ -16,7 +16,7 @@ F00:0020
 F00:0021       	di
                S01:00000803:  F3
 F00:0022       	ld hl,readymsg
-               S01:00000804:  21 60 08
+               S01:00000804:  21 62 08
 F00:0023       	call print
                S01:00000807:  CD 1C 08
 F00:0024       		;ld b, endlabel2-label2
@@ -123,31 +123,284 @@ F00:0089
 F00:0090       	serialport: ;#/* interrupt 2, echo what was sent*/
 F00:0091       		di
                S01:00000844:  F3
-F00:0092       		in a,(SERIALPORT)
-               S01:00000845:  DB 01
-F00:0093       		out (SERIALPORT),a
+F00:0092       	;	in a,(SERIALPORT)
+F00:0093       		ld a,'*'
+               S01:00000845:  3E 2A
+F00:0094       		out (SERIALPORT),a
                S01:00000847:  D3 01
-F00:0094       		ei
+F00:0095       		ei
                S01:00000849:  FB
-F00:0095       		reti
+F00:0096       		reti
                S01:0000084A:  ED 4D
-F00:0096       	loadedmsg: .string "my Z80 Ram loaded.\0"
+F00:0097       	loadedmsg: .string "my Z80 Ram loaded.\r\n\0"
                S01:0000084C:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
-               S01:0000085C:  64 2E 00
-F00:0097       	readymsg: .string "_ready\0"
-               S01:00000860:  5F 72 65 61 64 79 00
-F00:0098       
-F00:0099       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0100       	org 0x900-start
-F00:0101       	.align 2
-F00:0102       	jumptable:
-F00:0103       	.2byte int0 ;0
-               S01:00000900:  40 08
-F00:0104       	.2byte serialport ;2
+               S01:0000085C:  64 2E 0D 0A 00
+F00:0098       	readymsg: .string "_ready\r\n\0"
+               S01:00000862:  5F 72 65 61 64 79 0D 0A 00
+F00:0099       
+F00:0100       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0101       	org 0x900-start
+F00:0102       	.align 2
+F00:0103       	jumptable:
+F00:0104       	.2byte serialport ;0
+               S01:00000900:  44 08
+F00:0105       	.2byte serialport ;1
                S01:00000902:  44 08
-F00:0105       	
-F00:0106       	
-F00:0107       	
+F00:0106       	.2byte serialport ;2
+               S01:00000904:  44 08
+F00:0107       	.2byte serialport ;3
+               S01:00000906:  44 08
+F00:0108       	.2byte serialport ;4
+               S01:00000908:  44 08
+F00:0109       	.2byte serialport ;5
+               S01:0000090A:  44 08
+F00:0110       	.2byte serialport ;6
+               S01:0000090C:  44 08
+F00:0111       	.2byte serialport ;7
+               S01:0000090E:  44 08
+F00:0112       	.2byte serialport ;8
+               S01:00000910:  44 08
+F00:0113       	.2byte serialport ;9
+               S01:00000912:  44 08
+F00:0114       	.2byte serialport ;0
+               S01:00000914:  44 08
+F00:0115       	.2byte serialport ;1
+               S01:00000916:  44 08
+F00:0116       	.2byte serialport ;2
+               S01:00000918:  44 08
+F00:0117       	.2byte serialport ;3
+               S01:0000091A:  44 08
+F00:0118       	.2byte serialport ;4
+               S01:0000091C:  44 08
+F00:0119       	.2byte serialport ;5
+               S01:0000091E:  44 08
+F00:0120       	.2byte serialport ;6
+               S01:00000920:  44 08
+F00:0121       	.2byte serialport ;7
+               S01:00000922:  44 08
+F00:0122       	.2byte serialport ;8
+               S01:00000924:  44 08
+F00:0123       	.2byte serialport ;9
+               S01:00000926:  44 08
+F00:0124       	.2byte serialport ;0
+               S01:00000928:  44 08
+F00:0125       	.2byte serialport ;1
+               S01:0000092A:  44 08
+F00:0126       	.2byte serialport ;2
+               S01:0000092C:  44 08
+F00:0127       	.2byte serialport ;3
+               S01:0000092E:  44 08
+F00:0128       	.2byte serialport ;4
+               S01:00000930:  44 08
+F00:0129       	.2byte serialport ;5
+               S01:00000932:  44 08
+F00:0130       	.2byte serialport ;6
+               S01:00000934:  44 08
+F00:0131       	.2byte serialport ;7
+               S01:00000936:  44 08
+F00:0132       	.2byte serialport ;8
+               S01:00000938:  44 08
+F00:0133       	.2byte serialport ;9
+               S01:0000093A:  44 08
+F00:0134       	.2byte serialport ;0
+               S01:0000093C:  44 08
+F00:0135       	.2byte serialport ;1
+               S01:0000093E:  44 08
+F00:0136       	.2byte serialport ;2
+               S01:00000940:  44 08
+F00:0137       	.2byte serialport ;3
+               S01:00000942:  44 08
+F00:0138       	.2byte serialport ;4
+               S01:00000944:  44 08
+F00:0139       	.2byte serialport ;5
+               S01:00000946:  44 08
+F00:0140       	.2byte serialport ;6
+               S01:00000948:  44 08
+F00:0141       	.2byte serialport ;7
+               S01:0000094A:  44 08
+F00:0142       	.2byte serialport ;8
+               S01:0000094C:  44 08
+F00:0143       	.2byte serialport ;9
+               S01:0000094E:  44 08
+F00:0144       	.2byte serialport ;0
+               S01:00000950:  44 08
+F00:0145       	.2byte serialport ;1
+               S01:00000952:  44 08
+F00:0146       	.2byte serialport ;2
+               S01:00000954:  44 08
+F00:0147       	.2byte serialport ;3
+               S01:00000956:  44 08
+F00:0148       	.2byte serialport ;4
+               S01:00000958:  44 08
+F00:0149       	.2byte serialport ;5
+               S01:0000095A:  44 08
+F00:0150       	.2byte serialport ;6
+               S01:0000095C:  44 08
+F00:0151       	.2byte serialport ;7
+               S01:0000095E:  44 08
+F00:0152       	.2byte serialport ;8
+               S01:00000960:  44 08
+F00:0153       	.2byte serialport ;9
+               S01:00000962:  44 08
+F00:0154       	.2byte serialport ;0
+               S01:00000964:  44 08
+F00:0155       	.2byte serialport ;1
+               S01:00000966:  44 08
+F00:0156       	.2byte serialport ;2
+               S01:00000968:  44 08
+F00:0157       	.2byte serialport ;3
+               S01:0000096A:  44 08
+F00:0158       	.2byte serialport ;4
+               S01:0000096C:  44 08
+F00:0159       	.2byte serialport ;5
+               S01:0000096E:  44 08
+F00:0160       	.2byte serialport ;6
+               S01:00000970:  44 08
+F00:0161       	.2byte serialport ;7
+               S01:00000972:  44 08
+F00:0162       	.2byte serialport ;8
+               S01:00000974:  44 08
+F00:0163       	.2byte serialport ;9
+               S01:00000976:  44 08
+F00:0164       	.2byte serialport ;0
+               S01:00000978:  44 08
+F00:0165       	.2byte serialport ;1
+               S01:0000097A:  44 08
+F00:0166       	.2byte serialport ;2
+               S01:0000097C:  44 08
+F00:0167       	.2byte serialport ;3
+               S01:0000097E:  44 08
+F00:0168       	.2byte serialport ;4
+               S01:00000980:  44 08
+F00:0169       	.2byte serialport ;5
+               S01:00000982:  44 08
+F00:0170       	.2byte serialport ;6
+               S01:00000984:  44 08
+F00:0171       	.2byte serialport ;7
+               S01:00000986:  44 08
+F00:0172       	.2byte serialport ;8
+               S01:00000988:  44 08
+F00:0173       	.2byte serialport ;9
+               S01:0000098A:  44 08
+F00:0174       	.2byte serialport ;0
+               S01:0000098C:  44 08
+F00:0175       	.2byte serialport ;1
+               S01:0000098E:  44 08
+F00:0176       	.2byte serialport ;2
+               S01:00000990:  44 08
+F00:0177       	.2byte serialport ;3
+               S01:00000992:  44 08
+F00:0178       	.2byte serialport ;4
+               S01:00000994:  44 08
+F00:0179       	.2byte serialport ;5
+               S01:00000996:  44 08
+F00:0180       	.2byte serialport ;6
+               S01:00000998:  44 08
+F00:0181       	.2byte serialport ;7
+               S01:0000099A:  44 08
+F00:0182       	.2byte serialport ;8
+               S01:0000099C:  44 08
+F00:0183       	.2byte serialport ;9
+               S01:0000099E:  44 08
+F00:0184       	.2byte serialport ;0
+               S01:000009A0:  44 08
+F00:0185       	.2byte serialport ;1
+               S01:000009A2:  44 08
+F00:0186       	.2byte serialport ;2
+               S01:000009A4:  44 08
+F00:0187       	.2byte serialport ;3
+               S01:000009A6:  44 08
+F00:0188       	.2byte serialport ;4
+               S01:000009A8:  44 08
+F00:0189       	.2byte serialport ;5
+               S01:000009AA:  44 08
+F00:0190       	.2byte serialport ;6
+               S01:000009AC:  44 08
+F00:0191       	.2byte serialport ;7
+               S01:000009AE:  44 08
+F00:0192       	.2byte serialport ;8
+               S01:000009B0:  44 08
+F00:0193       	.2byte serialport ;9
+               S01:000009B2:  44 08
+F00:0194       	.2byte serialport ;0
+               S01:000009B4:  44 08
+F00:0195       	.2byte serialport ;1
+               S01:000009B6:  44 08
+F00:0196       	.2byte serialport ;2
+               S01:000009B8:  44 08
+F00:0197       	.2byte serialport ;3
+               S01:000009BA:  44 08
+F00:0198       	.2byte serialport ;4
+               S01:000009BC:  44 08
+F00:0199       	.2byte serialport ;5
+               S01:000009BE:  44 08
+F00:0200       	.2byte serialport ;6
+               S01:000009C0:  44 08
+F00:0201       	.2byte serialport ;7
+               S01:000009C2:  44 08
+F00:0202       	.2byte serialport ;8
+               S01:000009C4:  44 08
+F00:0203       	.2byte serialport ;9
+               S01:000009C6:  44 08
+F00:0204       	.2byte serialport ;0
+               S01:000009C8:  44 08
+F00:0205       	.2byte serialport ;1
+               S01:000009CA:  44 08
+F00:0206       	.2byte serialport ;2
+               S01:000009CC:  44 08
+F00:0207       	.2byte serialport ;3
+               S01:000009CE:  44 08
+F00:0208       	.2byte serialport ;4
+               S01:000009D0:  44 08
+F00:0209       	.2byte serialport ;5
+               S01:000009D2:  44 08
+F00:0210       	.2byte serialport ;6
+               S01:000009D4:  44 08
+F00:0211       	.2byte serialport ;7
+               S01:000009D6:  44 08
+F00:0212       	.2byte serialport ;8
+               S01:000009D8:  44 08
+F00:0213       	.2byte serialport ;9
+               S01:000009DA:  44 08
+F00:0214       	.2byte serialport ;0
+               S01:000009DC:  44 08
+F00:0215       	.2byte serialport ;1
+               S01:000009DE:  44 08
+F00:0216       	.2byte serialport ;2
+               S01:000009E0:  44 08
+F00:0217       	.2byte serialport ;3
+               S01:000009E2:  44 08
+F00:0218       	.2byte serialport ;4
+               S01:000009E4:  44 08
+F00:0219       	.2byte serialport ;5
+               S01:000009E6:  44 08
+F00:0220       	.2byte serialport ;6
+               S01:000009E8:  44 08
+F00:0221       	.2byte serialport ;7
+               S01:000009EA:  44 08
+F00:0222       	.2byte serialport ;8
+               S01:000009EC:  44 08
+F00:0223       	.2byte serialport ;9
+               S01:000009EE:  44 08
+F00:0224       	.2byte serialport ;0
+               S01:000009F0:  44 08
+F00:0225       	.2byte serialport ;1
+               S01:000009F2:  44 08
+F00:0226       	.2byte serialport ;2
+               S01:000009F4:  44 08
+F00:0227       	.2byte serialport ;3
+               S01:000009F6:  44 08
+F00:0228       	.2byte serialport ;4
+               S01:000009F8:  44 08
+F00:0229       	.2byte serialport ;5
+               S01:000009FA:  44 08
+F00:0230       	.2byte serialport ;6
+               S01:000009FC:  44 08
+F00:0231       	.2byte serialport ;7
+               S01:000009FE:  44 08
+F00:0232       	
+F00:0233       	
+F00:0234       	
 
 
 Sections:
@@ -169,7 +422,7 @@ again EXPR(2072=0x818) ABS
 loadedmsg EXPR(2124=0x84c) ABS 
 jumptable EXPR(2304=0x900) ABS 
 print EXPR(2076=0x81c) ABS 
-readymsg EXPR(2144=0x860) ABS 
+readymsg EXPR(2146=0x862) ABS 
 start EXPR(2048=0x800) ABS 
 SERIALPORT EXPR(1=0x1) 
 __VASM EXPR(0=0x0) INTERNAL 
