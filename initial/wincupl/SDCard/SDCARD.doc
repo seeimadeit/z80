@@ -5,7 +5,7 @@
 
 CUPL(WM)        5.0a Serial# 60008009
 Device          g16v8as  Library DLIB-h-40-2
-Created         Thu Nov 19 17:49:12 2020
+Created         Mon Nov 23 17:21:31 2020
 Name            SDCardController 
 Partno          00 
 Revision        01 
@@ -19,28 +19,11 @@ Location
                             Expanded Product Terms
 ===============================================================================
 
-output =>
-    sdactive , serialactive
-
 sdactive =>
-    _ioreq & a0a & a1a & a2a & a3a
-  # !a1a & !a2a & !a3a
-  # a0a & !a1a & a3a
-  # a1a & !a2a
-  # !a0a & !a1a & !a2a & a3a
-  # !_ioreq & a0a & a1a & a2a
-  # _ioreq & a0a & a2a & !a3a
-  # !a0a & a2a
+    !_ioreq & _rfrsh & a0a & !a1a & a2a & !a3a
 
 serialactive =>
-    !_ioreq & a0a & a1a & a2a & a3a
-  # !a2a & a3a
-  # _ioreq & a0a & !a2a & !a3a
-  # !a0a & !a2a & !a3a
-  # !_ioreq & a0a & a1a & !a3a
-  # _ioreq & a0a & a1a & a2a
-  # !a1a & a2a
-  # !a0a & a1a & a2a
+    !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a
 
 
 ===============================================================================
@@ -52,13 +35,13 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
 --- --------            ---     ---     ----    ------  ------  -----   
 
     _ioreq                      5        V        -       -       -     
+    _rfrsh                      6        V        -       -       -     
     a0a                         1        V        -       -       -     
     a1a                         2        V        -       -       -     
     a2a                         3        V        -       -       -     
     a3a                         4        V        -       -       -     
-    output                      0        F        -       -       -     
-    sdactive                    19       V        8       8       1     
-    serialactive                18       V        8       8       1     
+ !  sdactive                    19       V        1       8       1     
+ !  serialactive                18       V        1       8       1     
 
 
 LEGEND    D : default variable         F : field      G : group

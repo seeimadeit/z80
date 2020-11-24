@@ -1,36 +1,22 @@
 %SIGNAL
 PIN   5 =  _ioreq 
+PIN   6 =  _rfrsh 
 PIN   1 =  a0a 
 PIN   2 =  a1a 
 PIN   3 =  a2a 
 PIN   4 =  a3a 
-PIN  19 =  sdactive 
-PIN  18 =  serialactive 
+PIN  19 = !sdactive 
+PIN  18 = !serialactive 
 %END
 
 %FIELD
-FIELD output = sdactive,serialactive
 %END
 
 %EQUATION
 sdactive =>
-    _ioreq & a0a & a1a & a2a & a3a
-  # !a1a & !a2a & !a3a
-  # a0a & !a1a & a3a
-  # a1a & !a2a
-  # !a0a & !a1a & !a2a & a3a
-  # !_ioreq & a0a & a1a & a2a
-  # _ioreq & a0a & a2a & !a3a
-  # !a0a & a2a
+    !_ioreq & _rfrsh & a0a & !a1a & a2a & !a3a
 
 serialactive =>
-    !_ioreq & a0a & a1a & a2a & a3a
-  # !a2a & a3a
-  # _ioreq & a0a & !a2a & !a3a
-  # !a0a & !a2a & !a3a
-  # !_ioreq & a0a & a1a & !a3a
-  # _ioreq & a0a & a1a & a2a
-  # !a1a & a2a
-  # !a0a & a1a & a2a
+    !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a
 
 %END

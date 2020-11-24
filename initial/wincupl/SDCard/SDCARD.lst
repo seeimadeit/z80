@@ -3,7 +3,7 @@ LISTING FOR LOGIC DESCRIPTION FILE: SDCARD.pld                       Page 1
 CUPL(WM): Universal Compiler for Programmable Logic
 Version 5.0a Serial# 60008009
 Copyright (c) 1983, 1998 Logical Devices, Inc.
-Created Thu Nov 19 17:49:12 2020
+Created Mon Nov 23 17:21:31 2020
 
   1:Name     SDCardController ;
   2:PartNo   00 ;
@@ -20,94 +20,21 @@ Created Thu Nov 19 17:49:12 2020
  13:Pin  2   =   a1a; /*                                 */ 
  14:Pin  3   =   a2a; /*                                 */ 
  15:Pin  4   =   a3a; /*                                 */ 
- 16:Pin  5   =   _ioreq; /*                                 */ 
- 17:
- 18:/* *************** OUTPUT PINS *********************/
- 19:Pin  19  =   sdactive; /*                                 */ 
- 20:Pin  18  =   serialactive;
- 21:field output = [sdactive, serialactive ];
- 22:table a3a,a2a,a1a,a0a,_ioreq => serialactive {
+ 16:Pin  5   =   _ioreq; /*   */
+ 17:Pin  6   =   _rfrsh; /*                              */ 
+ 18:/* pins 13 - 18 have feedback paths in complex mode*/
+ 19:
+ 20:/* *************** OUTPUT PINS *********************/
+ 21:Pin  19  =   !sdactive; /*                                 */ 
+ 22:Pin  18  =   !serialactive;
  23:
- 24:'b'00000 => 1;
- 25:'b'00001 => 1;
- 26:'b'00010 => 0; /* serial active */
- 27:'b'00011 => 1;
- 28:'b'00100 => 1;
- 29:'b'00101 => 1;
- 30:'b'00110 => 1;
- 31:'b'00111 => 1;
- 32:'b'01000 => 1;
- 33:'b'01001 => 1;
- 34:'b'01010 => 1; /* sd card active */
- 35:'b'01011 => 1;
- 36:'b'01100 => 1;
- 37:'b'01101 => 1;
- 38:'b'01110 => 1;
- 39:'b'01111 => 1;
- 40:'b'10000 => 1;
- 41:'b'10001 => 1;
- 42:'b'10010 => 1;
- 43:'b'10011 => 1;
- 44:'b'10100 => 1;
- 45:'b'10101 => 1;
- 46:'b'10110 => 1;
- 47:'b'10111 => 1;
- 48:'b'11000 => 1;
- 49:'b'11001 => 1;
- 50:'b'11010 => 1;
- 51:'b'11011 => 1;
- 52:'b'11100 => 1;
- 53:'b'11101 => 1;
-
-LISTING FOR LOGIC DESCRIPTION FILE: SDCARD.pld                       Page 2
-
-CUPL(WM): Universal Compiler for Programmable Logic
-Version 5.0a Serial# 60008009
-Copyright (c) 1983, 1998 Logical Devices, Inc.
-Created Thu Nov 19 17:49:12 2020
-
- 54:'b'11110 => 1;
- 55:'b'11111 => 1;
- 56:
- 57:}
- 58:table a3a,a2a,a1a,a0a,_ioreq => sdactive {
- 59:'b'00000 => 1;
- 60:'b'00001 => 1;
- 61:'b'00010 => 1; /* serial active */
- 62:'b'00011 => 1;
- 63:'b'00100 => 1;
- 64:'b'00101 => 1;
- 65:'b'00110 => 1;
- 66:'b'00111 => 1;
- 67:'b'01000 => 1;
- 68:'b'01001 => 1;
- 69:'b'01010 => 0; /* sd card active */
- 70:'b'01011 => 1;
- 71:'b'01100 => 1;
- 72:'b'01101 => 1;
- 73:'b'01110 => 1;
- 74:'b'01111 => 1;
- 75:'b'10000 => 1;
- 76:'b'10001 => 1;
- 77:'b'10010 => 1;
- 78:'b'10011 => 1;
- 79:'b'10100 => 1;
- 80:'b'10101 => 1;
- 81:'b'10110 => 1;
- 82:'b'10111 => 1;
- 83:'b'11000 => 1;
- 84:'b'11001 => 1;
- 85:'b'11010 => 1;
- 86:'b'11011 => 1;
- 87:'b'11100 => 1;
- 88:'b'11101 => 1;
- 89:'b'11110 => 1;
- 90:'b'11111 => 1;
- 91:}
- 92:
- 93:
+ 24:
+ 25:serialactive    =       !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a;
+ 26:sdactive        =       !_ioreq & _rfrsh & a0a & !a1a &  a2a & !a3a;
+ 27:
+ 28:
 
 
 
-Jedec Fuse Checksum       (4696)
-Jedec Transmit Checksum   (ed33)
+Jedec Fuse Checksum       (1087)
+Jedec Transmit Checksum   (804c)
