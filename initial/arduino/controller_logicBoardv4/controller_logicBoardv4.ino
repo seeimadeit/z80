@@ -45,7 +45,7 @@ void setuptimer()
   TCCR0B = 0;// same for TCCR2B
   TCNT0  = 0;//initialize counter value to 0
   // set compare match register for 2khz increments
-  OCR0A = 255;// = (16*10^6) / (2000*64) - 1 (must be <256)
+  OCR0A = 25;// = (16*10^6) / (2000*64) - 1 (must be <256)
   // turn on CTC mode
   TCCR0A |= (1 << WGM01);
   // Set CS01 and CS00 bits for 64 prescaler
@@ -54,7 +54,7 @@ void setuptimer()
   TIMSK0 |= (1 << OCIE0A);
   sei();//allow interrupts
 }
-ISR(TIMER0_COMPA_vect) { //timer0 interrupt 2kHz toggles pin 8
+ISR(TIMER0_COMPA_vect) { //timer0 interrupt 2kHz toggles pin CLK
   //generates pulse wave of frequency 2kHz/2 = 1kHz (takes two cycles for full wave- toggle high then toggle low)
   //DWRITE("clock::"); DWRITE(clockset);
   if (!clockset) {
@@ -154,8 +154,8 @@ void loop() {
   int ioreq = digitalRead(IOREQ);
   int active = digitalRead(ACTIVE);
   int m1 = digitalRead(M1);
-  uint8_t c = 0;
-  readchannel(&c);
+  //uint8_t c = 0;
+  //readchannel(&c);
   /*     Serial.print("ioreq=");Serial.print(ioreq);
        Serial.print(",Active=");Serial.print(active);
        Serial.print(",M1=");Serial.println(m1);
