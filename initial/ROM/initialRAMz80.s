@@ -14,7 +14,7 @@
 	endm
 
 
-	org 0x800
+	.org 0x800
 	start:
 	ld sp,0xffff
 
@@ -24,17 +24,15 @@
 		;ld b, endlabel2-label2
 		;ld c,SERIALPORT
 		;otir
-
-		ld a, (jumptable >> 8) ;// hibyte
-		ld i,a
+		
 		im 2 ;/* interrupt mode 2*/
+		ld a, jumptable/256 ;// hibyte
+		ld i,a
 		ei   ;#/* enable interrupts*/
 
 		ld hl,loadedmsg
 		call print
-		;ld b, endlabel1-label1
-		;ld c,SERIALPORT
-		;otir
+
 	again:	halt
 		jp again
 		
@@ -84,13 +82,14 @@ _$:
 
 		;// end subroutines
 
-	int0: halt
-		jp int0
+	
 		
 	serialport: ;#/* interrupt 2, echo what was sent*/
-		di
-	;	in a,(SERIALPORT)
-		ld a,'*'
+	#	di
+		#ld a,'*'
+		#out (SERIALPORT),a
+
+		in a,(SERIALPORT)
 		out (SERIALPORT),a
 		ei
 		reti
@@ -98,137 +97,13 @@ _$:
 	readymsg: .string "_ready\r\n\0"
 
 	; I could set the org address but I'm going to let that move as needed	.org 0x????
-	org 0x900-start
+	.org 0x900-start
 	.align 2
 	jumptable:
 	.2byte serialport ;0
 	.2byte serialport ;1
 	.2byte serialport ;2
 	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	.2byte serialport ;8
-	.2byte serialport ;9
-	.2byte serialport ;0
-	.2byte serialport ;1
-	.2byte serialport ;2
-	.2byte serialport ;3
-	.2byte serialport ;4
-	.2byte serialport ;5
-	.2byte serialport ;6
-	.2byte serialport ;7
-	
+
 	
 	
