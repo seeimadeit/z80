@@ -30,64 +30,58 @@
 		ld hl,z80msg
 		call print
 
-		
-		ld a, (jumptable >> 8) ;// hibyte
-		ld i,a
-		
-		#im 2 ;/* interrupt mode 2*/
 		im 1 #mode 1
-		ei   ;#/* enable interrupts*/
-		jp again
-		.org 0x038-start
-		jp serialport
+		di   ;#/* disable interrupts*/
+		#jp again
+	
 ;=================================================================
-;		; try to open the SD card and read some data
-;		ld a,FILENAMECLEAR ; // filenameclear
-;		out (SDCARD),a
-;		ld a,FILENAMEAPPEND
-;		out (SDCARD),a ; // filenameappend
-;		ld a,'R'
-;		out (SDCARD),a 
-;		ld a,FILENAMEAPPEND
-;		out (SDCARD),a ; // filenameappend
-;		ld a,'A'
-;		out (SDCARD),a
-;		ld a,FILENAMEAPPEND
-;		out (SDCARD),a ; // filenameappend
-;		ld a,'M'
-;		out (SDCARD),a
-;		ld a,OPEN	;// Open
-;		out (SDCARD),a
-;		in a,(SDCARD)
-;		cp 0
-;		jr z,reboot
-;		ld hl,OSLOAD
-;		available:
-;		ld a, AVAILABLE ; // available
-;		out (SDCARD),a
-;		in a,(SDCARD) ;// read the value from the device
-;	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
-;	;	add a,'0' ;// make it printable
-;	;	out (SERIALPORT),a ;// print response
-;	;	ld a,b
-;		cp 0 ;// compare the A reg returned by the device
-;		jr z, again
-;		;// if we get here then there is data to read
-;		ld a,READNEXTBYTE
-;		out (SDCARD),a ;// read nextbyte
-;		in a,(SDCARD)
-;		ld (hl),a ; // store byte in RAM (OSLOAD)
-;		inc hl 
-;		;ld a,'.'
-;		;out (SERIALPORT),a ;// just echo it back for now
-;		jr available ;
-;================================
-.org 0x100-start
-	again:	
-		halt
+		; try to open the SD card and read some data
+		ld a,FILENAMECLEAR ; // filenameclear
+		out (SDCARD),a
+		ld a,FILENAMEAPPEND
+		out (SDCARD),a ; // filenameappend
+		ld a,'R'
+		out (SDCARD),a 
+		ld a,FILENAMEAPPEND
+		out (SDCARD),a ; // filenameappend
+		ld a,'A'
+		out (SDCARD),a
+		ld a,FILENAMEAPPEND
+		out (SDCARD),a ; // filenameappend
+		ld a,'M'
+		out (SDCARD),a
+		ld a,OPEN	;// Open
+		out (SDCARD),a
+		in a,(SDCARD)
+		cp 0
+		jp z,reboot
+		ld hl,OSLOAD
+	available:
+		ld a, AVAILABLE ; // available
+		out (SDCARD),a
+		in a,(SDCARD) ;// read the value from the device
+	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
+	;	add a,'0' ;// make it printable
+	;	out (SERIALPORT),a ;// print response
+	;	ld a,b
+		cp 0 ;// compare the A reg returned by the device
+		jp z, again
+		;// if we get here then there is data to read
+		ld a,READNEXTBYTE
+		out (SDCARD),a ;// read nextbyte
+		in a,(SDCARD)
+		ld (hl),a ; // store byte in RAM (OSLOAD)
+		inc hl 
 		ld a,'.'
-		out (SERIALPORT),a ;
-	;	jp OSLOAD
+		out (SERIALPORT),a ;// just echo it back for now
+		jr available ;
+;================================
+#.org 0x100-start
+	again:	
+	#	halt
+	#	ld a,'.'
+	#	out (SERIALPORT),a ;
+		jp OSLOAD
 		jp again ;; this will never execute
 	;// subroutines
 	print: ;// expecting a zero terminated string
@@ -112,43 +106,12 @@ reboot:
 	halt
 	jp reboot
 		
-	z80msg:	.string "Z80:\r\n\0"
-	failedtoloadRAMimagemsg: .string "in memory\r\n\0"
-	mode1: .string "mode1\0"
-	mode2: .string "mode2\0"
-	vector0: .string "vector0\0"
+	z80msg:	.string ":Z80:\r\n\0"
+	failedtoloadRAMimagemsg: .string "failed to load OS.\r\n\0"
 
-serialport0:
-	ld hl,vector0
-	call print
-serialport: ;#/* interrupt 2, echo what was sent*/
-		#di
-		ld a,'*'
-		out (SERIALPORT),a
-		in a,(SERIALPORT)
-		out (SERIALPORT),a
-		cp '1'
-		jr nz, trymode2
-		im 1
-		ld hl,mode1
-		call print
-	trymode2:
-		cp '2'
-		jr nz, trynothing
-		im 2 #; is vital that the sequece for enabling mode 2 is correct
-		ld a,jumptable/256 #; for turn on mode 2 (im 2), then
-		ld i,a #; load the vector table into i register. ld a,jumptable/256; ld i,a
 
-		ld hl,mode2
-		call print
-	trynothing:
-		ei
-		reti
+
 	
-	.org 0x200-start
-	.align 2
-	jumptable:
-		.2byte serialport ;0
-		.2byte serialport0 ;2
+
 
 	
