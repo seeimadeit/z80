@@ -1,0 +1,337 @@
+F00:0001       
+F00:0002       .include "Routines.inc"
+F01:0001       
+F01:0002       # address where user programs load
+F01:0003       .include "SERIAL.inc"
+F02:0001       .equ SERIALPORT , 0x01
+F02:0002       
+F01:0004       .include "SDCARD.inc"
+F03:0001       .equ SDCARD,0x05
+F03:0002       ; ******* SDCARD *********
+F03:0003       ; z80 out only
+F03:0004       .equ FILENAMECLEAR ,1
+F03:0005       .equ OPEN ,2
+F03:0006       .equ CLOSE ,3
+F03:0007       .equ FILENAMEAPPEND ,4
+F03:0008       ; z80 out + in
+F03:0009       .equ READNEXTBYTE ,5
+F03:0010       .equ AVAILABLE ,6
+F01:0005       .equ commandMemory, 0x1000
+F01:0006       .equ userMemory,0x2000
+F01:0007       
+F01:0008       # the only fixed address (i hope), use it to get the address of utilities methods
+F01:0009       # lda, PRINT
+F01:0010       # call GetAddress
+F01:0011       # address for print loaded into hl
+F01:0012       # the value in hl can change between os versions so do not hard code the values
+F01:0013       
+F01:0014       .equ GetAddress, 0x0804
+F01:0015       .equ PRINT,1
+F01:0016       .equ PRINTHEX,2
+F01:0017       .equ LOADFILE,3
+F01:0018       .equ MEMSET,4
+F01:0019       .equ STRLEN,5
+F01:0020       
+F01:0021       
+F00:0003       .org commandMemory
+F00:0004       
+F00:0005       	ld a,PRINT
+               S01:00001000:  3E 01
+F00:0006       	call GetAddress
+               S01:00001002:  CD 04 08
+F00:0007       	ld (printadr),hl
+               S01:00001005:  22 11 11
+F00:0008       	ld a,PRINTHEX
+               S01:00001008:  3E 02
+F00:0009       	call GetAddress
+               S01:0000100A:  CD 04 08
+F00:0010       	ld (printhexadr),hl
+               S01:0000100D:  22 14 11
+F00:0011       	ld a,LOADFILE
+               S01:00001010:  3E 03
+F00:0012       	call GetAddress
+               S01:00001012:  CD 04 08
+F00:0013       	ld (loadfileadr),hl
+               S01:00001015:  22 17 11
+F00:0014       	ld a,MEMSET
+               S01:00001018:  3E 04
+F00:0015       	call GetAddress
+               S01:0000101A:  CD 04 08
+F00:0016       	ld (memsetadr),hl
+               S01:0000101D:  22 1A 11
+F00:0017       	ld a,STRLEN
+               S01:00001020:  3E 05
+F00:0018       	call GetAddress
+               S01:00001022:  CD 04 08
+F00:0019       	ld (strlenadr),hl
+               S01:00001025:  22 1D 11
+F00:0020       
+F00:0021       	
+F00:0022       
+F00:0023       	; setup the interrupt vector
+F00:0024       	ld a, jumptable/256 ; initialize the new interrupt vector
+               S01:00001028:  3E 12
+F00:0025       	ld i,a
+               S01:0000102A:  ED 47
+F00:0026       
+F00:0027       newcommand:
+F00:0028       	ld hl,commandPromptmsg
+               S01:0000102C:  21 C1 10
+F00:0029       	call print
+               S01:0000102F:  CD 10 11
+F00:0030       loop:
+F00:0031       	halt
+               S01:00001032:  76
+F00:0032       	ld hl,cmdlineexecute
+               S01:00001033:  21 DA 10
+F00:0033       	ld a,(hl)
+               S01:00001036:  7E
+F00:0034       	cp 1
+               S01:00001037:  FE 01
+F00:0035       	jp nz,loop
+               S01:00001039:  C2 32 10
+F00:0036       
+F00:0037       	ld hl,cmdlinebuffer
+               S01:0000103C:  21 DC 10
+F00:0038       	call strlen
+               S01:0000103F:  CD 1C 11
+F00:0039       	ld a,b
+               S01:00001042:  78
+F00:0040       	cp 0
+               S01:00001043:  FE 00
+F00:0041       	jp z, newcommand
+               S01:00001045:  CA 2C 10
+F00:0042       	call loadandrun
+               S01:00001048:  CD 4E 10
+F00:0043       
+F00:0044       	jp newcommand
+               S01:0000104B:  C3 2C 10
+F00:0045       
+F00:0046       loadandrun:
+F00:0047       	
+F00:0048       	ld hl,crlf
+               S01:0000104E:  21 BD 10
+F00:0049       	call print
+               S01:00001051:  CD 10 11
+F00:0050       	ld hl, cmdlinebuffer
+               S01:00001054:  21 DC 10
+F00:0051       	ld de, userMemory
+               S01:00001057:  11 00 20
+F00:0052       	call loadfile
+               S01:0000105A:  CD 16 11
+F00:0053       	cp 0
+               S01:0000105D:  FE 00
+F00:0054       	jp nz,loaderr
+               S01:0000105F:  C2 65 10
+F00:0055       	jp run
+               S01:00001062:  C3 78 10
+F00:0056       
+F00:0057       loaderr:
+F00:0058       	call printhex ;# print return code
+               S01:00001065:  CD 13 11
+F00:0059       	ld hl,cmdlinebuffer
+               S01:00001068:  21 DC 10
+F00:0060       	call print ;# print the command
+               S01:0000106B:  CD 10 11
+F00:0061       	ld hl,invalidcommandmsg
+               S01:0000106E:  21 C4 10
+F00:0062       	call print ;# print msg
+               S01:00001071:  CD 10 11
+F00:0063       	call resetcommandline
+               S01:00001074:  CD 7F 10
+F00:0064       	ret
+               S01:00001077:  C9
+F00:0065       
+F00:0066       run:
+F00:0067       	call resetcommandline
+               S01:00001078:  CD 7F 10
+F00:0068       	call userMemory
+               S01:0000107B:  CD 00 20
+F00:0069       	ret
+               S01:0000107E:  C9
+F00:0070       
+F00:0071       resetcommandline:
+F00:0072       # reset the command line variables
+F00:0073       	ld hl,cmdlinebufferlen
+               S01:0000107F:  21 DB 10
+F00:0074       	ld a,0
+               S01:00001082:  3E 00
+F00:0075       	ld (hl),a
+               S01:00001084:  77
+F00:0076       	ld hl, cmdlinebuffer
+               S01:00001085:  21 DC 10
+F00:0077       	ld b, cmdlinebuffer$-cmdlinebuffer
+               S01:00001088:  06 32
+F00:0078       	call memset
+               S01:0000108A:  CD 19 11
+F00:0079       	ret
+               S01:0000108D:  C9
+F00:0080       
+F00:0081       	;##############################################################
+F00:0082       	cmdline: ;#/* interrupt 2, echo what was sent*/
+F00:0083       		in a,(SERIALPORT)
+               S01:0000108E:  DB 01
+F00:0084       		cp 0x0d
+               S01:00001090:  FE 0D
+F00:0085       		jp z, executecmd
+               S01:00001092:  CA B4 10
+F00:0086       		cp 0x0a
+               S01:00001095:  FE 0A
+F00:0087       		jp z,executeexit
+               S01:00001097:  CA BA 10
+F00:0088       		
+F00:0089       
+F00:0090       	
+F00:0091       		ld hl,cmdlinebufferlen # load the length into b
+               S01:0000109A:  21 DB 10
+F00:0092       		ld b,0
+               S01:0000109D:  06 00
+F00:0093       		ld c,(hl)
+               S01:0000109F:  4E
+F00:0094       
+F00:0095       
+F00:0096       		ld hl,cmdlinebuffer ;# load buffer address into hl
+               S01:000010A0:  21 DC 10
+F00:0097       		add hl,bc ;# add the buffer length to get the last character pointer
+               S01:000010A3:  09
+F00:0098       		ld (hl),a ;# store keyboard character
+               S01:000010A4:  77
+F00:0099       		
+F00:0100       		ld hl,cmdlinebufferlen ;# load buffer length
+               S01:000010A5:  21 DB 10
+F00:0101       		inc (hl) ;# increment buffer len
+               S01:000010A8:  34
+F00:0102       		
+F00:0103       
+F00:0104       		out (SERIALPORT),a
+               S01:000010A9:  D3 01
+F00:0105       		ld a,0
+               S01:000010AB:  3E 00
+F00:0106       		ld hl,cmdlineexecute
+               S01:000010AD:  21 DA 10
+F00:0107       		ld (hl),a
+               S01:000010B0:  77
+F00:0108       		jp executeexit
+               S01:000010B1:  C3 BA 10
+F00:0109       	executecmd:
+F00:0110       		ld a,1
+               S01:000010B4:  3E 01
+F00:0111       		ld hl,cmdlineexecute
+               S01:000010B6:  21 DA 10
+F00:0112       		ld (hl),a
+               S01:000010B9:  77
+F00:0113       	executeexit:
+F00:0114       		ei
+               S01:000010BA:  FB
+F00:0115       		reti
+               S01:000010BB:  ED 4D
+F00:0116       messages:
+F00:0117       	crlf: .string "\r\n\0"
+               S01:000010BD:  0D 0A 00
+F00:0118       	commandPromptmsg: .string ">\0";
+               S01:000010C1:  3E 00
+F00:0119       	invalidcommandmsg: .string ": Invalid command.\r\n\0"
+               S01:000010C4:  3A 20 49 6E 76 61 6C 69 64 20 63 6F 6D 6D 61 6E
+               S01:000010D4:  64 2E 0D 0A 00
+F00:0120       
+F00:0121       data:
+F00:0122       	cmdlineexecute: .byte 0
+               S01:000010DA:  00
+F00:0123       	cmdlinebufferlen: .byte 0
+               S01:000010DB:  00
+F00:0124       	cmdlinebuffer: .space 50
+F00:0125       	cmdlinebuffer$:
+F00:0126       
+F00:0127       
+F00:0128       functionlookups:
+F00:0129       	.align 2
+F00:0130       	print: .byte 0xc3
+               S01:00001110:  C3
+F00:0131       	printadr: .2byte 0
+               S01:00001111:  00 00
+F00:0132       	printhex: .byte 0xc3
+               S01:00001113:  C3
+F00:0133       	printhexadr: .2byte 0
+               S01:00001114:  00 00
+F00:0134       	loadfile: .byte 0xc3
+               S01:00001116:  C3
+F00:0135       	loadfileadr: .2byte 0
+               S01:00001117:  00 00
+F00:0136       	memset: .byte 0xc3
+               S01:00001119:  C3
+F00:0137       	memsetadr: .2byte 0
+               S01:0000111A:  00 00
+F00:0138       	strlen: .byte 0xc3
+               S01:0000111C:  C3
+F00:0139       	strlenadr: .2byte 0
+               S01:0000111D:  00 00
+F00:0140       	.org 0x200
+F00:0141       	jumptable: ;# for keyboard interrupts
+F00:0142       	.2byte cmdline ;0
+               S01:00001200:  8E 10
+F00:0143       	.2byte cmdline ;0
+               S01:00001202:  8E 10
+
+
+Sections:
+S01  seg1000
+
+
+Sources:
+F00  cmd.s
+F01  Routines.inc
+F02  SERIAL.inc
+F03  SDCARD.inc
+
+
+Symbols:
+functionlookups EXPR(4366=0x110e) UNUSED ABS 
+data EXPR(4314=0x10da) UNUSED ABS 
+messages EXPR(4285=0x10bd) UNUSED ABS 
+executeexit EXPR(4282=0x10ba) ABS 
+executecmd EXPR(4276=0x10b4) ABS 
+cmdline EXPR(4238=0x108e) ABS 
+memset EXPR(4377=0x1119) ABS 
+cmdlinebuffer$ EXPR(4366=0x110e) ABS 
+cmdlinebufferlen EXPR(4315=0x10db) ABS 
+resetcommandline EXPR(4223=0x107f) ABS 
+invalidcommandmsg EXPR(4292=0x10c4) ABS 
+printhex EXPR(4371=0x1113) ABS 
+run EXPR(4216=0x1078) ABS 
+loaderr EXPR(4197=0x1065) ABS 
+loadfile EXPR(4374=0x1116) ABS 
+crlf EXPR(4285=0x10bd) ABS 
+loadandrun EXPR(4174=0x104e) ABS 
+strlen EXPR(4380=0x111c) ABS 
+cmdlinebuffer EXPR(4316=0x10dc) ABS 
+cmdlineexecute EXPR(4314=0x10da) ABS 
+loop EXPR(4146=0x1032) ABS 
+print EXPR(4368=0x1110) ABS 
+commandPromptmsg EXPR(4289=0x10c1) ABS 
+newcommand EXPR(4140=0x102c) ABS 
+jumptable EXPR(4608=0x1200) ABS 
+strlenadr EXPR(4381=0x111d) ABS 
+memsetadr EXPR(4378=0x111a) ABS 
+loadfileadr EXPR(4375=0x1117) ABS 
+printhexadr EXPR(4372=0x1114) ABS 
+printadr EXPR(4369=0x1111) ABS 
+STRLEN EXPR(5=0x5) 
+MEMSET EXPR(4=0x4) 
+LOADFILE EXPR(3=0x3) 
+PRINTHEX EXPR(2=0x2) 
+PRINT EXPR(1=0x1) 
+GetAddress EXPR(2052=0x804) 
+userMemory EXPR(8192=0x2000) 
+commandMemory EXPR(4096=0x1000) 
+AVAILABLE EXPR(6=0x6) UNUSED 
+READNEXTBYTE EXPR(5=0x5) UNUSED 
+FILENAMEAPPEND EXPR(4=0x4) UNUSED 
+CLOSE EXPR(3=0x3) UNUSED 
+OPEN EXPR(2=0x2) UNUSED 
+FILENAMECLEAR EXPR(1=0x1) UNUSED 
+SDCARD EXPR(5=0x5) UNUSED 
+SERIALPORT EXPR(1=0x1) 
+__VASM EXPR(0=0x0) INTERNAL 
+__MSDOSFS EXPR(0=0x0) INTERNAL 
+
+There have been no errors.
