@@ -1,8 +1,9 @@
 .equ SERIALPORT , 0x01
-.equ SDCARD,0x05
+
 
 .equ OSLOAD,0x800 ; // start address for loading the OS.
 
+.equ SDCARD,0x05
 ; ******* SDCARD *********
 ; z80 out only
 .equ FILENAMECLEAR ,1

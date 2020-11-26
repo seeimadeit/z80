@@ -18,9 +18,26 @@
     <None Include="makefile" />
     <None Include="initialRAMz80.s" />
     <None Include="initialROMz80.s" />
+    <None Include="SDCARD.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="Routines.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="SERIAL.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="cmd.s">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="copyfiles.bat">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="hello.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />
     <Text Include="initialROMz80.txt" />
+    <Text Include="CMD.txt" />
   </ItemGroup>
 </Project>
