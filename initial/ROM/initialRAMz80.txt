@@ -37,20 +37,25 @@ F04:0010       .equ AVAILABLE ,6
 F02:0005       .equ commandMemory, 0x1000
 F02:0006       .equ userMemory,0x2000
 F02:0007       
-F02:0008       # the only fixed address (i hope), use it to get the address of utilities methods
-F02:0009       # lda, PRINT
-F02:0010       # call GetAddress
-F02:0011       # address for print loaded into hl
-F02:0012       # the value in hl can change between os versions so do not hard code the values
-F02:0013       
-F02:0014       .equ GetAddress, 0x0804
-F02:0015       .equ PRINT,1
-F02:0016       .equ PRINTHEX,2
-F02:0017       .equ LOADFILE,3
-F02:0018       .equ MEMSET,4
-F02:0019       .equ STRLEN,5
-F02:0020       
-F02:0021       
+F02:0008       .equ TRUE, 1
+F02:0009       .equ FALSE, 0
+F02:0010       
+F02:0011       # the only fixed address (i hope), use it to get the address of utilities methods
+F02:0012       # ld a, PRINT
+F02:0013       # call GetAddress
+F02:0014       # address for print loaded into hl
+F02:0015       # the value in hl can change between os versions so do not hard code the values
+F02:0016       
+F02:0017       .equ GetAddress, 0x0804
+F02:0018       .equ PRINT,1
+F02:0019       .equ PRINTHEX,2
+F02:0020       .equ LOADFILE,3
+F02:0021       .equ MEMSET,4
+F02:0022       .equ STRLEN,5
+F02:0023       .equ PUTC,6
+F02:0024       
+F02:0025       
+F02:0026       
 F00:0011       
 F00:0012       
 F00:0013       	.org 0x800
@@ -59,7 +64,7 @@ F00:0014       	jp boot
 F00:0015       	.align 2
 F00:0016       	start:
 F00:0017       	jp loadaddress
-               S01:00000804:  C3 BE 08
+               S01:00000804:  C3 C1 08
 F00:0018       	
 F00:0019       boot:
 F00:0020       	ld sp,0xffff
@@ -68,9 +73,9 @@ F00:0021
 F00:0022       	di
                S01:0000080A:  F3
 F00:0023       	ld hl,readymsg
-               S01:0000080B:  21 0C 09
+               S01:0000080B:  21 18 09
 F00:0024       	call print
-               S01:0000080E:  CD 57 08
+               S01:0000080E:  CD 59 08
 F00:0025       		;ld b, endlabel2-label2
 F00:0026       		;ld c,SERIALPORT
 F00:0027       		;otir
@@ -85,17 +90,17 @@ F00:0032       		ei   ;#/* enable interrupts*/
                S01:00000817:  FB
 F00:0033       
 F00:0034       		ld hl,loadedmsg
-               S01:00000818:  21 F6 08
+               S01:00000818:  21 02 09
 F00:0035       		call print
-               S01:0000081B:  CD 57 08
+               S01:0000081B:  CD 59 08
 F00:0036       		#== ******* Command processor Loop ******** ==#
 F00:0037       	commandprocessloop:	
 F00:0038       		ld hl,commandprocessor
-               S01:0000081E:  21 1C 09
+               S01:0000081E:  21 28 09
 F00:0039       		ld de,commandMemory
                S01:00000821:  11 00 10
 F00:0040       		call loadFILE
-               S01:00000824:  CD 7B 08
+               S01:00000824:  CD 80 08
 F00:0041       		cp 0
                S01:00000827:  FE 00
 F00:0042       		jp nz,errorloading
@@ -107,322 +112,354 @@ F00:0044       		jp commandprocessloop
 F00:0045       
 F00:0046       	errorloading:
 F00:0047       		call printhex
-               S01:00000832:  CD 67 08
+               S01:00000832:  CD 69 08
 F00:0048       		ld hl,errorloadingmsg
-               S01:00000835:  21 21 09
+               S01:00000835:  21 2D 09
 F00:0049       		call print
-               S01:00000838:  CD 57 08
+               S01:00000838:  CD 59 08
 F00:0050       		jp commandprocessloop
                S01:0000083B:  C3 1E 08
 F00:0051       		#======================suboutines===============================================#
-F00:0052       		# === memset === #
+F00:0052       	# === memset === #
 F00:0053       		# ld hl, address to start
 F00:0054       		# ld a,0 byte to write into address
 F00:0055       		# ld b,1 count of bytes to write
 F00:0056       	memset:
-F00:0057       		ld (hl),a
-               S01:0000083E:  77
-F00:0058       		inc hl
-               S01:0000083F:  23
-F00:0059       		djnz memset
-               S01:00000840:  10 FC
-F00:0060       		ret
-               S01:00000842:  C9
-F00:0061       		#== strlen ==#
-F00:0062       		# ld hl, address to start
-F00:0063       		# call strlen
-F00:0064       		# return len in b
-F00:0065       	strlen:
-F00:0066       		ex af,af'
-               S01:00000843:  08
-F00:0067       		ld b,0
-               S01:00000844:  06 00
-F00:0068       	_strlen$:
-F00:0069       		ld a,(hl)
-               S01:00000846:  7E
-F00:0070       		cp 0
-               S01:00000847:  FE 00
-F00:0071       		jp z, strlenexit
-               S01:00000849:  CA 51 08
-F00:0072       		inc b
-               S01:0000084C:  04
-F00:0073       		inc hl
-               S01:0000084D:  23
-F00:0074       		jp _strlen$:
-               S01:0000084E:  C3 46 08
-F00:0075       	strlenexit:
-F00:0076       		ld a,b
-               S01:00000851:  78
-F00:0077       		call printhex
-               S01:00000852:  CD 67 08
-F00:0078       		ex af,af'
-               S01:00000855:  08
-F00:0079       		ret
-               S01:00000856:  C9
-F00:0080       
-F00:0081       
-F00:0082       		# === PRINT === #
-F00:0083       	print: ;// expecting a zero terminated string
-F00:0084       		push hl
-               S01:00000857:  E5
-F00:0085       		push af
-               S01:00000858:  F5
-F00:0086       		_$1:
-F00:0087       			ld a,(hl)
-               S01:00000859:  7E
-F00:0088       			cp 0
-               S01:0000085A:  FE 00
-F00:0089       			jr z,_$2
-               S01:0000085C:  28 06
-F00:0090       			out (SERIALPORT),a
-               S01:0000085E:  D3 01
-F00:0091       			inc hl
-               S01:00000860:  23
-F00:0092       			jp _$1
-               S01:00000861:  C3 59 08
-F00:0093       _$2:			
-F00:0094       		pop af
-               S01:00000864:  F1
-F00:0095       		pop hl
-               S01:00000865:  E1
-F00:0096       		ret
-               S01:00000866:  C9
-F00:0097       
-F00:0098       # === PRINTHEX === #
-F00:0099       		;Display 8-bit number in hex.
-F00:0100       		; 	ld a,0xaa
-F00:0101       	;       call printhex
-F00:0102       printhex:
-F00:0103       
-F00:0104       ; Input: a
-F00:0105         push af
-               S01:00000867:  F5
-F00:0106         ;// remove low nibble
-F00:0107          rra
-               S01:00000868:  1F
-F00:0108          rra
-               S01:00000869:  1F
-F00:0109          rra
+F00:0057       		push af
+               S01:0000083E:  F5
+F00:0058       		push hl
+               S01:0000083F:  E5
+F00:0059       	_metset$1:
+F00:0060       		ld (hl),a
+               S01:00000840:  77
+F00:0061       		inc hl
+               S01:00000841:  23
+F00:0062       		djnz _metset$1
+               S01:00000842:  10 FC
+F00:0063       		pop hl
+               S01:00000844:  E1
+F00:0064       		pop af
+               S01:00000845:  F1
+F00:0065       		ret
+               S01:00000846:  C9
+F00:0066       		#== strlen ==#
+F00:0067       		# ld hl, address to start
+F00:0068       		# call strlen
+F00:0069       		# return len in b
+F00:0070       	strlen:
+F00:0071       		push hl
+               S01:00000847:  E5
+F00:0072       		push af
+               S01:00000848:  F5
+F00:0073       	
+F00:0074       		ld b,0
+               S01:00000849:  06 00
+F00:0075       	_strlen$:
+F00:0076       		ld a,(hl)
+               S01:0000084B:  7E
+F00:0077       		cp 0
+               S01:0000084C:  FE 00
+F00:0078       		jp z, strlenexit
+               S01:0000084E:  CA 56 08
+F00:0079       		inc b
+               S01:00000851:  04
+F00:0080       		inc hl
+               S01:00000852:  23
+F00:0081       		jp _strlen$:
+               S01:00000853:  C3 4B 08
+F00:0082       	strlenexit:
+F00:0083       	;#	ld a,b
+F00:0084       	;#	call printhex
+F00:0085       		pop af
+               S01:00000856:  F1
+F00:0086       		pop hl
+               S01:00000857:  E1
+F00:0087       		ret
+               S01:00000858:  C9
+F00:0088       
+F00:0089       
+F00:0090       	# === PRINT === #
+F00:0091       	print: ;// expecting a zero terminated string
+F00:0092       		push hl
+               S01:00000859:  E5
+F00:0093       		push af
+               S01:0000085A:  F5
+F00:0094       		_$1:
+F00:0095       			ld a,(hl)
+               S01:0000085B:  7E
+F00:0096       			cp 0
+               S01:0000085C:  FE 00
+F00:0097       			jr z,_$2
+               S01:0000085E:  28 06
+F00:0098       			out (SERIALPORT),a
+               S01:00000860:  D3 01
+F00:0099       			inc hl
+               S01:00000862:  23
+F00:0100       			jp _$1
+               S01:00000863:  C3 5B 08
+F00:0101       _$2:			
+F00:0102       		pop af
+               S01:00000866:  F1
+F00:0103       		pop hl
+               S01:00000867:  E1
+F00:0104       		ret
+               S01:00000868:  C9
+F00:0105       
+F00:0106       # === PRINTHEX === #
+F00:0107       		;Display 8-bit number in hex.
+F00:0108       		; 	ld a,0xaa
+F00:0109       	;       call printhex
+F00:0110       printhex:
+F00:0111       
+F00:0112       ; Input: a
+F00:0113         push af
+               S01:00000869:  F5
+F00:0114         ;// remove low nibble
+F00:0115          rra
                S01:0000086A:  1F
-F00:0110          rra
+F00:0116          rra
                S01:0000086B:  1F
-F00:0111          call  _$
-               S01:0000086C:  CD 70 08
-F00:0112          ;// restore low nibble
-F00:0113          pop af
-               S01:0000086F:  F1
-F00:0114          
-F00:0115       _$:
-F00:0116       	;// remove high nibble
-F00:0117          and  0x0F
-               S01:00000870:  E6 0F
-F00:0118          add  a,0x90
-               S01:00000872:  C6 90
-F00:0119          ;; bcd adjust
-F00:0120          daa
-               S01:00000874:  27
-F00:0121          adc  a,0x40
-               S01:00000875:  CE 40
-F00:0122          daa
-               S01:00000877:  27
-F00:0123          out (SERIALPORT),a 
-               S01:00000878:  D3 01
-F00:0124          ret
-               S01:0000087A:  C9
-F00:0125       
-F00:0126       
-F00:0127       		;// end subroutines
-F00:0128       # === loadFILE === #
-F00:0129       ; ld hl, filename (zero terminated)
-F00:0130       ; ld de, memory address to load file into
-F00:0131       ; call loadFILE
-F00:0132       ;
-F00:0133       loadFILE:
-F00:0134       	push de ; save de for later
-               S01:0000087B:  D5
-F00:0135       		; try to open the SD card and read some data
-F00:0136       		ld a,FILENAMECLEAR ; // filenameclear
-               S01:0000087C:  3E 01
-F00:0137       		out (SDCARD),a
-               S01:0000087E:  D3 05
-F00:0138       
-F00:0139       
-F00:0140       ;
-F00:0141       _$getnextchar:
-F00:0142       		ld a,(hl)
-               S01:00000880:  7E
-F00:0143       		cp 0
-               S01:00000881:  FE 00
-F00:0144       		jp z, _$openfile #; if filename character is null we have finished
-               S01:00000883:  CA 93 08
-F00:0145       		ld a,FILENAMEAPPEND
-               S01:00000886:  3E 04
-F00:0146       		out (SDCARD),a ; // filenameappend
-               S01:00000888:  D3 05
-F00:0147       		ld a,(hl)
-               S01:0000088A:  7E
-F00:0148       		out (SDCARD),a
-               S01:0000088B:  D3 05
-F00:0149       		out (SERIALPORT),a
-               S01:0000088D:  D3 01
-F00:0150       		inc hl
-               S01:0000088F:  23
-F00:0151       		jp _$getnextchar
-               S01:00000890:  C3 80 08
-F00:0152       
-F00:0153       _$openfile:
-F00:0154       		ld a,OPEN	;// Open
-               S01:00000893:  3E 02
-F00:0155       		out (SDCARD),a
-               S01:00000895:  D3 05
-F00:0156       		in a,(SDCARD)
-               S01:00000897:  DB 05
-F00:0157       		pop hl ; get load address - must pop the stack before returning
-               S01:00000899:  E1
-F00:0158       		cp 0
-               S01:0000089A:  FE 00
-F00:0159       		jp nz,available
-               S01:0000089C:  C2 A2 08
-F00:0160       		ld a,2 ;we have an error trying to open the file.
-               S01:0000089F:  3E 02
-F00:0161       		ret
-               S01:000008A1:  C9
-F00:0162       		
-F00:0163       	available:
-F00:0164       		ld a, AVAILABLE ; // available
-               S01:000008A2:  3E 06
-F00:0165       		out (SDCARD),a
-               S01:000008A4:  D3 05
-F00:0166       		in a,(SDCARD) ;// read the value from the device
-               S01:000008A6:  DB 05
-F00:0167       	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
-F00:0168       	;	add a,'0' ;// make it printable
-F00:0169       	;	out (SERIALPORT),a ;// print response
-F00:0170       	;	ld a,b
-F00:0171       		cp 0 ;// compare the A reg returned by the device
-               S01:000008A8:  FE 00
-F00:0172       		jp nz,_$nextbyte
-               S01:000008AA:  C2 B0 08
-F00:0173       		ld a,0
-               S01:000008AD:  3E 00
-F00:0174       		ret
-               S01:000008AF:  C9
-F00:0175       _$nextbyte:
-F00:0176       		;// if we get here then there is data to read
-F00:0177       		ld a,READNEXTBYTE
-               S01:000008B0:  3E 05
-F00:0178       		out (SDCARD),a ;// read nextbyte
-               S01:000008B2:  D3 05
-F00:0179       		in a,(SDCARD)
-               S01:000008B4:  DB 05
-F00:0180       		ld (hl),a ; // store byte in RAM (OSLOAD)
-               S01:000008B6:  77
-F00:0181       		inc hl 
-               S01:000008B7:  23
-F00:0182       		ld a,'#'
-               S01:000008B8:  3E 23
-F00:0183       		out (SERIALPORT),a ;// just echo it back for now
-               S01:000008BA:  D3 01
-F00:0184       		jr available ;
-               S01:000008BC:  18 E4
-F00:0185       ;================================
-F00:0186       ; # === loadaddress == #
-F00:0187       ; ld a,x - where x = instruction id
-F00:0188       ;				id = 1, print
-F00:0189       ;					 2, printhex
-F00:0190       ;					3,loadFILE
-F00:0191       loadaddress:
-F00:0192       	cp PRINT
-               S01:000008BE:  FE 01
-F00:0193       	jp nz,_loadaddress$2
-               S01:000008C0:  C2 C7 08
-F00:0194       	ld hl,print
-               S01:000008C3:  21 57 08
-F00:0195       	ret
-               S01:000008C6:  C9
-F00:0196       _loadaddress$2:
-F00:0197       	cp PRINTHEX
-               S01:000008C7:  FE 02
-F00:0198       	jp nz,_loadaddress$3
-               S01:000008C9:  C2 D0 08
-F00:0199       	ld hl,printhex
-               S01:000008CC:  21 67 08
-F00:0200       	ret
-               S01:000008CF:  C9
-F00:0201       _loadaddress$3:
-F00:0202       	cp LOADFILE
-               S01:000008D0:  FE 03
-F00:0203       	jp nz,_loadaddress$4
-               S01:000008D2:  C2 D9 08
-F00:0204       	ld hl,loadFILE
-               S01:000008D5:  21 7B 08
-F00:0205       	ret
-               S01:000008D8:  C9
-F00:0206       _loadaddress$4:
-F00:0207       	cp MEMSET
-               S01:000008D9:  FE 04
-F00:0208       	jp nz,_loadaddress$5
-               S01:000008DB:  C2 E2 08
-F00:0209       	ld hl,memset
-               S01:000008DE:  21 3E 08
-F00:0210       	ret
-               S01:000008E1:  C9
-F00:0211       _loadaddress$5:
-F00:0212       	cp STRLEN
-               S01:000008E2:  FE 05
-F00:0213       	jp nz,_loadaddress$6
-               S01:000008E4:  C2 EB 08
-F00:0214       	ld hl,strlen
-               S01:000008E7:  21 43 08
-F00:0215       	ret
-               S01:000008EA:  C9
-F00:0216       _loadaddress$6:
-F00:0217       	#----- not defined ---
-F00:0218       	ld hl,0
-               S01:000008EB:  21 00 00
-F00:0219       	ret
-               S01:000008EE:  C9
-F00:0220       	# ======================== end subroutines ========== #
-F00:0221       		
-F00:0222       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0223       	#	di
-F00:0224       		#ld a,'*'
-F00:0225       		#out (SERIALPORT),a
-F00:0226       
-F00:0227       		in a,(SERIALPORT)
-               S01:000008EF:  DB 01
-F00:0228       		out (SERIALPORT),a
-               S01:000008F1:  D3 01
-F00:0229       		ei
-               S01:000008F3:  FB
-F00:0230       		reti
-               S01:000008F4:  ED 4D
-F00:0231       	loadedmsg: .string "my Z80 Ram loaded.\r\n\0"
-               S01:000008F6:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
-               S01:00000906:  64 2E 0D 0A 00
-F00:0232       	readymsg: .string "\r\nReady v0.0\r\n\0"
-               S01:0000090C:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A 00
-F00:0233       	commandprocessor: .string "cmd\0"
-               S01:0000091C:  63 6D 64 00
-F00:0234       	errorloadingmsg: .string "error loading program.\r\n\0"
-               S01:00000921:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
-               S01:00000931:  6F 67 72 61 6D 2E 0D 0A 00
-F00:0235       
-F00:0236       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0237       	.org 0x0A00-start
-F00:0238       	.align 2
-F00:0239       	jumptable:
-F00:0240       	.2byte serialport ;0
-               S01:000009FC:  EF 08
-F00:0241       	.2byte serialport ;1
-               S01:000009FE:  EF 08
-F00:0242       	.2byte serialport ;2
-               S01:00000A00:  EF 08
-F00:0243       	.2byte serialport ;3
-               S01:00000A02:  EF 08
-F00:0244       
-F00:0245       	
-F00:0246       	
+F00:0117          rra
+               S01:0000086C:  1F
+F00:0118          rra
+               S01:0000086D:  1F
+F00:0119          call  _$
+               S01:0000086E:  CD 72 08
+F00:0120          ;// restore low nibble
+F00:0121          pop af
+               S01:00000871:  F1
+F00:0122          
+F00:0123       _$:
+F00:0124       	;// remove high nibble
+F00:0125          and  0x0F
+               S01:00000872:  E6 0F
+F00:0126          add  a,0x90
+               S01:00000874:  C6 90
+F00:0127          ;; bcd adjust
+F00:0128          daa
+               S01:00000876:  27
+F00:0129          adc  a,0x40
+               S01:00000877:  CE 40
+F00:0130          daa
+               S01:00000879:  27
+F00:0131          out (SERIALPORT),a 
+               S01:0000087A:  D3 01
+F00:0132          ret
+               S01:0000087C:  C9
+F00:0133       
+F00:0134       # === putc ===== #
+F00:0135       ;# ld a,'*'
+F00:0136       ;# call putc
+F00:0137       ;# no return value
+F00:0138       putc:
+F00:0139       		out (SERIALPORT),a
+               S01:0000087D:  D3 01
+F00:0140       		ret
+               S01:0000087F:  C9
+F00:0141       
+F00:0142       		;// end subroutines
+F00:0143       # === loadFILE === #
+F00:0144       ; ld hl, filename (zero terminated)
+F00:0145       ; ld de, memory address to load file into
+F00:0146       ; call loadFILE
+F00:0147       ; returns 2 = failed to open the file
+F00:0148       ;         0 = if file loaded into memory
+F00:0149       loadFILE:
+F00:0150       	push de ; save de for later
+               S01:00000880:  D5
+F00:0151       		; try to open the SD card and read some data
+F00:0152       		ld a,FILENAMECLEAR ; // filenameclear
+               S01:00000881:  3E 01
+F00:0153       		out (SDCARD),a
+               S01:00000883:  D3 05
+F00:0154       
+F00:0155       
+F00:0156       ;
+F00:0157       _$getnextchar:
+F00:0158       		ld a,(hl)
+               S01:00000885:  7E
+F00:0159       		cp 0
+               S01:00000886:  FE 00
+F00:0160       		jp z, _$openfile #; if filename character is null we have finished
+               S01:00000888:  CA 96 08
+F00:0161       		ld a,FILENAMEAPPEND
+               S01:0000088B:  3E 04
+F00:0162       		out (SDCARD),a ; // filenameappend
+               S01:0000088D:  D3 05
+F00:0163       		ld a,(hl)
+               S01:0000088F:  7E
+F00:0164       		out (SDCARD),a
+               S01:00000890:  D3 05
+F00:0165       		;#out (SERIALPORT),a
+F00:0166       		inc hl
+               S01:00000892:  23
+F00:0167       		jp _$getnextchar
+               S01:00000893:  C3 85 08
+F00:0168       
+F00:0169       _$openfile:
+F00:0170       #openfile will return 1 if the file was opened, 0 if it failed to open
+F00:0171       		ld a,OPEN	;// Open
+               S01:00000896:  3E 02
+F00:0172       		out (SDCARD),a
+               S01:00000898:  D3 05
+F00:0173       		in a,(SDCARD)
+               S01:0000089A:  DB 05
+F00:0174       		pop hl ; get load address - must pop the stack before returning
+               S01:0000089C:  E1
+F00:0175       		cp 0
+               S01:0000089D:  FE 00
+F00:0176       		jp nz,available
+               S01:0000089F:  C2 A5 08
+F00:0177       		ld a,2 ;we have an error trying to open the file.
+               S01:000008A2:  3E 02
+F00:0178       		ret
+               S01:000008A4:  C9
+F00:0179       		
+F00:0180       	available:
+F00:0181       	#available will return 1 if there is data to read, 0 if no data to read
+F00:0182       		ld a, AVAILABLE ; // available
+               S01:000008A5:  3E 06
+F00:0183       		out (SDCARD),a
+               S01:000008A7:  D3 05
+F00:0184       		in a,(SDCARD) ;// read the value from the device
+               S01:000008A9:  DB 05
+F00:0185       	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
+F00:0186       	;	add a,'0' ;// make it printable
+F00:0187       	;	out (SERIALPORT),a ;// print response
+F00:0188       	;	ld a,b
+F00:0189       		cp 0 ;// compare the A reg returned by the device
+               S01:000008AB:  FE 00
+F00:0190       		jp nz,_$nextbyte
+               S01:000008AD:  C2 B3 08
+F00:0191       		ld a,0
+               S01:000008B0:  3E 00
+F00:0192       		ret
+               S01:000008B2:  C9
+F00:0193       _$nextbyte:
+F00:0194       		;// if we get here then there is data to read
+F00:0195       		ld a,READNEXTBYTE
+               S01:000008B3:  3E 05
+F00:0196       		out (SDCARD),a ;// read nextbyte
+               S01:000008B5:  D3 05
+F00:0197       		in a,(SDCARD)
+               S01:000008B7:  DB 05
+F00:0198       		ld (hl),a ; // store byte in RAM (OSLOAD)
+               S01:000008B9:  77
+F00:0199       		inc hl 
+               S01:000008BA:  23
+F00:0200       		ld a,'#'
+               S01:000008BB:  3E 23
+F00:0201       		out (SERIALPORT),a ;// just echo it back for now
+               S01:000008BD:  D3 01
+F00:0202       		jr available ;
+               S01:000008BF:  18 E4
+F00:0203       ;================================
+F00:0204       ; # === loadaddress == #
+F00:0205       ; ld a,x - where x = instruction id
+F00:0206       ;				id = 1, print
+F00:0207       ;					 2, printhex
+F00:0208       ;					3,loadFILE
+F00:0209       loadaddress:
+F00:0210       	cp PRINT
+               S01:000008C1:  FE 01
+F00:0211       	jp nz,_loadaddress$2
+               S01:000008C3:  C2 CA 08
+F00:0212       	ld hl,print
+               S01:000008C6:  21 59 08
+F00:0213       	ret
+               S01:000008C9:  C9
+F00:0214       _loadaddress$2:
+F00:0215       	cp PRINTHEX
+               S01:000008CA:  FE 02
+F00:0216       	jp nz,_loadaddress$3
+               S01:000008CC:  C2 D3 08
+F00:0217       	ld hl,printhex
+               S01:000008CF:  21 69 08
+F00:0218       	ret
+               S01:000008D2:  C9
+F00:0219       _loadaddress$3:
+F00:0220       	cp LOADFILE
+               S01:000008D3:  FE 03
+F00:0221       	jp nz,_loadaddress$4
+               S01:000008D5:  C2 DC 08
+F00:0222       	ld hl,loadFILE
+               S01:000008D8:  21 80 08
+F00:0223       	ret
+               S01:000008DB:  C9
+F00:0224       _loadaddress$4:
+F00:0225       	cp MEMSET
+               S01:000008DC:  FE 04
+F00:0226       	jp nz,_loadaddress$5
+               S01:000008DE:  C2 E5 08
+F00:0227       	ld hl,memset
+               S01:000008E1:  21 3E 08
+F00:0228       	ret
+               S01:000008E4:  C9
+F00:0229       _loadaddress$5:
+F00:0230       	cp STRLEN
+               S01:000008E5:  FE 05
+F00:0231       	jp nz,_loadaddress$6
+               S01:000008E7:  C2 EE 08
+F00:0232       	ld hl,strlen
+               S01:000008EA:  21 47 08
+F00:0233       	ret
+               S01:000008ED:  C9
+F00:0234       _loadaddress$6:
+F00:0235       	cp PUTC
+               S01:000008EE:  FE 06
+F00:0236       	jp nz,_loadaddress$7
+               S01:000008F0:  C2 F7 08
+F00:0237       	ld hl,putc
+               S01:000008F3:  21 7D 08
+F00:0238       	ret
+               S01:000008F6:  C9
+F00:0239       _loadaddress$7:
+F00:0240       	#----- not defined ---
+F00:0241       	ld hl,0
+               S01:000008F7:  21 00 00
+F00:0242       	ret
+               S01:000008FA:  C9
+F00:0243       	# ======================== end subroutines ========== #
+F00:0244       		
+F00:0245       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0246       	#	di
+F00:0247       		#ld a,'*'
+F00:0248       		#out (SERIALPORT),a
+F00:0249       
+F00:0250       		in a,(SERIALPORT)
+               S01:000008FB:  DB 01
+F00:0251       		out (SERIALPORT),a
+               S01:000008FD:  D3 01
+F00:0252       		ei
+               S01:000008FF:  FB
+F00:0253       		reti
+               S01:00000900:  ED 4D
+F00:0254       	loadedmsg: .string "my Z80 Ram loaded.\r\n\0"
+               S01:00000902:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
+               S01:00000912:  64 2E 0D 0A 00
+F00:0255       	readymsg: .string "\r\nReady v0.0\r\n\0"
+               S01:00000918:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A 00
+F00:0256       	commandprocessor: .string "cmd\0"
+               S01:00000928:  63 6D 64 00
+F00:0257       	errorloadingmsg: .string "error loading program.\r\n\0"
+               S01:0000092D:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
+               S01:0000093D:  6F 67 72 61 6D 2E 0D 0A 00
+F00:0258       
+F00:0259       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0260       	.org 0x0A00-start
+F00:0261       	.align 2
+F00:0262       	jumptable:
+F00:0263       	.2byte serialport ;0
+               S01:000009FC:  FB 08
+F00:0264       	.2byte serialport ;1
+               S01:000009FE:  FB 08
+F00:0265       	.2byte serialport ;2
+               S01:00000A00:  FB 08
+F00:0266       	.2byte serialport ;3
+               S01:00000A02:  FB 08
+F00:0267       
+F00:0268       	
+F00:0269       	
 
 
 Sections:
@@ -438,42 +475,48 @@ F04  SDCARD.inc
 
 
 Symbols:
-serialport EXPR(2287=0x8ef) ABS 
-_loadaddress$6 EXPR(2283=0x8eb) ABS 
-_loadaddress$5 EXPR(2274=0x8e2) ABS 
-_loadaddress$4 EXPR(2265=0x8d9) ABS 
-_loadaddress$3 EXPR(2256=0x8d0) ABS 
-_loadaddress$2 EXPR(2247=0x8c7) ABS 
-_$nextbyte EXPR(2224=0x8b0) ABS 
-available EXPR(2210=0x8a2) ABS 
-_$openfile EXPR(2195=0x893) ABS 
-_$getnextchar EXPR(2176=0x880) ABS 
-_$ EXPR(2160=0x870) ABS 
-_$2 EXPR(2148=0x864) ABS 
-_$1 EXPR(2137=0x859) ABS 
-strlenexit EXPR(2129=0x851) ABS 
-_strlen$ EXPR(2118=0x846) ABS 
-strlen EXPR(2115=0x843) ABS 
+serialport EXPR(2299=0x8fb) ABS 
+_loadaddress$7 EXPR(2295=0x8f7) ABS 
+_loadaddress$6 EXPR(2286=0x8ee) ABS 
+_loadaddress$5 EXPR(2277=0x8e5) ABS 
+_loadaddress$4 EXPR(2268=0x8dc) ABS 
+_loadaddress$3 EXPR(2259=0x8d3) ABS 
+_loadaddress$2 EXPR(2250=0x8ca) ABS 
+_$nextbyte EXPR(2227=0x8b3) ABS 
+available EXPR(2213=0x8a5) ABS 
+_$openfile EXPR(2198=0x896) ABS 
+_$getnextchar EXPR(2181=0x885) ABS 
+putc EXPR(2173=0x87d) ABS 
+_$ EXPR(2162=0x872) ABS 
+_$2 EXPR(2150=0x866) ABS 
+_$1 EXPR(2139=0x85b) ABS 
+strlenexit EXPR(2134=0x856) ABS 
+_strlen$ EXPR(2123=0x84b) ABS 
+strlen EXPR(2119=0x847) ABS 
+_metset$1 EXPR(2112=0x840) ABS 
 memset EXPR(2110=0x83e) ABS 
-errorloadingmsg EXPR(2337=0x921) ABS 
-printhex EXPR(2151=0x867) ABS 
+errorloadingmsg EXPR(2349=0x92d) ABS 
+printhex EXPR(2153=0x869) ABS 
 errorloading EXPR(2098=0x832) ABS 
-loadFILE EXPR(2171=0x87b) ABS 
-commandprocessor EXPR(2332=0x91c) ABS 
+loadFILE EXPR(2176=0x880) ABS 
+commandprocessor EXPR(2344=0x928) ABS 
 commandprocessloop EXPR(2078=0x81e) ABS 
-loadedmsg EXPR(2294=0x8f6) ABS 
+loadedmsg EXPR(2306=0x902) ABS 
 jumptable EXPR(2556=0x9fc) ABS 
-print EXPR(2135=0x857) ABS 
-readymsg EXPR(2316=0x90c) ABS 
-loadaddress EXPR(2238=0x8be) ABS 
+print EXPR(2137=0x859) ABS 
+readymsg EXPR(2328=0x918) ABS 
+loadaddress EXPR(2241=0x8c1) ABS 
 start EXPR(2052=0x804) ABS 
 boot EXPR(2055=0x807) ABS 
+PUTC EXPR(6=0x6) 
 STRLEN EXPR(5=0x5) 
 MEMSET EXPR(4=0x4) 
 LOADFILE EXPR(3=0x3) 
 PRINTHEX EXPR(2=0x2) 
 PRINT EXPR(1=0x1) 
 GetAddress EXPR(2052=0x804) UNUSED 
+FALSE EXPR(0=0x0) UNUSED 
+TRUE EXPR(1=0x1) UNUSED 
 userMemory EXPR(8192=0x2000) UNUSED 
 commandMemory EXPR(4096=0x1000) 
 SERIALPORT EXPR(1=0x1) 

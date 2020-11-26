@@ -49,21 +49,28 @@ boot:
 		call print
 		jp commandprocessloop
 		#======================suboutines===============================================#
-		# === memset === #
+	# === memset === #
 		# ld hl, address to start
 		# ld a,0 byte to write into address
 		# ld b,1 count of bytes to write
 	memset:
+		push af
+		push hl
+	_metset$1:
 		ld (hl),a
 		inc hl
-		djnz memset
+		djnz _metset$1
+		pop hl
+		pop af
 		ret
 		#== strlen ==#
 		# ld hl, address to start
 		# call strlen
 		# return len in b
 	strlen:
-		ex af,af'
+		push hl
+		push af
+	
 		ld b,0
 	_strlen$:
 		ld a,(hl)
@@ -73,13 +80,14 @@ boot:
 		inc hl
 		jp _strlen$:
 	strlenexit:
-		ld a,b
-		call printhex
-		ex af,af'
+	;#	ld a,b
+	;#	call printhex
+		pop af
+		pop hl
 		ret
 
 
-		# === PRINT === #
+	# === PRINT === #
 	print: ;// expecting a zero terminated string
 		push hl
 		push af
@@ -123,13 +131,21 @@ _$:
    out (SERIALPORT),a 
    ret
 
+# === putc ===== #
+;# ld a,'*'
+;# call putc
+;# no return value
+putc:
+		out (SERIALPORT),a
+		ret
 
 		;// end subroutines
 # === loadFILE === #
 ; ld hl, filename (zero terminated)
 ; ld de, memory address to load file into
 ; call loadFILE
-;
+; returns 2 = failed to open the file
+;         0 = if file loaded into memory
 loadFILE:
 	push de ; save de for later
 		; try to open the SD card and read some data
@@ -146,11 +162,12 @@ _$getnextchar:
 		out (SDCARD),a ; // filenameappend
 		ld a,(hl)
 		out (SDCARD),a
-		out (SERIALPORT),a
+		;#out (SERIALPORT),a
 		inc hl
 		jp _$getnextchar
 
 _$openfile:
+#openfile will return 1 if the file was opened, 0 if it failed to open
 		ld a,OPEN	;// Open
 		out (SDCARD),a
 		in a,(SDCARD)
@@ -161,6 +178,7 @@ _$openfile:
 		ret
 		
 	available:
+	#available will return 1 if there is data to read, 0 if no data to read
 		ld a, AVAILABLE ; // available
 		out (SDCARD),a
 		in a,(SDCARD) ;// read the value from the device
@@ -214,6 +232,11 @@ _loadaddress$5:
 	ld hl,strlen
 	ret
 _loadaddress$6:
+	cp PUTC
+	jp nz,_loadaddress$7
+	ld hl,putc
+	ret
+_loadaddress$7:
 	#----- not defined ---
 	ld hl,0
 	ret
