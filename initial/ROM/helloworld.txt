@@ -28,18 +28,22 @@ F01:0014       # address for print loaded into hl
 F01:0015       # the value in hl can change between os versions so do not hard code the values
 F01:0016       
 F01:0017       .equ GetAddress, 0x0804
-F01:0018       .equ PRINT,1
-F01:0019       .equ PRINTHEX,2
-F01:0020       .equ LOADFILE,3
-F01:0021       .equ MEMSET,4
-F01:0022       .equ STRLEN,5
-F01:0023       .equ PUTC,6
-F01:0024       .equ TOUPPERCASE,7
-F01:0025       .equ HEXTOBYTE,8
-F01:0026       
-F01:0027       
-F01:0028       
+F01:0018       .equ PRINT,		1
+F01:0019       .equ PRINTLN,	9
+F01:0020       .equ PRINTHEX,	2
+F01:0021       .equ LOADFILE,	3
+F01:0022       .equ MEMSET,	4
+F01:0023       .equ STRLEN,	5
+F01:0024       .equ PUTC,		6
+F01:0025       .equ TOUPPERCASE,7
+F01:0026       .equ HEXTOBYTE,	8
+F01:0027       .equ STRNCPY,10
+F01:0028       .equ NEXTNUMBER,11
 F01:0029       
+F01:0030       
+F01:0031       
+F01:0032       
+F01:0033       
 F00:0002       
 F00:0003       .org userMemory
 F00:0004       
@@ -88,6 +92,8 @@ functionlookups EXPR(8278=0x2056) UNUSED ABS
 print EXPR(8280=0x2058) ABS 
 hello EXPR(8207=0x200f) ABS 
 printadr EXPR(8281=0x2059) ABS 
+NEXTNUMBER EXPR(11=0xb) UNUSED 
+STRNCPY EXPR(10=0xa) UNUSED 
 HEXTOBYTE EXPR(8=0x8) UNUSED 
 TOUPPERCASE EXPR(7=0x7) UNUSED 
 PUTC EXPR(6=0x6) UNUSED 
@@ -95,6 +101,7 @@ STRLEN EXPR(5=0x5) UNUSED
 MEMSET EXPR(4=0x4) UNUSED 
 LOADFILE EXPR(3=0x3) UNUSED 
 PRINTHEX EXPR(2=0x2) UNUSED 
+PRINTLN EXPR(9=0x9) UNUSED 
 PRINT EXPR(1=0x1) 
 GetAddress EXPR(2052=0x804) 
 FALSE EXPR(0=0x0) UNUSED 

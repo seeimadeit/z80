@@ -26,6 +26,10 @@
 	ld a,HEXTOBYTE
 	call GetAddress
 	ld (hextobyteadr),hl
+	ld a,PRINTLN
+	call GetAddress
+	ld (printlnadr),hl
+	
 
 
 	
@@ -50,17 +54,20 @@ loop:
 	ld a,b
 	cp 0
 	jp z, newcommand ;# if no commands display prompt and repeat
-
+	ld hl,0
+	call println
 	ld hl,cmdlinebuffer
 	call findbuiltin
 	cp TRUE ;# true if builtin was found
 	call nz,loadandrun ;# must be something to do
+	ld hl,0
+	call println
 	jp newcommand
 
 loadandrun:
 	
-	ld hl,crlf
-	call print ;# display a new line
+	ld hl,0
+	call println ;# display a new line
 	ld hl, cmdlinebuffer ;# load filename of program
 	ld de, userMemory ;# address where to load program
 	call loadfile
@@ -73,7 +80,7 @@ loaderr:
 	ld hl,cmdlinebuffer
 	call print ;# print the command
 	ld hl,invalidcommandmsg
-	call print ;# print msg
+	call println ;# print msg
 	call resetcommandline
 	ret
 
@@ -210,62 +217,209 @@ _findbuiltinSuccess:
 
 		;#======================= builtin functions ====================
 		hexdumpcmd: .string "h,",0
-		smallh: .string "d,",0
+		
 	hexdump:
 		ld hl,hexdumpmsg
-		call print
-		ld hl,cmdlinebuffer
+		call println
+		ld hl,cmdlinebuffer ;# command length must be 8 characters
 		call strlen
 		ld a,b
 		cp 8
 		jp nz,hexdumperror
-		ld hl,cmdlinebuffer
+		ld hl,cmdlinebuffer ;# the hextobyte is expect uppercase characters
 		call touppercase
-		call print
-		ld ix,cmdlinebuffer
+		call println
+		ld ix,cmdlinebuffer ;# get the 4th and 5th characters into the lobyte
 		ld h,(ix+4)
 		ld l,(ix+5)
 		call hextobyte
 		ld (lodump),a
 	
-		ld h,(ix+6)
+		ld h,(ix+6) ;# get the 6th and 7th characters into the hibyte
 		ld l,(ix+7)
 		call hextobyte
 		ld (hidump),a
-		ld hl,crlf
-		call print
-		ld a,(hidump)
-		call printhex
-		ld a,(lodump)
-		call printhex
+		ld hl,0
+		call println
+
+	;# hidump has the address to dump so let dump it out
+		call hexdumpprint
 		jp hexdumpexit
 
 hexdumperror:
 		ld hl,hexdumpsyntaxmsg
-		call print
+		call println
 hexdumpexit:
 		ld a,TRUE
 		ret
-hidump: .byte 0
-lodump: .byte 0
 
+
+hexdumpprint:
+
+	;# print the heading
+
+	ld b,7
+_sp$1:
+	ld a,' ' ;# 7 spaces
+	call putc
+	djnz _sp$1
+
+	ld a,0 ;# for column header
+	ld b,16 ;# 16 column headers
+_col$1:
+	call printhex
+	inc a
+
+	push af
+	ld a,' '
+	call putc
+	pop af
+
+	djnz _col$1
+
+	ld hl,0 ;# newline
+	call println
+
+	ld hl,(hidump)
+
+	ld b,16 ;# outer loop
+_hexdp0:
+	push bc
+
+	ld b,16 ;# inner loop
+		;# print the address
+	push hl
+	ld hl,hexdumpprefix
+	call print
+	pop hl
+
+	ld a,h
+	call printhex
+	ld a,l
+	call printhex
+	ld a,' '
+	call putc
+_hexdp$1:
+
+	;# print the byte values
+	ld a,(hl)
+	call printhex
+	ld a,' '
+	call putc
+	;# next byte
+	inc hl
+	djnz _hexdp$1
+	;# now repeat the line and display the ascii value
+	or a ;# reset carry flag
+	ld de,16
+	sbc hl,de ;# subtrack 16bytes
+
+	ld a,'|' ;# output border character
+	call putc
+	ld b,16
+_dexdpc$1:
+	ld a,(hl)
+	cp 32 ;# space
+	jp p, _nex$2 ;# if character >= 32 jump
+	ld a,'.'
+	jp _prt$
+_nex$2:
+	cp 127 ;# delete
+	jp m,_prt$ ;# if character < 127 jump print
+	ld a,'.' ;# else print a dot
+
+_prt$:
+	call putc
+	inc hl
+	djnz _dexdpc$1
+
+	ld a,"|" ;# output border character
+	call putc
+
+	;# next line
+	push hl
+	ld hl,0
+	call println
+	pop hl
+	pop bc
+	djnz _hexdp0
+	ret
+
+	;# ====== LOAD builtin ==== #
+	loadcmd: .string "l,",0
+	load:
+		ld hl,loadmsg
+		call println
+		ld hl,cmdlinebuffer ;# command length must be >= 10 characters
+		call strlen
+		ld a,b
+		cp 10
+		jp p, _loadc$1
+		ld hl,loadsyntaxmsg ;# load failure message
+		call println
+		ld a,TRUE
+		ret
+_loadc$1:
+		ld hl,cmdlinebuffer+4
+		ld de,_ladr
+		ld bc,4
+		ldir
+		ld a,0
+		ld (de),a ;# zero terminated
+		ld hl,_ladr ;# hex address stored in _adr
+		call touppercase
+		call println
+
+		ld ix,_ladr ;# covert text to binary address and store in hidump,lodump
+		ld h,(ix)
+		ld l,(ix+1)
+		call hextobyte
+		ld (lodump),a
+		ld h,(ix+2)
+		ld l,(ix+3)
+		call hextobyte
+		ld (hidump),a
+
+		
+		ld hl,cmdlinebuffer+9
+		ld de,(hidump)
+		call loadfile
+		cp 0
+		jp z, _doneload$1
+		call printhex ;# print return code
+		ld hl,loaderrormsg
+		call println
+
+
+
+		
+_doneload$1:
+		ld a,TRUE
+		ret
+_ladr: .space 5 ;# store character address
+hidump: .byte 0 ;# used but hexdump and load
+lodump: .byte 0 ;# used by hexdump and load
 
 		;#======================= builtin functions end ================
-
+		;# --- dev note : builtin function must return TRUE in a register
 messages:
-	dbug1: .string "debug1",0
-	dbug2: .string "debug2",0
-	hexdumpmsg: .string "HEXDUMP\0"
-	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal\r\n",0
-	crlf: .string "\r\n",0
+;	dbug1: .string "debug1",0
+;	dbug2: .string "debug2",0
+	hexdumpmsg: .string "HEXDUMP",0
+	hexdumpprefix: .string "0x",0
+	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal",0
+	loadmsg: .string "LOAD",0
+	loadsyntaxmsg: .string "  load syntax: l,0xXXXX,filename - load file @ 0xXXXX address",0
+	loaderrormsg: .string "  load error.",0
+
 	commandPromptmsg: .string ">\0";
-	invalidcommandmsg: .string ": Invalid command.\r\n\0"
+	invalidcommandmsg: .string ": Invalid command.\0"
 builtin:
 	;# 2bytes pointer to command - zero terminated, 2bytes pointer to handler Routines
 	;# last item will have 0x000 to indicate end of list
 	;#hexdump
 		.2byte hexdumpcmd,hexdump
-		.2byte smallh,hexdump
+		.2byte loadcmd,load
 
 	endoflist: .2byte 0,0
 
@@ -280,6 +434,8 @@ functionlookups:
 	.align 2
 	print: .byte 0xc3
 	printadr: .2byte 0
+	println: .byte 0xc3
+	printlnadr: .2byte 0
 	printhex: .byte 0xc3
 	printhexadr: .2byte 0
 	loadfile: .byte 0xc3
@@ -294,9 +450,10 @@ functionlookups:
 	touppercaseadr: .2byte 0
 	hextobyte: .byte 0xc3
 	hextobyteadr: .2byte 0
+	
 
 
-	.org 0x300
+	.org 0x400
 	jumptable: ;# for keyboard interrupts
 	.2byte cmdline ;0
 	.2byte cmdline ;0

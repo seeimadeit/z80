@@ -27,13 +27,11 @@
     <None Include="SERIAL.inc">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="cmd.s">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="copyfiles.bat">
       <Filter>Source Files</Filter>
     </None>
     <None Include="hello.s" />
+    <None Include="cmd.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />

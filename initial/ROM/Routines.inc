@@ -15,14 +15,18 @@
 # the value in hl can change between os versions so do not hard code the values
 
 .equ GetAddress, 0x0804
-.equ PRINT,1
-.equ PRINTHEX,2
-.equ LOADFILE,3
-.equ MEMSET,4
-.equ STRLEN,5
-.equ PUTC,6
+.equ PRINT,		1
+.equ PRINTLN,	9
+.equ PRINTHEX,	2
+.equ LOADFILE,	3
+.equ MEMSET,	4
+.equ STRLEN,	5
+.equ PUTC,		6
 .equ TOUPPERCASE,7
-.equ HEXTOBYTE,8
+.equ HEXTOBYTE,	8
+.equ STRNCPY,10
+.equ NEXTNUMBER,11
+
 
 
 

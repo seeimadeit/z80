@@ -40,13 +40,15 @@ boot:
 		call loadFILE
 		cp 0
 		jp nz,errorloading
+		ld hl,0
+		call println
 		call commandMemory # run the file just loaded.
 		jp commandprocessloop
 
 	errorloading:
 		call printhex
 		ld hl,errorloadingmsg
-		call print
+		call println
 		jp commandprocessloop
 		#======================suboutines===============================================#
 	# === memset === #
@@ -63,7 +65,7 @@ boot:
 		pop hl
 		pop af
 		ret
-		#== strlen ==#
+	#== strlen ==#
 		# ld hl, address to start
 		# call strlen
 		# return len in b
@@ -84,6 +86,16 @@ boot:
 	;#	call printhex
 		pop af
 		pop hl
+		ret
+
+	#=== strncpy ==#
+	;# copy from source into destination size bytes. no validation is done.
+	;# ld hl, source
+	;# ld de, destination
+	;# ld bc, size
+
+	strncpy:
+		ldir
 		ret
 
 		# === touppercase ==#
@@ -136,11 +148,28 @@ nextcharacter:
 	pop af
 
 	ret
+	# === PRINTLN == #
+	println: ;// same as print but appends CRLF
+	call print
+	push hl
+	push af
+	ld hl,crlf
+	call print
+	pop af
+	pop hl
+	ret
 
 	# === PRINT === #
 	print: ;// expecting a zero terminated string
 		push hl
 		push af
+		;# hl can be null so check for that first
+		ld a,h
+		cp 0
+		jp nz,_$1 ;# hibyte not null, no just print it
+		ld a,l
+		cp 0
+		jp z,_$2 ;# lobyte is null and hibyte is null so just exit
 		_$1:
 			ld a,(hl)
 			cp 0
@@ -160,6 +189,7 @@ _$2:
 printhex:
 
 ; Input: a
+
   push af
   ;// remove low nibble
    rra
@@ -171,6 +201,7 @@ printhex:
    pop af
    
 _$:
+	push af
 	;// remove high nibble
    and  0x0F
    add  a,0x90
@@ -179,6 +210,7 @@ _$:
    adc  a,0x40
    daa
    out (SERIALPORT),a 
+   pop af
    ret
 
 # === putc ===== #
@@ -333,6 +365,16 @@ _loadaddress$8:
 	ld hl,hextobyte
 	ret
 _loadaddress$9:
+	cp PRINTLN
+	jp nz,_loadaddress$10
+	ld hl,println
+	ret
+_loadaddress$10:
+	cp STRNCPY
+	jp nz,_loadaddress$11
+	ld hl,strncpy
+	ret
+_loadaddress$11:
 	#----- not defined ---
 	ld hl,0
 	ret
@@ -347,6 +389,7 @@ _loadaddress$9:
 		out (SERIALPORT),a
 		ei
 		reti
+	crlf: .string "\r\n",0
 	loadedmsg: .string "my Z80 Ram loaded.\r\n\0"
 	readymsg: .string "\r\nReady v0.0\r\n\0"
 	commandprocessor: .string "cmd\0"
