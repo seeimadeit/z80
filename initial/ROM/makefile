@@ -8,11 +8,13 @@ TARGET = ROM
 TARGET2 = RAM
 TARGET3 = cmd
 hello = hello
+TARGET4 = run@5000
 
-all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello)
+
+all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4)
 
 clean:
-	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello)
+	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4)
 
 
 $(TARGET):
@@ -26,3 +28,6 @@ $(TARGET3):
 
 $(hello):
 	$(CC) $(OPTS) $(INC) $(CCOUT) -L helloworld.txt -o $(hello) hello.s
+
+$(TARGET4):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L runat5000.txt -o $(TARGET4) run@5000.s

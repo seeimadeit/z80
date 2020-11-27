@@ -73,7 +73,7 @@ loadandrun:
 	call loadfile
 	cp 0
 	jp nz,loaderr ;# if load returned anything except 0, its an error
-	jp run
+	jp runuserMemory
 
 loaderr:
 	call printhex ;# print return code
@@ -81,10 +81,27 @@ loaderr:
 	call print ;# print the command
 	ld hl,invalidcommandmsg
 	call println ;# print msg
+	call hexdumpcmdline
 	call resetcommandline
 	ret
+hexdumpcmdline: 
+	;# when an invalid command happens hexdump 16 bytes 
+	;# of the commmandline.
+	ld hl,cmdlinebuffer
+	ld b,16
+_hexdp$99:
 
-run:
+	;# print the byte values
+	ld a,(hl)
+	call printhex
+	ld a,' '
+	call putc
+	;# next byte
+	inc hl
+	djnz _hexdp$99
+	ret
+
+runuserMemory:
 	
 	call userMemory
 	call resetcommandline
@@ -156,13 +173,18 @@ findbuiltin:
 	pop ix;# copy hl into ix, ix contains the user supplied cmd
 
 	ld iy,builtin ;# load start of list
+	ld b,0 ;# used to keep count of the number of characters - because a 0 length is bad
 findbuiltinrestart:
 	ld l, (iy)	;# load hl with the pointer address
 	ld h, (iy+1)
 
 findbuiltin1:
+	ld a,(ix)
+	cp 0 ;# if we have a null character we have made a match
+	jp z,_findbuiltinSuccess
+
+	inc b ;# character count
 	ld a,(hl)
-	ld b,(ix)
 	sub (ix)
 
 	inc ix ;# no flag changes for inc
@@ -202,6 +224,11 @@ _findbuildtinFail:
 	ld a,FALSE
 	ret
 _findbuiltinSuccess:
+	;# check the length - it can't be 0
+	ld a,b
+	cp 0
+	jp z,_findbuildtinFail
+	;# ok good from here to continue
 	pop hl ;# remove the saved hl
 	ld bc,2 ;# we have a success so now we load the address of the subroutine
 	add iy,bc
@@ -397,29 +424,89 @@ _doneload$1:
 		ld a,TRUE
 		ret
 _ladr: .space 5 ;# store character address
+
+;# === run builtin ==========
+
+runcmd: .string "r,",0
+run:
+	ld hl,runmsg
+	call println
+
+	ld hl,cmdlinebuffer ;# command length must be 8 characters
+	call strlen
+	ld a,b
+	cp 8
+	jp nz, runerror
+	ld hl,cmdlinebuffer
+	call touppercase
+	call println
+	ld ix, cmdlinebuffer
+	ld h,(ix+4)
+	ld l,(ix+5)
+	call hextobyte
+	ld (lodump),a
+
+	ld h,(ix+6)
+	ld l,(ix+7)
+	call hextobyte
+	ld (hidump),a
+	ld hl,0
+	call println
+
+	call runfrom
+	jp runexit
+runerror:
+	ld hl,runsyntaxmsg
+	call println
+runexit:
+	ld a,TRUE
+	ret
+
+# === help builtin === #
+helpcmd: .string "?",0
+
+help:
+	ld hl,helpmsg
+	call println
+
+	ld a,TRUE
+	ret
+
+;# shared variables for builtin functions
+runfrom: .byte 0xc3 ;# jump instruction - must be next to hidump
 hidump: .byte 0 ;# used but hexdump and load
 lodump: .byte 0 ;# used by hexdump and load
 
 		;#======================= builtin functions end ================
 		;# --- dev note : builtin function must return TRUE in a register
 messages:
-;	dbug1: .string "debug1",0
-;	dbug2: .string "debug2",0
-	hexdumpmsg: .string "HEXDUMP",0
-	hexdumpprefix: .string "0x",0
-	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal",0
-	loadmsg: .string "LOAD",0
-	loadsyntaxmsg: .string "  load syntax: l,0xXXXX,filename - load file @ 0xXXXX address",0
-	loaderrormsg: .string "  load error.",0
+;	dbug1: .string "debug1"
+;	dbug2: .string "debug2"
+	hexdumpmsg: .string "HEXDUMP"
+	hexdumpprefix: .string "0x"
+	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal"
+	loadmsg: .string "LOAD"
+	loadsyntaxmsg: .string "  load syntax: l,0xXXXX,filename - load file @ 0xXXXX address"
+	loaderrormsg: .string "  load error."
+	runmsg: .string "RUN"
+	runsyntaxmsg: .string "  run syntax: r,0xXXXX - run from 0xXXXX address"
 
-	commandPromptmsg: .string ">\0";
-	invalidcommandmsg: .string ": Invalid command.\0"
+	commandPromptmsg: .string "\r\n>";
+	invalidcommandmsg: .string ": Invalid command."
+	helpmsg: .byte "Z80 command line builtin commands:\r\n"
+			 .byte "? - help, you are reading help right now\r\n"
+			 .byte "h,0xXXXX - hexdump from address 0xXXXX for 255 bytes\r\n"
+			 .byte "l,0xXXXX,filename - load into memory at 0xXXXX the file filename\r\n"
+			 .byte "r,0xXXXX - run from address 0xXXXX\r\n"
+			 .string 0
 builtin:
 	;# 2bytes pointer to command - zero terminated, 2bytes pointer to handler Routines
 	;# last item will have 0x000 to indicate end of list
 	;#hexdump
 		.2byte hexdumpcmd,hexdump
 		.2byte loadcmd,load
+		.2byte runcmd,run
+		.2byte helpcmd,help
 
 	endoflist: .2byte 0,0
 
@@ -453,7 +540,7 @@ functionlookups:
 	
 
 
-	.org 0x400
+	.org 0x600
 	jumptable: ;# for keyboard interrupts
 	.2byte cmdline ;0
 	.2byte cmdline ;0

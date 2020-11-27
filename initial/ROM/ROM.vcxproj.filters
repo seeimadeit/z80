@@ -37,5 +37,6 @@
     <Text Include="initialRAMz80.txt" />
     <Text Include="initialROMz80.txt" />
     <Text Include="CMD.txt" />
+    <Text Include="run%405000.s" />
   </ItemGroup>
 </Project>
