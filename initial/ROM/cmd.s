@@ -20,6 +20,13 @@
 	ld a,PUTC
 	call GetAddress
 	ld (putcadr),hl
+	ld a,TOUPPERCASE
+	call GetAddress
+	ld (touppercaseadr),hl
+	ld a,HEXTOBYTE
+	call GetAddress
+	ld (hextobyteadr),hl
+
 
 	
 
@@ -207,9 +214,40 @@ _findbuiltinSuccess:
 	hexdump:
 		ld hl,hexdumpmsg
 		call print
+		ld hl,cmdlinebuffer
+		call strlen
+		ld a,b
+		cp 8
+		jp nz,hexdumperror
+		ld hl,cmdlinebuffer
+		call touppercase
+		call print
+		ld ix,cmdlinebuffer
+		ld h,(ix+4)
+		ld l,(ix+5)
+		call hextobyte
+		ld (lodump),a
+	
+		ld h,(ix+6)
+		ld l,(ix+7)
+		call hextobyte
+		ld (hidump),a
+		ld hl,crlf
+		call print
+		ld a,(hidump)
+		call printhex
+		ld a,(lodump)
+		call printhex
+		jp hexdumpexit
+
+hexdumperror:
+		ld hl,hexdumpsyntaxmsg
+		call print
+hexdumpexit:
 		ld a,TRUE
 		ret
-
+hidump: .byte 0
+lodump: .byte 0
 
 
 		;#======================= builtin functions end ================
@@ -218,6 +256,7 @@ messages:
 	dbug1: .string "debug1",0
 	dbug2: .string "debug2",0
 	hexdumpmsg: .string "HEXDUMP\0"
+	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal\r\n",0
 	crlf: .string "\r\n",0
 	commandPromptmsg: .string ">\0";
 	invalidcommandmsg: .string ": Invalid command.\r\n\0"
@@ -251,8 +290,13 @@ functionlookups:
 	strlenadr: .2byte 0
 	putc: .byte 0xc3
 	putcadr: .2byte 0
+	touppercase: .byte 0xc3
+	touppercaseadr: .2byte 0
+	hextobyte: .byte 0xc3
+	hextobyteadr: .2byte 0
 
-	.org 0x200
+
+	.org 0x300
 	jumptable: ;# for keyboard interrupts
 	.2byte cmdline ;0
 	.2byte cmdline ;0

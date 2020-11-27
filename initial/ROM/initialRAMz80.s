@@ -86,6 +86,56 @@ boot:
 		pop hl
 		ret
 
+		# === touppercase ==#
+	;#		ld hl,cmd  - zero terminated string
+	;#		call touppercase
+	;#		ret
+	;# the P flag means the comparison was Positive
+	;# the M flags means the comparision was Negative
+	;# the Z flag means the comparison was equal
+	;# the NZ flag means the comparison was not equal.
+	;# where:
+	;#    A = x  P Positive
+	;#			 Z Zero
+	;#
+	;#    A < x	 M Negative
+	;#			 NZ Not zero
+	;#
+	;#	  A > x  P Positive
+	;#			 NZ Not zero
+	;#
+	;# so a test for JP P,meansSameOrGreater
+
+
+touppercase:
+	push af
+	push hl
+	
+goagain:
+	ld a,(hl)
+	cp 'a'
+	jp p, converttouppercaseletter ;# is same or greater then 'a'
+;# the instructions commented out are implied
+	;#cp 'A'
+	;#jp p, nextcharacter ;# is same or greater
+	;#cp '0'
+	;#jp p, nextcharacter
+	;# jp nextcharacter replaces the above 4 lines
+	jp nextcharacter
+
+converttouppercaseletter:
+	sub 32
+	ld (hl),a
+nextcharacter:
+	inc hl
+	ld a,(hl)
+	cp 0
+	jp nz,goagain	
+
+	pop hl
+	pop af
+
+	ret
 
 	# === PRINT === #
 	print: ;// expecting a zero terminated string
@@ -200,6 +250,42 @@ _$nextbyte:
 		ld a,'#'
 		out (SERIALPORT),a ;// just echo it back for now
 		jr available ;
+
+;# ====== hextobyte ==========
+;#    load HL registers with the 2 ascii characters of a hexadecimal value
+;# note routine does not validate the inputs.
+;# alphabeta expected in uppercase
+;#	ld h,'c'
+;#	ld l,'3'
+;#	call hextobyte
+;#	value stored in A register
+
+
+hextobyte:
+	push hl
+	push bc
+	ld a,l ;# prepare the low nibble
+	call workhextobyte
+	ld b,a ;# save it later
+	ld a,h ;# prepare the high nibble
+	call workhextobyte
+	rla ;# a contains the result from the high nibble
+	rla ;# so move the nibble to make room for the low nibble
+	rla
+	rla
+	or b ;# add the low nibble
+
+	pop bc
+	pop hl
+	ret
+workhextobyte:
+	cp 'A' ;# alphabeta sub 55
+	jp m,hextobytenumber
+	sub 55
+	ret
+hextobytenumber:
+	sub 48 ;# if number sub 48
+	ret
 ;================================
 ; # === loadaddress == #
 ; ld a,x - where x = instruction id
@@ -237,6 +323,16 @@ _loadaddress$6:
 	ld hl,putc
 	ret
 _loadaddress$7:
+	cp TOUPPERCASE
+	jp nz,_loadaddress$8
+	ld hl,touppercase
+	ret
+_loadaddress$8:
+	cp HEXTOBYTE
+	jp nz,_loadaddress$9
+	ld hl,hextobyte
+	ret
+_loadaddress$9:
 	#----- not defined ---
 	ld hl,0
 	ret

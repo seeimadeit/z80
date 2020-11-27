@@ -21,5 +21,8 @@
 .equ MEMSET,4
 .equ STRLEN,5
 .equ PUTC,6
+.equ TOUPPERCASE,7
+.equ HEXTOBYTE,8
+
 
 
