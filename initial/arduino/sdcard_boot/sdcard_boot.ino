@@ -9,6 +9,13 @@
 /*z80 out + in*/
 #define READNEXTBYTE 5
 #define AVAILABLE 6
+#define OPENWRITE 7
+#define WRITEBYTE 8
+#define GETNAME 0x20
+#define NAMEAVAILABLE 0x21
+#define OPENDIRECTORY 0x31
+#define NEXTFILE 0x32
+
 
 volatile byte filename[12];
 volatile uint8_t index=0;
@@ -60,6 +67,7 @@ volatile int state = NOTHING;
 #include <SD.h>
 
 File file;
+File directory;
 
 // change this to match your SD shield or module;
 // Default SPI on Uno and Nano: pin 10
@@ -166,8 +174,18 @@ unsigned char WriteCmd(int command)
         {
             switch (command)
             {
+              case OPENDIRECTORY:
+                if (directory) directory.close();
+                directory = SD.open("/");
+                file = directory.openNextFile();
+                
+              break;
+              case NEXTFILE:
+              if (file) file.close();
+                file = directory.openNextFile();
+              break;
             case FILENAMECLEAR:
-            file.close();
+            if (file) file.close();
    //         DWRITE("FILENAMECLEAR");
                 index = 0;
                 filename[index] = 0; 
@@ -176,11 +194,26 @@ unsigned char WriteCmd(int command)
      //       DWRITE("FILENAMEAPPEND");
                 state = FILENAMEAPPEND;
                 break;
+             case GETNAME:
+                if (file)
+                  {
+                    String name=file.name();
+                    name.getBytes(filename,sizeof(filename));
+                    index=0;
+                  }
+                  break;
+             case NAMEAVAILABLE:
+                state=NAMEAVAILABLE;
+             break;
             case OPEN:
     //        DWRITE("OPEN"); DWRITE((char*)filename); DWRITE("****");
                 file = SD.open(filename);
                 state=OPEN;
                 break;
+            case OPENWRITE:
+              file = SD.open(filename,FILE_WRITE);
+              state=OPEN;
+              break;
             case CLOSE:
     //        DWRITE("CLOSE");
                if (file) file.close();
@@ -189,6 +222,9 @@ unsigned char WriteCmd(int command)
      //       DWRITE("READNEXTBYTE");
                 state = READNEXTBYTE;
                 break;
+            case WRITEBYTE:
+              state=WRITEBYTE;
+              break;
             case AVAILABLE:
       //      DWRITE("AVAILABLE");
                 state = AVAILABLE;
@@ -208,6 +244,12 @@ unsigned char WriteCmd(int command)
             state = NOTHING;
         }   
         break;
+        case WRITEBYTE:
+        {
+          if (file) file.write(command);
+          state=NOTHING;
+        }
+        break;
         case AVAILABLE:
         {
           
@@ -224,6 +266,20 @@ unsigned char WriteCmd(int command)
             state = NOTHING;
         }
         break;
+        case NAMEAVAILABLE:
+        {
+          if (file) {
+                  if (filename[index]!=0) {
+                    result = filename[index++];
+                } else {
+                  result = 0;
+                }
+          } else {
+            result = 0;
+          }
+          state = NOTHING;
+        }
+        break;
     }
     return result;
 }
@@ -236,14 +292,15 @@ void process()
 int isRead = digitalRead(RDWR);
 //DWRITE("RDWR"); DWRITE(isRead);
 if (!isRead) {
-  
+  // this is a z80 OUT instruction
   uint8_t c=0;
   readchannel(&c);
   //DWRITE("GOT READ"); Serial.println(c,HEX);
   WriteCmd(c);
  // DWRITE("state after"); DWRITE(state);
 } else {
-  //DWRITE("GOT WRITE");
+    // this is a z80 IN instruction
+  //DWRITE("GOT WRITE"); 
   uint8_t t = WriteCmd(0);
   //Serial.println(t,BIN);
   write(t);

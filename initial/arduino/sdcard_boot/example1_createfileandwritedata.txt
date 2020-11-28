@@ -1,0 +1,84 @@
+.equ SDCARD,0x05
+; ******* SDCARD *********
+; z80 out -filenameclear: no return value, will close the previous open file is one already open
+.equ FILENAMECLEAR ,1
+
+; z80 out + in -open: will return a status 1 if file open successfull, 0 if open failed
+.equ OPEN ,2
+
+; z80 out - close: no return value
+.equ CLOSE ,3
+
+; z80 out + out - filenameappend: no return value
+.equ FILENAMEAPPEND ,4
+
+; z80 out + in - readnextbyte: will return 0xFF is nothing to read, which might be a problem if you don't check the available status
+.equ READNEXTBYTE ,5
+
+; z80 out + in - available: return 1 is data is available, 0 if no data available
+.equ AVAILABLE ,6
+
+; z80 out + in - openwrite: open file for write ,will return a status 1 if file open successfull, 0 if open failed
+.equ OPENWRITE,7
+
+; z80 - out + out -writebyte: will write data to an open file,is no file is open or the file is not writable nothing will happen
+.equ WRITEBYTE,8
+
+;#===============================
+; z80 - out -getname: prepares to get the openfilename, use NAMEAVAILABLE to read the bytes, no return value
+.equ GETNAME,0x20
+; z80 out + in - nameavailable: return next character of the filename, or 0 it no more characters
+.equ NAMEAVAILABLE,0x21
+;z80 - out - opendirectory : will open the root directory for directory listing, no return value
+.equ OPENDIRECTORY,0x31
+;z80 -out - nextfile: move to the next directory entry, no return value
+.equ NEXTFILE,0x32
+======================================================
+  peripheral out syntax: out,0xXX,0xYY - executes
+LD A,0xXX
+OUT (0xYY), A
+where 0xYY is the device address, XX is byte to send
+======================================================
+IN
+  peripheral in syntax: in,0xYY - execute IN A,(0xYY) - register A is displayed in hex on return
+======================================================
+
+===== open directory and get filenames ====
+open direcory
+out,0x31,0x05
+
+getname
+out,0x20,0x05
+repeat until 0
+	out,0x21,0x05
+	in,0x05
+nextfile
+out,0x32,0x05
+
+
+====== get name of open file ========
+out,0x20,0x05
+
+repeat until 0
+	out,0x21,0x05
+	in,0x05
+
+
+======open file for writing, write the letter B==================
+filename clear
+out,0x01,0x05
+
+filenameappend A=0x41
+out,0x04,0x05
+out,0x41,0x05
+
+openforwriting, expecting 0x01 return value for success
+out,0x07,0x05
+in,0x05
+
+write a byte of data 'B'=0x42
+out,0x08,0x05
+out,0x42,0x05
+
+closefile
+out,0x03,0x05
