@@ -259,7 +259,7 @@ _$openfile:
 		ld a,2 ;we have an error trying to open the file.
 		ret
 		
-	available:
+available:
 	#available will return 1 if there is data to read, 0 if no data to read
 		ld a, AVAILABLE ; // available
 		out (SDCARD),a
@@ -270,6 +270,8 @@ _$openfile:
 	;	ld a,b
 		cp 0 ;// compare the A reg returned by the device
 		jp nz,_$nextbyte
+		ld hl,0
+		call println
 		ld a,0
 		ret
 _$nextbyte:
@@ -318,6 +320,59 @@ workhextobyte:
 hextobytenumber:
 	sub 48 ;# if number sub 48
 	ret
+
+	;# === directory open === #
+
+directoryopen:
+	push af
+	ld a,OPENDIRECTORY
+	out (SDCARD),a
+	pop af
+	ret
+	;# === nextfile === #
+nextfile:
+	push af
+	ld a,NEXTFILE
+	out (SDCARD),a
+	pop af
+	ret
+	;# === getfilename or currently open file ===#
+	;# ld hl,storagelocation - for the filename
+	;# call getfilename
+
+getfilename:
+	push af
+	push hl
+	ld a,GETNAME
+	out (SDCARD),a
+
+_getfilename$1:
+	ld a,NAMEAVAILABLE
+	out (SDCARD),a
+	in a,(SDCARD)
+	cp 0
+	jp z, _exitgetfilename
+
+	ld (hl),a
+	inc hl
+	
+	jp _getfilename$1
+
+_exitgetfilename:
+	ld a,0
+	ld (hl),a
+	pop hl
+	pop af
+	ret
+
+
+	# === getcomandline == #
+	;# ld hl,buffer - address of where to copy the data
+	;# call getcommandline
+	;# returns zero termined string at buffer 
+getcommandline:
+	ret
+
 ;================================
 ; # === loadaddress == #
 ; ld a,x - where x = instruction id
@@ -375,7 +430,26 @@ _loadaddress$10:
 	ld hl,strncpy
 	ret
 _loadaddress$11:
+	cp DIRECTORYOPEN
+	jp nz,_loadaddress$12
+	ld hl,directoryopen
+	ret
+_loadaddress$12:
+	cp GETFILENAME:
+	jp nz,_loadaddress$13
+	ld hl,getfilename
+	ret
+_loadaddress$13:
+	cp NEXTFILE
+	jp nz,_loadaddress$14
+	ld hl,nextfile
+	ret
+_loadaddress$14:
 	#----- not defined ---
+	ld hl,addressfailedmsg
+	call print 
+	call printhex
+
 	ld hl,0
 	ret
 	# ======================== end subroutines ========== #
@@ -389,15 +463,16 @@ _loadaddress$11:
 		out (SERIALPORT),a
 		ei
 		reti
-	crlf: .string "\r\n",0
-	loadedmsg: .string "my Z80 Ram loaded.\r\n\0"
-	readymsg: .string "\r\nReady v0.0\r\n\0"
-	commandprocessor: .string "cmd\0"
-	errorloadingmsg: .string "error loading program.\r\n\0"
+	crlf: .string "\r\n"
+	loadedmsg: .string "my Z80 Ram loaded.\r\n"
+	readymsg: .string "\r\nReady v0.0\r\n"
+	commandprocessor: .string "cmd"
+	errorloadingmsg: .string "error loading program.\r\n\"
+	addressfailedmsg: .string "GetAddress failed for code:"
 
 	; I could set the org address but I'm going to let that move as needed	.org 0x????
-	.org 0x0A00-start
-	.align 2
+	;#.org 0x0A00-start
+	.align 8
 	jumptable:
 	.2byte serialport ;0
 	.2byte serialport ;1

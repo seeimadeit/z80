@@ -1,44 +1,21 @@
 
 .include "Routines.inc"
+.set __CMD__,0
 .org commandMemory
-
-	ld a,PRINT
-	call GetAddress
-	ld (printadr),hl
-	ld a,PRINTHEX
-	call GetAddress
-	ld (printhexadr),hl
-	ld a,LOADFILE
-	call GetAddress
-	ld (loadfileadr),hl
-	ld a,MEMSET
-	call GetAddress
-	ld (memsetadr),hl
-	ld a,STRLEN
-	call GetAddress
-	ld (strlenadr),hl
-	ld a,PUTC
-	call GetAddress
-	ld (putcadr),hl
-	ld a,TOUPPERCASE
-	call GetAddress
-	ld (touppercaseadr),hl
-	ld a,HEXTOBYTE
-	call GetAddress
-	ld (hextobyteadr),hl
-	ld a,PRINTLN
-	call GetAddress
-	ld (printlnadr),hl
+.include "libs.inc"
 	
 
-
-	
-
-	; setup the interrupt vector
+	ld hl,welcomemsg
+	call println
+newcommand:
+	; #setup/reset the interrupt vector who knows what could have happen to it
+	di
+	im 2
 	ld a, jumptable/256 ; initialize the new interrupt vector
 	ld i,a
+	ei
 
-newcommand:
+
 	call resetcommandline
 	ld hl,commandPromptmsg ;# display command prompt
 	call print
@@ -463,12 +440,81 @@ runexit:
 	ret
 
 # === help builtin === #
-helpcmd: .string "?",0
+helpcmd: .string "?"
 
 help:
 	ld hl,helpmsg
 	call println
 
+	ld a,TRUE
+	ret
+
+	# === in builtin == #
+incmd: .string "in,"
+din:
+	ld hl,inmsg
+	call println
+
+	ld hl,cmdlinebuffer
+	call strlen
+	ld a,b
+	cp 7
+	jp nz, _inerror
+	ld hl,cmdlinebuffer
+	call touppercase
+	call println
+	ld ix,cmdlinebuffer
+	ld h,(ix+5)
+	ld l,(ix+6)
+	call hextobyte
+	ld (lodump),a ;# address to read in lodump
+	ld c,a
+	in a,(c)
+	call printhex
+	jp _inexit
+_inerror:
+	ld hl,insyntaxmsg
+	call println
+_inexit:
+
+	ld a,TRUE
+	ret
+
+	# === out builtin == #
+outcmd: .string "out,"
+dout:
+	ld hl,outmsg
+	call println
+
+	ld hl,cmdlinebuffer
+	call strlen
+	ld a,b
+	cp 13
+	jp nz, outerror
+	ld hl,cmdlinebuffer
+	call touppercase
+	call println
+	ld ix,cmdlinebuffer
+	ld h,(ix+6)
+	ld l,(ix+7)
+	call hextobyte
+	ld (lodump),a ;# byte to send in lodump
+
+	ld h,(ix+11)
+	ld l,(ix+12)
+	call hextobyte
+	ld (hidump),a ;# address in hidump
+	ld c,a
+	ld a,(lodump)
+	out (C),A
+
+
+	jp outexit
+
+outerror:
+	ld hl,outsyntaxmsg
+	call println
+outexit:
 	ld a,TRUE
 	ret
 
@@ -482,6 +528,7 @@ lodump: .byte 0 ;# used by hexdump and load
 messages:
 ;	dbug1: .string "debug1"
 ;	dbug2: .string "debug2"
+	welcomemsg: .string "Welcome to Z80"
 	hexdumpmsg: .string "HEXDUMP"
 	hexdumpprefix: .string "0x"
 	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal"
@@ -490,6 +537,12 @@ messages:
 	loaderrormsg: .string "  load error."
 	runmsg: .string "RUN"
 	runsyntaxmsg: .string "  run syntax: r,0xXXXX - run from 0xXXXX address"
+	inmsg: .string "IN"
+	insyntaxmsg: .string "  peripheral in syntax: in,0xYY - execute IN A,(0xYY) - register A is displayed in hex on return"
+	inerrormsg: .string "  in error."
+	outmsg: .string "OUT"
+	outsyntaxmsg: .string "  peripheral out syntax: out,0xXX,0xYY - executes\r\nLD A,0xXX\r\nOUT (0xYY), A\r\nwhere 0xYY is the device address, XX is byte to send"
+	outerrormsg: .string " out error."
 
 	commandPromptmsg: .string "\r\n>";
 	invalidcommandmsg: .string ": Invalid command."
@@ -498,6 +551,8 @@ messages:
 			 .byte "h,0xXXXX - hexdump from address 0xXXXX for 255 bytes\r\n"
 			 .byte "l,0xXXXX,filename - load into memory at 0xXXXX the file filename\r\n"
 			 .byte "r,0xXXXX - run from address 0xXXXX\r\n"
+			 .byte "in,0xYY - receive from peripheral at address 0xYY\r\n"
+			 .byte "out,0xXX,0xYY - send to peripheral at address 0xYY then value 0xXX\r\n"
 			 .string 0
 builtin:
 	;# 2bytes pointer to command - zero terminated, 2bytes pointer to handler Routines
@@ -507,6 +562,8 @@ builtin:
 		.2byte loadcmd,load
 		.2byte runcmd,run
 		.2byte helpcmd,help
+		.2byte outcmd,dout
+		.2byte incmd,din
 
 	endoflist: .2byte 0,0
 
@@ -517,30 +574,12 @@ data:
 	cmdlinebuffer$:
 
 
-functionlookups:
-	.align 2
-	print: .byte 0xc3
-	printadr: .2byte 0
-	println: .byte 0xc3
-	printlnadr: .2byte 0
-	printhex: .byte 0xc3
-	printhexadr: .2byte 0
-	loadfile: .byte 0xc3
-	loadfileadr: .2byte 0
-	memset: .byte 0xc3
-	memsetadr: .2byte 0
-	strlen: .byte 0xc3
-	strlenadr: .2byte 0
-	putc: .byte 0xc3
-	putcadr: .2byte 0
-	touppercase: .byte 0xc3
-	touppercaseadr: .2byte 0
-	hextobyte: .byte 0xc3
-	hextobyteadr: .2byte 0
+
 	
 
 
-	.org 0x600
+	;#.org 0x700
+	.align 8
 	jumptable: ;# for keyboard interrupts
 	.2byte cmdline ;0
 	.2byte cmdline ;0

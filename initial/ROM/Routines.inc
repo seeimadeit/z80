@@ -25,8 +25,12 @@
 .equ TOUPPERCASE,7
 .equ HEXTOBYTE,	8
 .equ STRNCPY,10
-.equ NEXTNUMBER,11
+# filesystem - primitive functions, probably going to change 
+.equ DIRECTORYOPEN,13
+.equ DIRECTORYNEXTFILE,14
+.equ GETFILENAME,15
 
 
 
+.equ NEXTNUMBER,16
 

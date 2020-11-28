@@ -32,11 +32,19 @@
     </None>
     <None Include="hello.s" />
     <None Include="cmd.s" />
+    <None Include="edit.s" />
+    <None Include="libs.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="dir.s" />
+    <None Include="type.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />
     <Text Include="initialROMz80.txt" />
     <Text Include="CMD.txt" />
     <Text Include="run%405000.s" />
+    <Text Include="edit.txt" />
+    <Text Include="dir.txt" />
   </ItemGroup>
 </Project>

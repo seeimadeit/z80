@@ -141,16 +141,22 @@
   <ItemGroup>
     <None Include="cmd.s" />
     <None Include="copyfiles.bat" />
+    <None Include="dir.s" />
+    <None Include="edit.s" />
     <None Include="hello.s" />
     <None Include="initialRAMz80.s" />
     <None Include="initialROMz80.s" />
+    <None Include="libs.inc" />
     <None Include="makefile" />
     <None Include="Routines.inc" />
     <None Include="SDCARD.inc" />
     <None Include="SERIAL.inc" />
+    <None Include="type.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMD.txt" />
+    <Text Include="dir.txt" />
+    <Text Include="edit.txt" />
     <Text Include="initialRAMz80.txt" />
     <Text Include="initialROMz80.txt" />
     <Text Include="run%405000.s" />

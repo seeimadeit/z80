@@ -9,12 +9,14 @@ TARGET2 = RAM
 TARGET3 = cmd
 hello = hello
 TARGET4 = run@5000
+TARGET5 = edit
+TARGET6 = dir
 
 
-all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4)
+all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6)
 
 clean:
-	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4)
+	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6)
 
 
 $(TARGET):
@@ -31,3 +33,10 @@ $(hello):
 
 $(TARGET4):
 	$(CC) $(OPTS) $(INC) $(CCOUT) -L runat5000.txt -o $(TARGET4) run@5000.s
+
+$(TARGET5):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L edit.txt -o $(TARGET5) edit.s
+
+$(TARGET6):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L dir.txt -o $(TARGET6) dir.s
+

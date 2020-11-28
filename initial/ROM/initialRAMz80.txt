@@ -9,14 +9,39 @@ F00:0008
 F00:0009       .include "SDCARD.inc"
 F01:0001       .equ SDCARD,0x05
 F01:0002       ; ******* SDCARD *********
-F01:0003       ; z80 out only
+F01:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
 F01:0004       .equ FILENAMECLEAR ,1
-F01:0005       .equ OPEN ,2
-F01:0006       .equ CLOSE ,3
-F01:0007       .equ FILENAMEAPPEND ,4
-F01:0008       ; z80 out + in
-F01:0009       .equ READNEXTBYTE ,5
-F01:0010       .equ AVAILABLE ,6
+F01:0005       
+F01:0006       ; z80 out + in -open: will return a status 1 if file open successfull, 0 if open failed
+F01:0007       .equ OPEN ,2
+F01:0008       
+F01:0009       ; z80 out - close: no return value
+F01:0010       .equ CLOSE ,3
+F01:0011       
+F01:0012       ; z80 out + out - filenameappend: no return value
+F01:0013       .equ FILENAMEAPPEND ,4
+F01:0014       
+F01:0015       ; z80 out + in - readnextbyte: will return 0xFF is nothing to read, which might be a problem if you don't check the avai
+F01:0016       .equ READNEXTBYTE ,5
+F01:0017       
+F01:0018       ; z80 out + in - available: return 1 is data is available, 0 if no data available
+F01:0019       .equ AVAILABLE ,6
+F01:0020       
+F01:0021       ; z80 out + in - openwrite: open file for write ,will return a status 1 if file open successfull, 0 if open failed
+F01:0022       .equ OPENWRITE,7
+F01:0023       
+F01:0024       ; z80 - out + out -writebyte: will write data to an open file,is no file is open or the file is not writable nothing wil
+F01:0025       .equ WRITEBYTE,8
+F01:0026       
+F01:0027       ;#===============================
+F01:0028       ; z80 - out -getname: prepares to get the openfilename, use NAMEAVAILABLE to read the bytes, no return value
+F01:0029       .equ GETNAME,0x20
+F01:0030       ; z80 out + in - nameavailable: return next character of the filename, or 0 it no more characters
+F01:0031       .equ NAMEAVAILABLE,0x21
+F01:0032       ;z80 - out - opendirectory : will open the root directory for directory listing, no return value
+F01:0033       .equ OPENDIRECTORY,0x31
+F01:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
+F01:0035       .equ NEXTFILE,0x32
 F00:0010       .include "Routines.inc"
 F02:0001       
 F02:0002       # address where user programs load
@@ -26,14 +51,39 @@ F03:0002
 F02:0004       .include "SDCARD.inc"
 F04:0001       .equ SDCARD,0x05
 F04:0002       ; ******* SDCARD *********
-F04:0003       ; z80 out only
+F04:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
 F04:0004       .equ FILENAMECLEAR ,1
-F04:0005       .equ OPEN ,2
-F04:0006       .equ CLOSE ,3
-F04:0007       .equ FILENAMEAPPEND ,4
-F04:0008       ; z80 out + in
-F04:0009       .equ READNEXTBYTE ,5
-F04:0010       .equ AVAILABLE ,6
+F04:0005       
+F04:0006       ; z80 out + in -open: will return a status 1 if file open successfull, 0 if open failed
+F04:0007       .equ OPEN ,2
+F04:0008       
+F04:0009       ; z80 out - close: no return value
+F04:0010       .equ CLOSE ,3
+F04:0011       
+F04:0012       ; z80 out + out - filenameappend: no return value
+F04:0013       .equ FILENAMEAPPEND ,4
+F04:0014       
+F04:0015       ; z80 out + in - readnextbyte: will return 0xFF is nothing to read, which might be a problem if you don't check the avai
+F04:0016       .equ READNEXTBYTE ,5
+F04:0017       
+F04:0018       ; z80 out + in - available: return 1 is data is available, 0 if no data available
+F04:0019       .equ AVAILABLE ,6
+F04:0020       
+F04:0021       ; z80 out + in - openwrite: open file for write ,will return a status 1 if file open successfull, 0 if open failed
+F04:0022       .equ OPENWRITE,7
+F04:0023       
+F04:0024       ; z80 - out + out -writebyte: will write data to an open file,is no file is open or the file is not writable nothing wil
+F04:0025       .equ WRITEBYTE,8
+F04:0026       
+F04:0027       ;#===============================
+F04:0028       ; z80 - out -getname: prepares to get the openfilename, use NAMEAVAILABLE to read the bytes, no return value
+F04:0029       .equ GETNAME,0x20
+F04:0030       ; z80 out + in - nameavailable: return next character of the filename, or 0 it no more characters
+F04:0031       .equ NAMEAVAILABLE,0x21
+F04:0032       ;z80 - out - opendirectory : will open the root directory for directory listing, no return value
+F04:0033       .equ OPENDIRECTORY,0x31
+F04:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
+F04:0035       .equ NEXTFILE,0x32
 F02:0005       .equ commandMemory, 0x1000
 F02:0006       .equ userMemory,0x2000
 F02:0007       
@@ -57,12 +107,16 @@ F02:0024       .equ PUTC,		6
 F02:0025       .equ TOUPPERCASE,7
 F02:0026       .equ HEXTOBYTE,	8
 F02:0027       .equ STRNCPY,10
-F02:0028       .equ NEXTNUMBER,11
-F02:0029       
-F02:0030       
-F02:0031       
+F02:0028       # filesystem - primitive functions, probably going to change 
+F02:0029       .equ DIRECTORYOPEN,13
+F02:0030       .equ DIRECTORYNEXTFILE,14
+F02:0031       .equ GETFILENAME,15
 F02:0032       
 F02:0033       
+F02:0034       
+F02:0035       .equ NEXTNUMBER,16
+F02:0036       
+F02:0037       
 F00:0011       
 F00:0012       
 F00:0013       	.org 0x800
@@ -71,7 +125,7 @@ F00:0014       	jp boot
 F00:0015       	.align 2
 F00:0016       	start:
 F00:0017       	jp loadaddress
-               S01:00000804:  C3 1C 09
+               S01:00000804:  C3 4C 09
 F00:0018       	
 F00:0019       boot:
 F00:0020       	ld sp,0xffff
@@ -80,7 +134,7 @@ F00:0021
 F00:0022       	di
                S01:0000080A:  F3
 F00:0023       	ld hl,readymsg
-               S01:0000080B:  21 9B 09
+               S01:0000080B:  21 ED 09
 F00:0024       	call print
                S01:0000080E:  CD 88 08
 F00:0025       		;ld b, endlabel2-label2
@@ -90,20 +144,20 @@ F00:0028
 F00:0029       		im 2 ;/* interrupt mode 2*/
                S01:00000811:  ED 5E
 F00:0030       		ld a, jumptable/256 ;// hibyte
-               S01:00000813:  3E 09
+               S01:00000813:  3E 0B
 F00:0031       		ld i,a
                S01:00000815:  ED 47
 F00:0032       		ei   ;#/* enable interrupts*/
                S01:00000817:  FB
 F00:0033       
 F00:0034       		ld hl,loadedmsg
-               S01:00000818:  21 85 09
+               S01:00000818:  21 D8 09
 F00:0035       		call print
                S01:0000081B:  CD 88 08
 F00:0036       		#== ******* Command processor Loop ******** ==#
 F00:0037       	commandprocessloop:	
 F00:0038       		ld hl,commandprocessor
-               S01:0000081E:  21 AB 09
+               S01:0000081E:  21 FC 09
 F00:0039       		ld de,commandMemory
                S01:00000821:  11 00 10
 F00:0040       		call loadFILE
@@ -125,7 +179,7 @@ F00:0048       	errorloading:
 F00:0049       		call printhex
                S01:00000838:  CD A4 08
 F00:0050       		ld hl,errorloadingmsg
-               S01:0000083B:  21 B0 09
+               S01:0000083B:  21 00 0A
 F00:0051       		call println
                S01:0000083E:  CD 7A 08
 F00:0052       		jp commandprocessloop
@@ -274,7 +328,7 @@ F00:0154       	push hl
 F00:0155       	push af
                S01:0000087E:  F5
 F00:0156       	ld hl,crlf
-               S01:0000087F:  21 81 09
+               S01:0000087F:  21 D5 09
 F00:0157       	call print
                S01:00000882:  CD 88 08
 F00:0158       	pop af
@@ -439,7 +493,7 @@ F00:0259       		ld a,2 ;we have an error trying to open the file.
 F00:0260       		ret
                S01:000008E1:  C9
 F00:0261       		
-F00:0262       	available:
+F00:0262       available:
 F00:0263       	#available will return 1 if there is data to read, 0 if no data to read
 F00:0264       		ld a, AVAILABLE ; // available
                S01:000008E2:  3E 06
@@ -454,232 +508,345 @@ F00:0270       	;	ld a,b
 F00:0271       		cp 0 ;// compare the A reg returned by the device
                S01:000008E8:  FE 00
 F00:0272       		jp nz,_$nextbyte
-               S01:000008EA:  C2 F0 08
-F00:0273       		ld a,0
-               S01:000008ED:  3E 00
-F00:0274       		ret
-               S01:000008EF:  C9
-F00:0275       _$nextbyte:
-F00:0276       		;// if we get here then there is data to read
-F00:0277       		ld a,READNEXTBYTE
-               S01:000008F0:  3E 05
-F00:0278       		out (SDCARD),a ;// read nextbyte
-               S01:000008F2:  D3 05
-F00:0279       		in a,(SDCARD)
-               S01:000008F4:  DB 05
-F00:0280       		ld (hl),a ; // store byte in RAM (OSLOAD)
-               S01:000008F6:  77
-F00:0281       		inc hl 
-               S01:000008F7:  23
-F00:0282       		ld a,'#'
-               S01:000008F8:  3E 23
-F00:0283       		out (SERIALPORT),a ;// just echo it back for now
-               S01:000008FA:  D3 01
-F00:0284       		jr available ;
-               S01:000008FC:  18 E4
-F00:0285       
-F00:0286       ;# ====== hextobyte ==========
-F00:0287       ;#    load HL registers with the 2 ascii characters of a hexadecimal value
-F00:0288       ;# note routine does not validate the inputs.
-F00:0289       ;# alphabeta expected in uppercase
-F00:0290       ;#	ld h,'c'
-F00:0291       ;#	ld l,'3'
-F00:0292       ;#	call hextobyte
-F00:0293       ;#	value stored in A register
-F00:0294       
-F00:0295       
-F00:0296       hextobyte:
-F00:0297       	push hl
-               S01:000008FE:  E5
-F00:0298       	push bc
-               S01:000008FF:  C5
-F00:0299       	ld a,l ;# prepare the low nibble
-               S01:00000900:  7D
-F00:0300       	call workhextobyte
-               S01:00000901:  CD 11 09
-F00:0301       	ld b,a ;# save it later
-               S01:00000904:  47
-F00:0302       	ld a,h ;# prepare the high nibble
-               S01:00000905:  7C
-F00:0303       	call workhextobyte
-               S01:00000906:  CD 11 09
-F00:0304       	rla ;# a contains the result from the high nibble
-               S01:00000909:  17
-F00:0305       	rla ;# so move the nibble to make room for the low nibble
-               S01:0000090A:  17
-F00:0306       	rla
-               S01:0000090B:  17
-F00:0307       	rla
-               S01:0000090C:  17
-F00:0308       	or b ;# add the low nibble
-               S01:0000090D:  B0
-F00:0309       
-F00:0310       	pop bc
-               S01:0000090E:  C1
-F00:0311       	pop hl
-               S01:0000090F:  E1
-F00:0312       	ret
-               S01:00000910:  C9
-F00:0313       workhextobyte:
-F00:0314       	cp 'A' ;# alphabeta sub 55
-               S01:00000911:  FE 41
-F00:0315       	jp m,hextobytenumber
-               S01:00000913:  FA 19 09
-F00:0316       	sub 55
-               S01:00000916:  D6 37
-F00:0317       	ret
-               S01:00000918:  C9
-F00:0318       hextobytenumber:
-F00:0319       	sub 48 ;# if number sub 48
-               S01:00000919:  D6 30
-F00:0320       	ret
-               S01:0000091B:  C9
-F00:0321       ;================================
-F00:0322       ; # === loadaddress == #
-F00:0323       ; ld a,x - where x = instruction id
-F00:0324       ;				id = 1, print
-F00:0325       ;					 2, printhex
-F00:0326       ;					3,loadFILE
-F00:0327       loadaddress:
-F00:0328       	cp PRINT
-               S01:0000091C:  FE 01
-F00:0329       	jp nz,_loadaddress$2
-               S01:0000091E:  C2 25 09
-F00:0330       	ld hl,print
-               S01:00000921:  21 88 08
+               S01:000008EA:  C2 F6 08
+F00:0273       		ld hl,0
+               S01:000008ED:  21 00 00
+F00:0274       		call println
+               S01:000008F0:  CD 7A 08
+F00:0275       		ld a,0
+               S01:000008F3:  3E 00
+F00:0276       		ret
+               S01:000008F5:  C9
+F00:0277       _$nextbyte:
+F00:0278       		;// if we get here then there is data to read
+F00:0279       		ld a,READNEXTBYTE
+               S01:000008F6:  3E 05
+F00:0280       		out (SDCARD),a ;// read nextbyte
+               S01:000008F8:  D3 05
+F00:0281       		in a,(SDCARD)
+               S01:000008FA:  DB 05
+F00:0282       		ld (hl),a ; // store byte in RAM (OSLOAD)
+               S01:000008FC:  77
+F00:0283       		inc hl 
+               S01:000008FD:  23
+F00:0284       		ld a,'#'
+               S01:000008FE:  3E 23
+F00:0285       		out (SERIALPORT),a ;// just echo it back for now
+               S01:00000900:  D3 01
+F00:0286       		jr available ;
+               S01:00000902:  18 DE
+F00:0287       
+F00:0288       ;# ====== hextobyte ==========
+F00:0289       ;#    load HL registers with the 2 ascii characters of a hexadecimal value
+F00:0290       ;# note routine does not validate the inputs.
+F00:0291       ;# alphabeta expected in uppercase
+F00:0292       ;#	ld h,'c'
+F00:0293       ;#	ld l,'3'
+F00:0294       ;#	call hextobyte
+F00:0295       ;#	value stored in A register
+F00:0296       
+F00:0297       
+F00:0298       hextobyte:
+F00:0299       	push hl
+               S01:00000904:  E5
+F00:0300       	push bc
+               S01:00000905:  C5
+F00:0301       	ld a,l ;# prepare the low nibble
+               S01:00000906:  7D
+F00:0302       	call workhextobyte
+               S01:00000907:  CD 17 09
+F00:0303       	ld b,a ;# save it later
+               S01:0000090A:  47
+F00:0304       	ld a,h ;# prepare the high nibble
+               S01:0000090B:  7C
+F00:0305       	call workhextobyte
+               S01:0000090C:  CD 17 09
+F00:0306       	rla ;# a contains the result from the high nibble
+               S01:0000090F:  17
+F00:0307       	rla ;# so move the nibble to make room for the low nibble
+               S01:00000910:  17
+F00:0308       	rla
+               S01:00000911:  17
+F00:0309       	rla
+               S01:00000912:  17
+F00:0310       	or b ;# add the low nibble
+               S01:00000913:  B0
+F00:0311       
+F00:0312       	pop bc
+               S01:00000914:  C1
+F00:0313       	pop hl
+               S01:00000915:  E1
+F00:0314       	ret
+               S01:00000916:  C9
+F00:0315       workhextobyte:
+F00:0316       	cp 'A' ;# alphabeta sub 55
+               S01:00000917:  FE 41
+F00:0317       	jp m,hextobytenumber
+               S01:00000919:  FA 1F 09
+F00:0318       	sub 55
+               S01:0000091C:  D6 37
+F00:0319       	ret
+               S01:0000091E:  C9
+F00:0320       hextobytenumber:
+F00:0321       	sub 48 ;# if number sub 48
+               S01:0000091F:  D6 30
+F00:0322       	ret
+               S01:00000921:  C9
+F00:0323       
+F00:0324       	;# === directory open === #
+F00:0325       
+F00:0326       directoryopen:
+F00:0327       	push af
+               S01:00000922:  F5
+F00:0328       	ld a,OPENDIRECTORY
+               S01:00000923:  3E 31
+F00:0329       	out (SDCARD),a
+               S01:00000925:  D3 05
+F00:0330       	pop af
+               S01:00000927:  F1
 F00:0331       	ret
-               S01:00000924:  C9
-F00:0332       _loadaddress$2:
-F00:0333       	cp PRINTHEX
-               S01:00000925:  FE 02
-F00:0334       	jp nz,_loadaddress$3
-               S01:00000927:  C2 2E 09
-F00:0335       	ld hl,printhex
-               S01:0000092A:  21 A4 08
-F00:0336       	ret
-               S01:0000092D:  C9
-F00:0337       _loadaddress$3:
-F00:0338       	cp LOADFILE
-               S01:0000092E:  FE 03
-F00:0339       	jp nz,_loadaddress$4
-               S01:00000930:  C2 37 09
-F00:0340       	ld hl,loadFILE
-               S01:00000933:  21 BD 08
-F00:0341       	ret
-               S01:00000936:  C9
-F00:0342       _loadaddress$4:
-F00:0343       	cp MEMSET
-               S01:00000937:  FE 04
-F00:0344       	jp nz,_loadaddress$5
-               S01:00000939:  C2 40 09
-F00:0345       	ld hl,memset
-               S01:0000093C:  21 44 08
-F00:0346       	ret
-               S01:0000093F:  C9
-F00:0347       _loadaddress$5:
-F00:0348       	cp STRLEN
-               S01:00000940:  FE 05
-F00:0349       	jp nz,_loadaddress$6
-               S01:00000942:  C2 49 09
-F00:0350       	ld hl,strlen
-               S01:00000945:  21 4D 08
-F00:0351       	ret
-               S01:00000948:  C9
-F00:0352       _loadaddress$6:
-F00:0353       	cp PUTC
-               S01:00000949:  FE 06
-F00:0354       	jp nz,_loadaddress$7
-               S01:0000094B:  C2 52 09
-F00:0355       	ld hl,putc
-               S01:0000094E:  21 BA 08
-F00:0356       	ret
-               S01:00000951:  C9
-F00:0357       _loadaddress$7:
-F00:0358       	cp TOUPPERCASE
-               S01:00000952:  FE 07
-F00:0359       	jp nz,_loadaddress$8
-               S01:00000954:  C2 5B 09
-F00:0360       	ld hl,touppercase
-               S01:00000957:  21 62 08
-F00:0361       	ret
-               S01:0000095A:  C9
-F00:0362       _loadaddress$8:
-F00:0363       	cp HEXTOBYTE
-               S01:0000095B:  FE 08
-F00:0364       	jp nz,_loadaddress$9
-               S01:0000095D:  C2 64 09
-F00:0365       	ld hl,hextobyte
-               S01:00000960:  21 FE 08
+               S01:00000928:  C9
+F00:0332       	;# === nextfile === #
+F00:0333       nextfile:
+F00:0334       	push af
+               S01:00000929:  F5
+F00:0335       	ld a,NEXTFILE
+               S01:0000092A:  3E 32
+F00:0336       	out (SDCARD),a
+               S01:0000092C:  D3 05
+F00:0337       	pop af
+               S01:0000092E:  F1
+F00:0338       	ret
+               S01:0000092F:  C9
+F00:0339       	;# === getfilename or currently open file ===#
+F00:0340       	;# ld hl,storagelocation - for the filename
+F00:0341       	;# call getfilename
+F00:0342       
+F00:0343       getfilename:
+F00:0344       	push af
+               S01:00000930:  F5
+F00:0345       	push hl
+               S01:00000931:  E5
+F00:0346       	ld a,GETNAME
+               S01:00000932:  3E 20
+F00:0347       	out (SDCARD),a
+               S01:00000934:  D3 05
+F00:0348       
+F00:0349       _getfilename$1:
+F00:0350       	ld a,NAMEAVAILABLE
+               S01:00000936:  3E 21
+F00:0351       	out (SDCARD),a
+               S01:00000938:  D3 05
+F00:0352       	in a,(SDCARD)
+               S01:0000093A:  DB 05
+F00:0353       	cp 0
+               S01:0000093C:  FE 00
+F00:0354       	jp z, _exitgetfilename
+               S01:0000093E:  CA 46 09
+F00:0355       
+F00:0356       	ld (hl),a
+               S01:00000941:  77
+F00:0357       	inc hl
+               S01:00000942:  23
+F00:0358       	
+F00:0359       	jp _getfilename$1
+               S01:00000943:  C3 36 09
+F00:0360       
+F00:0361       _exitgetfilename:
+F00:0362       	ld a,0
+               S01:00000946:  3E 00
+F00:0363       	ld (hl),a
+               S01:00000948:  77
+F00:0364       	pop hl
+               S01:00000949:  E1
+F00:0365       	pop af
+               S01:0000094A:  F1
 F00:0366       	ret
-               S01:00000963:  C9
-F00:0367       _loadaddress$9:
-F00:0368       	cp PRINTLN
-               S01:00000964:  FE 09
-F00:0369       	jp nz,_loadaddress$10
-               S01:00000966:  C2 6D 09
-F00:0370       	ld hl,println
-               S01:00000969:  21 7A 08
-F00:0371       	ret
-               S01:0000096C:  C9
-F00:0372       _loadaddress$10:
-F00:0373       	cp STRNCPY
-               S01:0000096D:  FE 0A
-F00:0374       	jp nz,_loadaddress$11
-               S01:0000096F:  C2 76 09
-F00:0375       	ld hl,strncpy
-               S01:00000972:  21 5F 08
-F00:0376       	ret
-               S01:00000975:  C9
-F00:0377       _loadaddress$11:
-F00:0378       	#----- not defined ---
-F00:0379       	ld hl,0
-               S01:00000976:  21 00 00
-F00:0380       	ret
-               S01:00000979:  C9
-F00:0381       	# ======================== end subroutines ========== #
-F00:0382       		
-F00:0383       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0384       	#	di
-F00:0385       		#ld a,'*'
-F00:0386       		#out (SERIALPORT),a
-F00:0387       
-F00:0388       		in a,(SERIALPORT)
-               S01:0000097A:  DB 01
-F00:0389       		out (SERIALPORT),a
-               S01:0000097C:  D3 01
-F00:0390       		ei
-               S01:0000097E:  FB
-F00:0391       		reti
-               S01:0000097F:  ED 4D
-F00:0392       	crlf: .string "\r\n",0
-               S01:00000981:  0D 0A
-               S01:00000983:  00
-F00:0393       	loadedmsg: .string "my Z80 Ram loaded.\r\n\0"
-               S01:00000985:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
-               S01:00000995:  64 2E 0D 0A 00
-F00:0394       	readymsg: .string "\r\nReady v0.0\r\n\0"
-               S01:0000099B:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A 00
-F00:0395       	commandprocessor: .string "cmd\0"
-               S01:000009AB:  63 6D 64 00
-F00:0396       	errorloadingmsg: .string "error loading program.\r\n\0"
-               S01:000009B0:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
-               S01:000009C0:  6F 67 72 61 6D 2E 0D 0A 00
-F00:0397       
-F00:0398       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0399       	.org 0x0A00-start
-F00:0400       	.align 2
-F00:0401       	jumptable:
-F00:0402       	.2byte serialport ;0
-               S01:000009FC:  7A 09
-F00:0403       	.2byte serialport ;1
-               S01:000009FE:  7A 09
-F00:0404       	.2byte serialport ;2
-               S01:00000A00:  7A 09
-F00:0405       	.2byte serialport ;3
-               S01:00000A02:  7A 09
-F00:0406       
-F00:0407       	
-F00:0408       	
+               S01:0000094B:  C9
+F00:0367       
+F00:0368       
+F00:0369       ;================================
+F00:0370       ; # === loadaddress == #
+F00:0371       ; ld a,x - where x = instruction id
+F00:0372       ;				id = 1, print
+F00:0373       ;					 2, printhex
+F00:0374       ;					3,loadFILE
+F00:0375       loadaddress:
+F00:0376       	cp PRINT
+               S01:0000094C:  FE 01
+F00:0377       	jp nz,_loadaddress$2
+               S01:0000094E:  C2 55 09
+F00:0378       	ld hl,print
+               S01:00000951:  21 88 08
+F00:0379       	ret
+               S01:00000954:  C9
+F00:0380       _loadaddress$2:
+F00:0381       	cp PRINTHEX
+               S01:00000955:  FE 02
+F00:0382       	jp nz,_loadaddress$3
+               S01:00000957:  C2 5E 09
+F00:0383       	ld hl,printhex
+               S01:0000095A:  21 A4 08
+F00:0384       	ret
+               S01:0000095D:  C9
+F00:0385       _loadaddress$3:
+F00:0386       	cp LOADFILE
+               S01:0000095E:  FE 03
+F00:0387       	jp nz,_loadaddress$4
+               S01:00000960:  C2 67 09
+F00:0388       	ld hl,loadFILE
+               S01:00000963:  21 BD 08
+F00:0389       	ret
+               S01:00000966:  C9
+F00:0390       _loadaddress$4:
+F00:0391       	cp MEMSET
+               S01:00000967:  FE 04
+F00:0392       	jp nz,_loadaddress$5
+               S01:00000969:  C2 70 09
+F00:0393       	ld hl,memset
+               S01:0000096C:  21 44 08
+F00:0394       	ret
+               S01:0000096F:  C9
+F00:0395       _loadaddress$5:
+F00:0396       	cp STRLEN
+               S01:00000970:  FE 05
+F00:0397       	jp nz,_loadaddress$6
+               S01:00000972:  C2 79 09
+F00:0398       	ld hl,strlen
+               S01:00000975:  21 4D 08
+F00:0399       	ret
+               S01:00000978:  C9
+F00:0400       _loadaddress$6:
+F00:0401       	cp PUTC
+               S01:00000979:  FE 06
+F00:0402       	jp nz,_loadaddress$7
+               S01:0000097B:  C2 82 09
+F00:0403       	ld hl,putc
+               S01:0000097E:  21 BA 08
+F00:0404       	ret
+               S01:00000981:  C9
+F00:0405       _loadaddress$7:
+F00:0406       	cp TOUPPERCASE
+               S01:00000982:  FE 07
+F00:0407       	jp nz,_loadaddress$8
+               S01:00000984:  C2 8B 09
+F00:0408       	ld hl,touppercase
+               S01:00000987:  21 62 08
+F00:0409       	ret
+               S01:0000098A:  C9
+F00:0410       _loadaddress$8:
+F00:0411       	cp HEXTOBYTE
+               S01:0000098B:  FE 08
+F00:0412       	jp nz,_loadaddress$9
+               S01:0000098D:  C2 94 09
+F00:0413       	ld hl,hextobyte
+               S01:00000990:  21 04 09
+F00:0414       	ret
+               S01:00000993:  C9
+F00:0415       _loadaddress$9:
+F00:0416       	cp PRINTLN
+               S01:00000994:  FE 09
+F00:0417       	jp nz,_loadaddress$10
+               S01:00000996:  C2 9D 09
+F00:0418       	ld hl,println
+               S01:00000999:  21 7A 08
+F00:0419       	ret
+               S01:0000099C:  C9
+F00:0420       _loadaddress$10:
+F00:0421       	cp STRNCPY
+               S01:0000099D:  FE 0A
+F00:0422       	jp nz,_loadaddress$11
+               S01:0000099F:  C2 A6 09
+F00:0423       	ld hl,strncpy
+               S01:000009A2:  21 5F 08
+F00:0424       	ret
+               S01:000009A5:  C9
+F00:0425       _loadaddress$11:
+F00:0426       	cp DIRECTORYOPEN
+               S01:000009A6:  FE 0D
+F00:0427       	jp nz,_loadaddress$12
+               S01:000009A8:  C2 AF 09
+F00:0428       	ld hl,directoryopen
+               S01:000009AB:  21 22 09
+F00:0429       	ret
+               S01:000009AE:  C9
+F00:0430       _loadaddress$12:
+F00:0431       	cp GETFILENAME:
+               S01:000009AF:  FE 0F
+F00:0432       	jp nz,_loadaddress$13
+               S01:000009B1:  C2 B8 09
+F00:0433       	ld hl,getfilename
+               S01:000009B4:  21 30 09
+F00:0434       	ret
+               S01:000009B7:  C9
+F00:0435       _loadaddress$13:
+F00:0436       	cp NEXTFILE
+               S01:000009B8:  FE 32
+F00:0437       	jp nz,_loadaddress$14
+               S01:000009BA:  C2 C1 09
+F00:0438       	ld hl,nextfile
+               S01:000009BD:  21 29 09
+F00:0439       	ret
+               S01:000009C0:  C9
+F00:0440       _loadaddress$14:
+F00:0441       	#----- not defined ---
+F00:0442       	ld hl,addressfailedmsg
+               S01:000009C1:  21 1A 0A
+F00:0443       	call print 
+               S01:000009C4:  CD 88 08
+F00:0444       	call printhex
+               S01:000009C7:  CD A4 08
+F00:0445       
+F00:0446       	ld hl,0
+               S01:000009CA:  21 00 00
+F00:0447       	ret
+               S01:000009CD:  C9
+F00:0448       	# ======================== end subroutines ========== #
+F00:0449       		
+F00:0450       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0451       	#	di
+F00:0452       		#ld a,'*'
+F00:0453       		#out (SERIALPORT),a
+F00:0454       
+F00:0455       		in a,(SERIALPORT)
+               S01:000009CE:  DB 01
+F00:0456       		out (SERIALPORT),a
+               S01:000009D0:  D3 01
+F00:0457       		ei
+               S01:000009D2:  FB
+F00:0458       		reti
+               S01:000009D3:  ED 4D
+F00:0459       	crlf: .string "\r\n"
+               S01:000009D5:  0D 0A
+F00:0460       	loadedmsg: .string "my Z80 Ram loaded.\r\n"
+               S01:000009D8:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
+               S01:000009E8:  64 2E 0D 0A
+F00:0461       	readymsg: .string "\r\nReady v0.0\r\n"
+               S01:000009ED:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+F00:0462       	commandprocessor: .string "cmd"
+               S01:000009FC:  63 6D 64
+F00:0463       	errorloadingmsg: .string "error loading program.\r\n\"
+               S01:00000A00:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
+               S01:00000A10:  6F 67 72 61 6D 2E 0D 0A 22
+F00:0464       	addressfailedmsg: .string "GetAddress failed for code:"
+               S01:00000A1A:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
+               S01:00000A2A:  64 20 66 6F 72 20 63 6F 64 65 3A
+F00:0465       
+F00:0466       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0467       	;#.org 0x0A00-start
+F00:0468       	.align 8
+F00:0469       	jumptable:
+F00:0470       	.2byte serialport ;0
+               S01:00000B00:  CE 09
+F00:0471       	.2byte serialport ;1
+               S01:00000B02:  CE 09
+F00:0472       	.2byte serialport ;2
+               S01:00000B04:  CE 09
+F00:0473       	.2byte serialport ;3
+               S01:00000B06:  CE 09
+F00:0474       
+F00:0475       	
+F00:0476       	
 
 
 Sections:
@@ -695,21 +862,30 @@ F04  SDCARD.inc
 
 
 Symbols:
-serialport EXPR(2426=0x97a) ABS 
-_loadaddress$11 EXPR(2422=0x976) ABS 
-_loadaddress$10 EXPR(2413=0x96d) ABS 
-_loadaddress$9 EXPR(2404=0x964) ABS 
-_loadaddress$8 EXPR(2395=0x95b) ABS 
-_loadaddress$7 EXPR(2386=0x952) ABS 
-_loadaddress$6 EXPR(2377=0x949) ABS 
-_loadaddress$5 EXPR(2368=0x940) ABS 
-_loadaddress$4 EXPR(2359=0x937) ABS 
-_loadaddress$3 EXPR(2350=0x92e) ABS 
-_loadaddress$2 EXPR(2341=0x925) ABS 
-hextobytenumber EXPR(2329=0x919) ABS 
-workhextobyte EXPR(2321=0x911) ABS 
-hextobyte EXPR(2302=0x8fe) ABS 
-_$nextbyte EXPR(2288=0x8f0) ABS 
+serialport EXPR(2510=0x9ce) ABS 
+addressfailedmsg EXPR(2586=0xa1a) ABS 
+_loadaddress$14 EXPR(2497=0x9c1) ABS 
+_loadaddress$13 EXPR(2488=0x9b8) ABS 
+_loadaddress$12 EXPR(2479=0x9af) ABS 
+_loadaddress$11 EXPR(2470=0x9a6) ABS 
+_loadaddress$10 EXPR(2461=0x99d) ABS 
+_loadaddress$9 EXPR(2452=0x994) ABS 
+_loadaddress$8 EXPR(2443=0x98b) ABS 
+_loadaddress$7 EXPR(2434=0x982) ABS 
+_loadaddress$6 EXPR(2425=0x979) ABS 
+_loadaddress$5 EXPR(2416=0x970) ABS 
+_loadaddress$4 EXPR(2407=0x967) ABS 
+_loadaddress$3 EXPR(2398=0x95e) ABS 
+_loadaddress$2 EXPR(2389=0x955) ABS 
+_exitgetfilename EXPR(2374=0x946) ABS 
+_getfilename$1 EXPR(2358=0x936) ABS 
+getfilename EXPR(2352=0x930) ABS 
+nextfile EXPR(2345=0x929) ABS 
+directoryopen EXPR(2338=0x922) ABS 
+hextobytenumber EXPR(2335=0x91f) ABS 
+workhextobyte EXPR(2327=0x917) ABS 
+hextobyte EXPR(2308=0x904) ABS 
+_$nextbyte EXPR(2294=0x8f6) ABS 
 available EXPR(2274=0x8e2) ABS 
 _$openfile EXPR(2259=0x8d3) ABS 
 _$getnextchar EXPR(2242=0x8c2) ABS 
@@ -717,7 +893,7 @@ putc EXPR(2234=0x8ba) ABS
 _$ EXPR(2221=0x8ad) ABS 
 _$2 EXPR(2209=0x8a1) ABS 
 _$1 EXPR(2198=0x896) ABS 
-crlf EXPR(2433=0x981) ABS 
+crlf EXPR(2517=0x9d5) ABS 
 nextcharacter EXPR(2160=0x870) ABS 
 converttouppercaseletter EXPR(2157=0x86d) ABS 
 goagain EXPR(2148=0x864) ABS 
@@ -728,21 +904,24 @@ _strlen$ EXPR(2129=0x851) ABS
 strlen EXPR(2125=0x84d) ABS 
 _metset$1 EXPR(2118=0x846) ABS 
 memset EXPR(2116=0x844) ABS 
-errorloadingmsg EXPR(2480=0x9b0) ABS 
+errorloadingmsg EXPR(2560=0xa00) ABS 
 printhex EXPR(2212=0x8a4) ABS 
 println EXPR(2170=0x87a) ABS 
 errorloading EXPR(2104=0x838) ABS 
 loadFILE EXPR(2237=0x8bd) ABS 
-commandprocessor EXPR(2475=0x9ab) ABS 
+commandprocessor EXPR(2556=0x9fc) ABS 
 commandprocessloop EXPR(2078=0x81e) ABS 
-loadedmsg EXPR(2437=0x985) ABS 
-jumptable EXPR(2556=0x9fc) ABS 
+loadedmsg EXPR(2520=0x9d8) ABS 
+jumptable EXPR(2816=0xb00) ABS 
 print EXPR(2184=0x888) ABS 
-readymsg EXPR(2459=0x99b) ABS 
-loadaddress EXPR(2332=0x91c) ABS 
-start EXPR(2052=0x804) ABS 
+readymsg EXPR(2541=0x9ed) ABS 
+loadaddress EXPR(2380=0x94c) ABS 
+start EXPR(2052=0x804) UNUSED ABS 
 boot EXPR(2055=0x807) ABS 
-NEXTNUMBER EXPR(11=0xb) UNUSED 
+NEXTNUMBER EXPR(16=0x10) UNUSED 
+GETFILENAME EXPR(15=0xf) 
+DIRECTORYNEXTFILE EXPR(14=0xe) UNUSED 
+DIRECTORYOPEN EXPR(13=0xd) 
 STRNCPY EXPR(10=0xa) 
 HEXTOBYTE EXPR(8=0x8) 
 TOUPPERCASE EXPR(7=0x7) 
@@ -759,6 +938,12 @@ TRUE EXPR(1=0x1) UNUSED
 userMemory EXPR(8192=0x2000) UNUSED 
 commandMemory EXPR(4096=0x1000) 
 SERIALPORT EXPR(1=0x1) 
+NEXTFILE EXPR(50=0x32) 
+OPENDIRECTORY EXPR(49=0x31) 
+NAMEAVAILABLE EXPR(33=0x21) 
+GETNAME EXPR(32=0x20) 
+WRITEBYTE EXPR(8=0x8) UNUSED 
+OPENWRITE EXPR(7=0x7) UNUSED 
 AVAILABLE EXPR(6=0x6) 
 READNEXTBYTE EXPR(5=0x5) 
 FILENAMEAPPEND EXPR(4=0x4) 

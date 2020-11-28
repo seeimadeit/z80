@@ -7,14 +7,39 @@ F02:0002
 F01:0004       .include "SDCARD.inc"
 F03:0001       .equ SDCARD,0x05
 F03:0002       ; ******* SDCARD *********
-F03:0003       ; z80 out only
+F03:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
 F03:0004       .equ FILENAMECLEAR ,1
-F03:0005       .equ OPEN ,2
-F03:0006       .equ CLOSE ,3
-F03:0007       .equ FILENAMEAPPEND ,4
-F03:0008       ; z80 out + in
-F03:0009       .equ READNEXTBYTE ,5
-F03:0010       .equ AVAILABLE ,6
+F03:0005       
+F03:0006       ; z80 out + in -open: will return a status 1 if file open successfull, 0 if open failed
+F03:0007       .equ OPEN ,2
+F03:0008       
+F03:0009       ; z80 out - close: no return value
+F03:0010       .equ CLOSE ,3
+F03:0011       
+F03:0012       ; z80 out + out - filenameappend: no return value
+F03:0013       .equ FILENAMEAPPEND ,4
+F03:0014       
+F03:0015       ; z80 out + in - readnextbyte: will return 0xFF is nothing to read, which might be a problem if you don't check the avai
+F03:0016       .equ READNEXTBYTE ,5
+F03:0017       
+F03:0018       ; z80 out + in - available: return 1 is data is available, 0 if no data available
+F03:0019       .equ AVAILABLE ,6
+F03:0020       
+F03:0021       ; z80 out + in - openwrite: open file for write ,will return a status 1 if file open successfull, 0 if open failed
+F03:0022       .equ OPENWRITE,7
+F03:0023       
+F03:0024       ; z80 - out + out -writebyte: will write data to an open file,is no file is open or the file is not writable nothing wil
+F03:0025       .equ WRITEBYTE,8
+F03:0026       
+F03:0027       ;#===============================
+F03:0028       ; z80 - out -getname: prepares to get the openfilename, use NAMEAVAILABLE to read the bytes, no return value
+F03:0029       .equ GETNAME,0x20
+F03:0030       ; z80 out + in - nameavailable: return next character of the filename, or 0 it no more characters
+F03:0031       .equ NAMEAVAILABLE,0x21
+F03:0032       ;z80 - out - opendirectory : will open the root directory for directory listing, no return value
+F03:0033       .equ OPENDIRECTORY,0x31
+F03:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
+F03:0035       .equ NEXTFILE,0x32
 F01:0005       .equ commandMemory, 0x1000
 F01:0006       .equ userMemory,0x2000
 F01:0007       
@@ -38,12 +63,16 @@ F01:0024       .equ PUTC,		6
 F01:0025       .equ TOUPPERCASE,7
 F01:0026       .equ HEXTOBYTE,	8
 F01:0027       .equ STRNCPY,10
-F01:0028       .equ NEXTNUMBER,11
-F01:0029       
-F01:0030       
-F01:0031       
+F01:0028       # filesystem - primitive functions, probably going to change 
+F01:0029       .equ DIRECTORYOPEN,13
+F01:0030       .equ DIRECTORYNEXTFILE,14
+F01:0031       .equ GETFILENAME,15
 F01:0032       
 F01:0033       
+F01:0034       
+F01:0035       .equ NEXTNUMBER,16
+F01:0036       
+F01:0037       
 F00:0002       
 F00:0003       .org userMemory
 F00:0004       
@@ -92,7 +121,10 @@ functionlookups EXPR(8278=0x2056) UNUSED ABS
 print EXPR(8280=0x2058) ABS 
 hello EXPR(8207=0x200f) ABS 
 printadr EXPR(8281=0x2059) ABS 
-NEXTNUMBER EXPR(11=0xb) UNUSED 
+NEXTNUMBER EXPR(16=0x10) UNUSED 
+GETFILENAME EXPR(15=0xf) UNUSED 
+DIRECTORYNEXTFILE EXPR(14=0xe) UNUSED 
+DIRECTORYOPEN EXPR(13=0xd) UNUSED 
 STRNCPY EXPR(10=0xa) UNUSED 
 HEXTOBYTE EXPR(8=0x8) UNUSED 
 TOUPPERCASE EXPR(7=0x7) UNUSED 
@@ -108,6 +140,12 @@ FALSE EXPR(0=0x0) UNUSED
 TRUE EXPR(1=0x1) UNUSED 
 userMemory EXPR(8192=0x2000) 
 commandMemory EXPR(4096=0x1000) UNUSED 
+NEXTFILE EXPR(50=0x32) UNUSED 
+OPENDIRECTORY EXPR(49=0x31) UNUSED 
+NAMEAVAILABLE EXPR(33=0x21) UNUSED 
+GETNAME EXPR(32=0x20) UNUSED 
+WRITEBYTE EXPR(8=0x8) UNUSED 
+OPENWRITE EXPR(7=0x7) UNUSED 
 AVAILABLE EXPR(6=0x6) UNUSED 
 READNEXTBYTE EXPR(5=0x5) UNUSED 
 FILENAMEAPPEND EXPR(4=0x4) UNUSED 
