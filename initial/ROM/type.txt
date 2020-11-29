@@ -1,4 +1,5 @@
-F00:0001       .include "Routines.inc"
+F00:0001       
+F00:0002       .include "Routines.inc"
 F01:0001       
 F01:0002       # address where user programs load
 F01:0003       .include "SERIAL.inc"
@@ -75,7 +76,7 @@ F01:0036
 F01:0037       .equ NEXTNUMBER,18
 F01:0038       
 F01:0039       
-F00:0002       .include "libs.inc"
+F00:0003       .include "libs.inc"
 F04:0001       
 F04:0002       .ifndef __CMD__
 F04:0003       	.org userMemory
@@ -229,117 +230,55 @@ F04:0080       	getcommandparamsadr: .2byte 0
                S01:0000209C:  00 00
 F04:0081       
 F04:0082       _main:
-F00:0003       
 F00:0004       
-F00:0005       
-F00:0006       	di
-               S01:0000209E:  F3
-F00:0007       	im 2
-               S01:0000209F:  ED 5E
-F00:0008       	ld a, interruptvectors/256
-               S01:000020A1:  3E 20
-F00:0009       	ld i,a
-               S01:000020A3:  ED 47
-F00:0010       	ei
-               S01:000020A5:  FB
-F00:0011       
-F00:0012       loop:
-F00:0013       	call available
-               S01:000020A6:  CD B0 20
-F00:0014       	jp z,loop
-               S01:000020A9:  CA A6 20
-F00:0015       
-F00:0016       	jp loop
-               S01:000020AC:  C3 A6 20
-F00:0017       
-F00:0018       
-F00:0019       exit:
-F00:0020       	ret
-               S01:000020AF:  C9
-F00:0021       
-F00:0022       	;# check if a key is available in the buffer
-F00:0023       	;# if bufferwrite is # bufferread then there's a byte available
-F00:0024       	;# check Z flag on return
-F00:0025       	;# call available
-F00:0026       	;# jp z, no data
-F00:0027       	;# jp nz, has data
-F00:0028       available:
-F00:0029       	push bc
-               S01:000020B0:  C5
-F00:0030       	ld a,(bufferread)
-               S01:000020B1:  3A EA 20
-F00:0031       	ld b,a
-               S01:000020B4:  47
-F00:0032       	ld a,(bufferwrite)
-               S01:000020B5:  3A E9 20
-F00:0033       	cp b
-               S01:000020B8:  B8
-F00:0034       	pop bc
-               S01:000020B9:  C1
-F00:0035       	ret
-               S01:000020BA:  C9
-F00:0036       
-F00:0037       	#return next character from keybuffer
-F00:0038       	#tryagain:
-F00:0039       	#call available
-F00:0040       	#jp nz, tryagain
-F00:0041       	#call getc
-F00:0042       	# register A has the byte
-F00:0043       getc:
-F00:0044       	ld ix,keybuffer
-               S01:000020BB:  DD 21 DF 20
-F00:0045       	ld bc,(bufferread)
-               S01:000020BF:  ED 4B EA 20
-F00:0046       	add ix,bc
-               S01:000020C3:  DD 09
-F00:0047       	ld a,(ix) ;# contains byte from keybuffer
-               S01:000020C5:  DD 7E 00
-F00:0048       	ld a,(bufferread)
-               S01:000020C8:  3A EA 20
-F00:0049       	push af
-               S01:000020CB:  F5
-F00:0050       	inc a
-               S01:000020CC:  3C
-F00:0051       	cp 10
-               S01:000020CD:  FE 0A
-F00:0052       	jp m,_$ ;#  if A < 10 continue
-               S01:000020CF:  FA D4 20
-F00:0053       	ld a,0 ;# reset to 0
-               S01:000020D2:  3E 00
-F00:0054       _$:
-F00:0055       	ld (bufferread),a ;# save readbuffer
-               S01:000020D4:  32 EA 20
-F00:0056       	pop af
-               S01:000020D7:  F1
-F00:0057       	ret
-               S01:000020D8:  C9
-F00:0058       
-F00:0059       
-F00:0060       interrupthandler:
-F00:0061       	push af
-               S01:000020D9:  F5
-F00:0062       	in a,(SERIALPORT)
-               S01:000020DA:  DB 01
-F00:0063       	
-F00:0064       	pop af
-               S01:000020DC:  F1
-F00:0065       	reti
-               S01:000020DD:  ED 4D
-F00:0066       
-F00:0067       
-F00:0068       keybuffer: .space 10
-F00:0069       bufferwrite: .byte 0
-               S01:000020E9:  00
-F00:0070       bufferread: .byte 0
-               S01:000020EA:  00
-F00:0071       
-F00:0072       interruptvectors:
-F00:0073       .org 0x100
-F00:0074       	jumptable: ;# for keyboard interrupts
-F00:0075       	.2byte interrupthandler ;0
-               S01:00002100:  D9 20
-F00:0076       	.2byte interrupthandler ;0
-               S01:00002102:  D9 20
+F00:0005       	ld hl,msg
+               S01:0000209E:  21 CF 20
+F00:0006       	call println
+               S01:000020A1:  CD 77 20
+F00:0007       	ld hl,params
+               S01:000020A4:  21 F8 20
+F00:0008       	call getcommandparams
+               S01:000020A7:  CD 9B 20
+F00:0009       	call println
+               S01:000020AA:  CD 77 20
+F00:0010       	ld de,dumparea
+               S01:000020AD:  11 2A 21
+F00:0011       	ld hl,params
+               S01:000020B0:  21 F8 20
+F00:0012       	ld a,1 ;# ask for zero terminated
+               S01:000020B3:  3E 01
+F00:0013       	call loadfile
+               S01:000020B5:  CD 7D 20
+F00:0014       	cp 0
+               S01:000020B8:  FE 00
+F00:0015       	jp nz,error
+               S01:000020BA:  C2 DF 20
+F00:0016       	ld hl,dumparea
+               S01:000020BD:  21 2A 21
+F00:0017       	call println
+               S01:000020C0:  CD 77 20
+F00:0018       	jp _exit
+               S01:000020C3:  C3 CC 20
+F00:0019       
+F00:0020       _error: 
+F00:0021       	ld hl,error
+               S01:000020C6:  21 DF 20
+F00:0022       	call println
+               S01:000020C9:  CD 77 20
+F00:0023       _exit:
+F00:0024       	ld a,0
+               S01:000020CC:  3E 00
+F00:0025       	ret
+               S01:000020CE:  C9
+F00:0026       
+F00:0027       
+F00:0028       msg: .string "the params are:"
+               S01:000020CF:  74 68 65 20 70 61 72 61 6D 73 20 61 72 65 3A
+F00:0029       error: .string "failed to load the file."
+               S01:000020DF:  66 61 69 6C 65 64 20 74 6F 20 6C 6F 61 64 20 74
+               S01:000020EF:  68 65 20 66 69 6C 65 2E
+F00:0030       params: .space 50
+F00:0031       dumparea: .space 1 ;# this is not correct the loadfile will expand passed this
 
 
 Sections:
@@ -347,7 +286,7 @@ S01  seg2000
 
 
 Sources:
-F00  edit.s
+F00  type.s
 F01  Routines.inc
 F02  SERIAL.inc
 F03  SDCARD.inc
@@ -355,18 +294,13 @@ F04  libs.inc
 
 
 Symbols:
-jumptable EXPR(8448=0x2100) UNUSED ABS 
-interrupthandler EXPR(8409=0x20d9) ABS 
-_$ EXPR(8404=0x20d4) ABS 
-keybuffer EXPR(8415=0x20df) ABS 
-getc EXPR(8379=0x20bb) UNUSED ABS 
-bufferwrite EXPR(8425=0x20e9) ABS 
-bufferread EXPR(8426=0x20ea) ABS 
-exit EXPR(8367=0x20af) UNUSED ABS 
-available EXPR(8368=0x20b0) ABS 
-loop EXPR(8358=0x20a6) ABS 
-interruptvectors EXPR(8427=0x20eb) ABS 
-getcommandparams EXPR(8347=0x209b) UNUSED ABS 
+_error EXPR(8390=0x20c6) UNUSED ABS 
+_exit EXPR(8396=0x20cc) ABS 
+error EXPR(8415=0x20df) ABS 
+dumparea EXPR(8490=0x212a) ABS 
+params EXPR(8440=0x20f8) ABS 
+msg EXPR(8399=0x20cf) ABS 
+getcommandparams EXPR(8347=0x209b) ABS 
 createProcess EXPR(8344=0x2098) UNUSED ABS 
 getfilename EXPR(8341=0x2095) UNUSED ABS 
 directorynextfile EXPR(8338=0x2092) UNUSED ABS 
@@ -376,9 +310,9 @@ touppercase EXPR(8329=0x2089) UNUSED ABS
 putc EXPR(8326=0x2086) UNUSED ABS 
 strlen EXPR(8323=0x2083) UNUSED ABS 
 memset EXPR(8320=0x2080) UNUSED ABS 
-loadfile EXPR(8317=0x207d) UNUSED ABS 
+loadfile EXPR(8317=0x207d) ABS 
 printhex EXPR(8314=0x207a) UNUSED ABS 
-println EXPR(8311=0x2077) UNUSED ABS 
+println EXPR(8311=0x2077) ABS 
 print EXPR(8308=0x2074) UNUSED ABS 
 functionlookups EXPR(8307=0x2073) UNUSED ABS 
 _main EXPR(8350=0x209e) ABS 
@@ -430,7 +364,7 @@ CLOSE EXPR(3=0x3) UNUSED
 OPEN EXPR(2=0x2) UNUSED 
 FILENAMECLEAR EXPR(1=0x1) UNUSED 
 SDCARD EXPR(5=0x5) UNUSED 
-SERIALPORT EXPR(1=0x1) 
+SERIALPORT EXPR(1=0x1) UNUSED 
 __VASM EXPR(0=0x0) INTERNAL 
 __MSDOSFS EXPR(0=0x0) INTERNAL 
 

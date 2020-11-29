@@ -25,6 +25,8 @@
 .equ TOUPPERCASE,7
 .equ HEXTOBYTE,	8
 .equ STRNCPY,10
+.equ CREATEPROCESS,16
+.equ GETCOMMANDPARAMS,17
 # filesystem - primitive functions, probably going to change 
 .equ DIRECTORYOPEN,13
 .equ DIRECTORYNEXTFILE,14
@@ -32,5 +34,5 @@
 
 
 
-.equ NEXTNUMBER,16
+.equ NEXTNUMBER,18
 

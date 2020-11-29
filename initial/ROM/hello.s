@@ -1,21 +1,10 @@
 .include "Routines.inc"
-
-.org userMemory
-
-	ld a,PRINT
-	call GetAddress
-	ld (printadr),hl
+.include "libs.inc"
 
 	ld hl,hello
 	call print
+	ld a,0
 	ret ;# return to calling program
 
 
-hello: .string "hello World!\r\nare you having a nice day\r\nwhat you like to play a game\0"
-
-
-
-functionlookups:
-	.align 2
-	print: .byte 0xc3
-	printadr: .2byte 0
+hello: .string "Hello World!\r\nAre you having a nice day?\r\nWould you like to play a game"

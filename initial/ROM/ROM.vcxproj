@@ -157,9 +157,12 @@
     <Text Include="CMD.txt" />
     <Text Include="dir.txt" />
     <Text Include="edit.txt" />
+    <Text Include="hexdump.s" />
+    <Text Include="hexdump.txt" />
     <Text Include="initialRAMz80.txt" />
     <Text Include="initialROMz80.txt" />
     <Text Include="run%405000.s" />
+    <Text Include="type.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

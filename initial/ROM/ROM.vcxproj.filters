@@ -46,5 +46,8 @@
     <Text Include="run%405000.s" />
     <Text Include="edit.txt" />
     <Text Include="dir.txt" />
+    <Text Include="type.txt" />
+    <Text Include="hexdump.s" />
+    <Text Include="hexdump.txt" />
   </ItemGroup>
 </Project>

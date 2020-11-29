@@ -11,12 +11,14 @@ hello = hello
 TARGET4 = run@5000
 TARGET5 = edit
 TARGET6 = dir
+TARGET7 = type
+TARGET8 = hexdump
 
 
-all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6)
+all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8)
 
 clean:
-	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6)
+	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8)
 
 
 $(TARGET):
@@ -39,4 +41,10 @@ $(TARGET5):
 
 $(TARGET6):
 	$(CC) $(OPTS) $(INC) $(CCOUT) -L dir.txt -o $(TARGET6) dir.s
+
+$(TARGET7):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L type.txt -o $(TARGET7) type.s
+
+$(TARGET8):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L hexdump.txt -o $(TARGET8) hexdump.s
 

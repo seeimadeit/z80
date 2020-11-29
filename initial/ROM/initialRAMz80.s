@@ -98,6 +98,30 @@ boot:
 		ldir
 		ret
 
+	# === strcpy == #
+	;# copy from source into destination string is zero terminated, no validation is done
+	;# ld hl,source
+	;# ld de,destination
+	;# call strcpy
+	strcpy:
+		push af
+		push hl
+		push de
+	_1$:
+		ld a,(hl)
+		ld (de),a ;# copy the potential zero before we test because we will need it
+		cp 0
+		jp z, _strcpyexit$1
+
+		inc de
+		inc hl
+		jp _1$
+	
+	_strcpyexit$1:
+		pop de
+		pop hl
+		pop af
+		ret
 		# === touppercase ==#
 	;#		ld hl,cmd  - zero terminated string
 	;#		call touppercase
@@ -226,10 +250,18 @@ putc:
 ; ld hl, filename (zero terminated)
 ; ld de, memory address to load file into
 ; call loadFILE
-; returns 2 = failed to open the file
-;         0 = if file loaded into memory
+; returns 
+;	HL
+;		not preserved
+;	A register 
+;			2 = failed to open the file
+;			0 = if file loaded into memory
+;	DE register pair
+;			count of bytes loaded
 loadFILE:
+	push af
 	push de ; save de for later
+	call sizereset
 		; try to open the SD card and read some data
 		ld a,FILENAMECLEAR ; // filenameclear
 		out (SDCARD),a
@@ -256,6 +288,8 @@ _$openfile:
 		pop hl ; get load address - must pop the stack before returning
 		cp 0
 		jp nz,available
+		pop af ;# a flag not needed now
+		call sizeloaded
 		ld a,2 ;we have an error trying to open the file.
 		ret
 		
@@ -270,8 +304,17 @@ available:
 	;	ld a,b
 		cp 0 ;// compare the A reg returned by the device
 		jp nz,_$nextbyte
+		pop af ;# restore the af registers because it will tell me if I need to zero terminate the loaded file
+		cp 1
+		jp nz,_1$
+		;# the hl register pair contains the last address we need to write a zero here because the user wants it
+		ld a,0
+		ld (hl),a ;# zero terminated
+
+_1$:
 		ld hl,0
 		call println
+		call sizeloaded
 		ld a,0
 		ret
 _$nextbyte:
@@ -283,7 +326,43 @@ _$nextbyte:
 		inc hl 
 		ld a,'#'
 		out (SERIALPORT),a ;// just echo it back for now
+		call sizeincrement
 		jr available ;
+
+sizeloaded:
+	push ix
+	ld ix,losize
+	ld e,(ix)
+	ld d,(ix+1)
+	pop ix
+	ret
+sizereset:
+	push ix
+	push af
+	ld a,0
+	ld ix,losize
+	ld (ix),a
+	ld (ix+1),a
+	pop af
+	pop ix
+	ret
+sizeincrement:
+	push ix
+	push hl
+
+	ld ix,losize
+	ld l,(ix)
+	ld h,(ix+1)
+	inc HL
+	ld (ix),l
+	ld (ix+1),h
+
+	pop hl
+	pop ix
+	ret
+
+losize: .byte 0
+hisize: .byte 0
 
 ;# ====== hextobyte ==========
 ;#    load HL registers with the 2 ascii characters of a hexadecimal value
@@ -365,12 +444,78 @@ _exitgetfilename:
 	pop af
 	ret
 
+	# === createProcess == #
+	;# stack - note the example below is using the registers as an example, it really don't matter
+	;# which register pair put that data on the stack
+	;# push hl,program - zero terminated
+	;# push de,commandline - zero terminated
+	;# call createProcess
+	;# that should do for now
+	createProcess: ;# this is messy need to have another go at this
+		ld a,0
+		call printhex
+
+		pop hl ;# get the return address
+		exx ;# exchange with other registers
+
+		ld de,userMemory-50 ;# whooa
+		;# copy the command params
+		pop hl ;# get the command params
+		ld a,1
+		call printhex
+
+		call strcpy
+		ld a,2
+		call printhex
+		push hl
+		ld hl,thecommandlinemsg
+		call println
+		pop hl
+		call println ;# print command params
+
+		ld a,3
+		call printhex
+
+		pop hl ;# get the program
+		push HL
+		ld hl,theprocessmsg
+		call println
+		pop hl
+		call println ;# print program name
+		ld de,userMemory
+		ld a,4
+		call printhex
+
+		call loadFILE
+		cp 0
+		jp nz, _createProcesserr$1
+		exx ;# restore the other original registers
+		push hl ; # restore the return address
+		call userMemory
+		ret
+_createProcesserr$1:
+		push af
+		exx ;# restore the other original registers
+		pop af
+		push hl ; # restore the return address
+		ret
+
+theprocessmsg: .string "process:"
+thecommandlinemsg: .string "params:"
 
 	# === getcomandline == #
 	;# ld hl,buffer - address of where to copy the data
 	;# call getcommandline
 	;# returns zero termined string at buffer 
-getcommandline:
+getcommandparams:
+	push de
+	push hl
+	push hl ;# save hl to move into de
+	pop de ;# load hl into de
+	ld hl,userMemory-50
+	call strcpy
+	pop hl
+	pop de
 	ret
 
 ;================================
@@ -445,6 +590,16 @@ _loadaddress$13:
 	ld hl,nextfile
 	ret
 _loadaddress$14:
+	cp CREATEPROCESS
+	jp nz,_loadaddress$15
+	ld hl,createProcess
+	ret
+_loadaddress$15:
+	cp GETCOMMANDPARAMS
+	jp nz,_loadaddress$16
+	ld hl,getcommandparams
+	ret
+_loadaddress$16:
 	#----- not defined ---
 	ld hl,addressfailedmsg
 	call print 
@@ -469,6 +624,7 @@ _loadaddress$14:
 	commandprocessor: .string "cmd"
 	errorloadingmsg: .string "error loading program.\r\n\"
 	addressfailedmsg: .string "GetAddress failed for code:"
+
 
 	; I could set the org address but I'm going to let that move as needed	.org 0x????
 	;#.org 0x0A00-start

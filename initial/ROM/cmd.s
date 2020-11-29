@@ -45,12 +45,18 @@ loadandrun:
 	
 	ld hl,0
 	call println ;# display a new line
-	ld hl, cmdlinebuffer ;# load filename of program
-	ld de, userMemory ;# address where to load program
-	call loadfile
+;	ld hl, cmdlinebuffer ;# load filename of program
+;	ld de, userMemory ;# address where to load program
+;	call loadfile
+;	cp 0
+;	jp nz,loaderr ;# if load returned anything except 0, its an error
+;	jp runuserMemory
+	call createprocess
 	cp 0
-	jp nz,loaderr ;# if load returned anything except 0, its an error
-	jp runuserMemory
+	jp nz,loaderr
+	call resetcommandline
+	ret
+
 
 loaderr:
 	call printhex ;# print return code
@@ -59,8 +65,10 @@ loaderr:
 	ld hl,invalidcommandmsg
 	call println ;# print msg
 	call hexdumpcmdline
-	call resetcommandline
+;#	call resetcommandline
 	ret
+
+
 hexdumpcmdline: 
 	;# when an invalid command happens hexdump 16 bytes 
 	;# of the commmandline.
@@ -220,6 +228,7 @@ _findbuiltinSuccess:
 
 
 		;#======================= builtin functions ====================
+#== hexdump memory builtin == #
 		hexdumpcmd: .string "h,",0
 		
 	hexdump:
@@ -518,6 +527,33 @@ outexit:
 	ld a,TRUE
 	ret
 
+
+	# === createprocess builtin === #
+createprocesscmd: .string "createprocess,"
+createprocess:
+	ld hl,createprocessmsg
+	call println
+	ld hl,cmdlinebuffer
+	push hl ;# save program name
+	dec hl ;# this is stupid but it works
+_1$:
+	inc hl
+	ld a,(hl)
+	
+	cp 0 ;# null terminated
+	jp z,_2$
+
+	cp ' ' ;# look for 1st space
+	jp nz,_1$
+	ld a,0
+	ld (hl),a ;# zero terminate prgram name
+_2$:
+	inc hl
+	push hl ;# save the command parameters
+	call createProcess
+	ret
+
+
 ;# shared variables for builtin functions
 runfrom: .byte 0xc3 ;# jump instruction - must be next to hidump
 hidump: .byte 0 ;# used but hexdump and load
@@ -543,6 +579,7 @@ messages:
 	outmsg: .string "OUT"
 	outsyntaxmsg: .string "  peripheral out syntax: out,0xXX,0xYY - executes\r\nLD A,0xXX\r\nOUT (0xYY), A\r\nwhere 0xYY is the device address, XX is byte to send"
 	outerrormsg: .string " out error."
+	createprocessmsg: .string "hell no"
 
 	commandPromptmsg: .string "\r\n>";
 	invalidcommandmsg: .string ": Invalid command."
@@ -564,6 +601,7 @@ builtin:
 		.2byte helpcmd,help
 		.2byte outcmd,dout
 		.2byte incmd,din
+		.2byte createprocesscmd,createprocess
 
 	endoflist: .2byte 0,0
 

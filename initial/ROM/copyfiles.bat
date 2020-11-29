@@ -6,4 +6,6 @@ copy hello f:\
 copy run@5000 f:\
 copy edit f:\
 copy dir f:\
+copy type f:\
+copy hexdump f:\
 pause

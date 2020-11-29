@@ -38,6 +38,13 @@
 	ld a,GETFILENAME
 	call GetAddress
 	ld (getfilenameadr),hl
+	ld a,CREATEPROCESS
+	call GetAddress
+	ld (createProcessadr),hl
+	ld a,GETCOMMANDPARAMS
+	call GetAddress
+	ld (getcommandparamsadr),hl
+
 
 	jp _main
 
@@ -67,5 +74,9 @@
 	directorynextfileadr: .2byte 0
 	getfilename: .byte 0xc3
 	getfilenameadr: .2byte 0
+	createProcess: .byte 0xc3
+	createProcessadr: .2byte 0
+	getcommandparams: .byte 0xc3
+	getcommandparamsadr: .2byte 0
 
 _main:

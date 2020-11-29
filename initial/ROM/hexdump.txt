@@ -1,0 +1,826 @@
+F00:0001       .include "Routines.inc"
+F01:0001       
+F01:0002       # address where user programs load
+F01:0003       .include "SERIAL.inc"
+F02:0001       .equ SERIALPORT , 0x01
+F02:0002       
+F01:0004       .include "SDCARD.inc"
+F03:0001       .equ SDCARD,0x05
+F03:0002       ; ******* SDCARD *********
+F03:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
+F03:0004       .equ FILENAMECLEAR ,1
+F03:0005       
+F03:0006       ; z80 out + in -open: will return a status 1 if file open successfull, 0 if open failed
+F03:0007       .equ OPEN ,2
+F03:0008       
+F03:0009       ; z80 out - close: no return value
+F03:0010       .equ CLOSE ,3
+F03:0011       
+F03:0012       ; z80 out + out - filenameappend: no return value
+F03:0013       .equ FILENAMEAPPEND ,4
+F03:0014       
+F03:0015       ; z80 out + in - readnextbyte: will return 0xFF is nothing to read, which might be a problem if you don't check the avai
+F03:0016       .equ READNEXTBYTE ,5
+F03:0017       
+F03:0018       ; z80 out + in - available: return 1 is data is available, 0 if no data available
+F03:0019       .equ AVAILABLE ,6
+F03:0020       
+F03:0021       ; z80 out + in - openwrite: open file for write ,will return a status 1 if file open successfull, 0 if open failed
+F03:0022       .equ OPENWRITE,7
+F03:0023       
+F03:0024       ; z80 - out + out -writebyte: will write data to an open file,is no file is open or the file is not writable nothing wil
+F03:0025       .equ WRITEBYTE,8
+F03:0026       
+F03:0027       ;#===============================
+F03:0028       ; z80 - out -getname: prepares to get the openfilename, use NAMEAVAILABLE to read the bytes, no return value
+F03:0029       .equ GETNAME,0x20
+F03:0030       ; z80 out + in - nameavailable: return next character of the filename, or 0 it no more characters
+F03:0031       .equ NAMEAVAILABLE,0x21
+F03:0032       ;z80 - out - opendirectory : will open the root directory for directory listing, no return value
+F03:0033       .equ OPENDIRECTORY,0x31
+F03:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
+F03:0035       .equ NEXTFILE,0x32
+F01:0005       .equ commandMemory, 0x1000
+F01:0006       .equ userMemory,0x2000
+F01:0007       
+F01:0008       .equ TRUE, 1
+F01:0009       .equ FALSE, 0
+F01:0010       
+F01:0011       # the only fixed address (i hope), use it to get the address of utilities methods
+F01:0012       # ld a, PRINT
+F01:0013       # call GetAddress
+F01:0014       # address for print loaded into hl
+F01:0015       # the value in hl can change between os versions so do not hard code the values
+F01:0016       
+F01:0017       .equ GetAddress, 0x0804
+F01:0018       .equ PRINT,		1
+F01:0019       .equ PRINTLN,	9
+F01:0020       .equ PRINTHEX,	2
+F01:0021       .equ LOADFILE,	3
+F01:0022       .equ MEMSET,	4
+F01:0023       .equ STRLEN,	5
+F01:0024       .equ PUTC,		6
+F01:0025       .equ TOUPPERCASE,7
+F01:0026       .equ HEXTOBYTE,	8
+F01:0027       .equ STRNCPY,10
+F01:0028       .equ CREATEPROCESS,16
+F01:0029       .equ GETCOMMANDPARAMS,17
+F01:0030       # filesystem - primitive functions, probably going to change 
+F01:0031       .equ DIRECTORYOPEN,13
+F01:0032       .equ DIRECTORYNEXTFILE,14
+F01:0033       .equ GETFILENAME,15
+F01:0034       
+F01:0035       
+F01:0036       
+F01:0037       .equ NEXTNUMBER,18
+F01:0038       
+F01:0039       
+F00:0002       .include "libs.inc"
+F04:0001       
+F04:0002       .ifndef __CMD__
+F04:0003       	.org userMemory
+F04:0004       .endif
+F04:0005       	ld a,PRINT
+               S01:00002000:  3E 01
+F04:0006       	call GetAddress
+               S01:00002002:  CD 04 08
+F04:0007       	ld (printadr),hl
+               S01:00002005:  22 75 20
+F04:0008       	ld a,PRINTHEX
+               S01:00002008:  3E 02
+F04:0009       	call GetAddress
+               S01:0000200A:  CD 04 08
+F04:0010       	ld (printhexadr),hl
+               S01:0000200D:  22 7B 20
+F04:0011       	ld a,LOADFILE
+               S01:00002010:  3E 03
+F04:0012       	call GetAddress
+               S01:00002012:  CD 04 08
+F04:0013       	ld (loadfileadr),hl
+               S01:00002015:  22 7E 20
+F04:0014       	ld a,MEMSET
+               S01:00002018:  3E 04
+F04:0015       	call GetAddress
+               S01:0000201A:  CD 04 08
+F04:0016       	ld (memsetadr),hl
+               S01:0000201D:  22 81 20
+F04:0017       	ld a,STRLEN
+               S01:00002020:  3E 05
+F04:0018       	call GetAddress
+               S01:00002022:  CD 04 08
+F04:0019       	ld (strlenadr),hl
+               S01:00002025:  22 84 20
+F04:0020       	ld a,PUTC
+               S01:00002028:  3E 06
+F04:0021       	call GetAddress
+               S01:0000202A:  CD 04 08
+F04:0022       	ld (putcadr),hl
+               S01:0000202D:  22 87 20
+F04:0023       	ld a,TOUPPERCASE
+               S01:00002030:  3E 07
+F04:0024       	call GetAddress
+               S01:00002032:  CD 04 08
+F04:0025       	ld (touppercaseadr),hl
+               S01:00002035:  22 8A 20
+F04:0026       	ld a,HEXTOBYTE
+               S01:00002038:  3E 08
+F04:0027       	call GetAddress
+               S01:0000203A:  CD 04 08
+F04:0028       	ld (hextobyteadr),hl
+               S01:0000203D:  22 8D 20
+F04:0029       	ld a,PRINTLN
+               S01:00002040:  3E 09
+F04:0030       	call GetAddress
+               S01:00002042:  CD 04 08
+F04:0031       	ld (printlnadr),hl
+               S01:00002045:  22 78 20
+F04:0032       	ld a,DIRECTORYOPEN
+               S01:00002048:  3E 0D
+F04:0033       	call GetAddress
+               S01:0000204A:  CD 04 08
+F04:0034       	ld (directoryopenadr),hl
+               S01:0000204D:  22 90 20
+F04:0035       	ld a,NEXTFILE
+               S01:00002050:  3E 32
+F04:0036       	call GetAddress
+               S01:00002052:  CD 04 08
+F04:0037       	ld (directorynextfileadr),hl
+               S01:00002055:  22 93 20
+F04:0038       	ld a,GETFILENAME
+               S01:00002058:  3E 0F
+F04:0039       	call GetAddress
+               S01:0000205A:  CD 04 08
+F04:0040       	ld (getfilenameadr),hl
+               S01:0000205D:  22 96 20
+F04:0041       	ld a,CREATEPROCESS
+               S01:00002060:  3E 10
+F04:0042       	call GetAddress
+               S01:00002062:  CD 04 08
+F04:0043       	ld (createProcessadr),hl
+               S01:00002065:  22 99 20
+F04:0044       	ld a,GETCOMMANDPARAMS
+               S01:00002068:  3E 11
+F04:0045       	call GetAddress
+               S01:0000206A:  CD 04 08
+F04:0046       	ld (getcommandparamsadr),hl
+               S01:0000206D:  22 9C 20
+F04:0047       
+F04:0048       
+F04:0049       	jp _main
+               S01:00002070:  C3 9E 20
+F04:0050       
+F04:0051       	functionlookups:
+F04:0052       	.align 2
+F04:0053       	print: .byte 0xc3
+               S01:00002074:  C3
+F04:0054       	printadr: .2byte 0
+               S01:00002075:  00 00
+F04:0055       	println: .byte 0xc3
+               S01:00002077:  C3
+F04:0056       	printlnadr: .2byte 0
+               S01:00002078:  00 00
+F04:0057       	printhex: .byte 0xc3
+               S01:0000207A:  C3
+F04:0058       	printhexadr: .2byte 0
+               S01:0000207B:  00 00
+F04:0059       	loadfile: .byte 0xc3
+               S01:0000207D:  C3
+F04:0060       	loadfileadr: .2byte 0
+               S01:0000207E:  00 00
+F04:0061       	memset: .byte 0xc3
+               S01:00002080:  C3
+F04:0062       	memsetadr: .2byte 0
+               S01:00002081:  00 00
+F04:0063       	strlen: .byte 0xc3
+               S01:00002083:  C3
+F04:0064       	strlenadr: .2byte 0
+               S01:00002084:  00 00
+F04:0065       	putc: .byte 0xc3
+               S01:00002086:  C3
+F04:0066       	putcadr: .2byte 0
+               S01:00002087:  00 00
+F04:0067       	touppercase: .byte 0xc3
+               S01:00002089:  C3
+F04:0068       	touppercaseadr: .2byte 0
+               S01:0000208A:  00 00
+F04:0069       	hextobyte: .byte 0xc3
+               S01:0000208C:  C3
+F04:0070       	hextobyteadr: .2byte 0
+               S01:0000208D:  00 00
+F04:0071       	directoryopen: .byte 0xc3
+               S01:0000208F:  C3
+F04:0072       	directoryopenadr: .2byte 0
+               S01:00002090:  00 00
+F04:0073       	directorynextfile: .byte 0xc3
+               S01:00002092:  C3
+F04:0074       	directorynextfileadr: .2byte 0
+               S01:00002093:  00 00
+F04:0075       	getfilename: .byte 0xc3
+               S01:00002095:  C3
+F04:0076       	getfilenameadr: .2byte 0
+               S01:00002096:  00 00
+F04:0077       	createProcess: .byte 0xc3
+               S01:00002098:  C3
+F04:0078       	createProcessadr: .2byte 0
+               S01:00002099:  00 00
+F04:0079       	getcommandparams: .byte 0xc3
+               S01:0000209B:  C3
+F04:0080       	getcommandparamsadr: .2byte 0
+               S01:0000209C:  00 00
+F04:0081       
+F04:0082       _main:
+F00:0003       ;# this is unfinished. in the function getcharacter, it will display the ascii printable characters
+F00:0004       ;# but it will also print characters passed the bytes loaded from the file. the hex display will
+F00:0005       ;# stop printing at the correct place, but the ascii display does not. I was using the
+F00:0006       ;# length variable to determine when to display the characters, I don't think this approad was working.
+F00:0007       ;# so look at it again when your not so tired. Peter
+F00:0008       
+F00:0009       	call lengthreset
+               S01:0000209E:  CD E9 21
+F00:0010       	ld hl,msg
+               S01:000020A1:  21 35 22
+F00:0011       	call println
+               S01:000020A4:  CD 77 20
+F00:0012       	ld hl,params
+               S01:000020A7:  21 5E 22
+F00:0013       	call getcommandparams
+               S01:000020AA:  CD 9B 20
+F00:0014       	call println
+               S01:000020AD:  CD 77 20
+F00:0015       	ld de,dumparea
+               S01:000020B0:  11 90 22
+F00:0016       	ld hl,params
+               S01:000020B3:  21 5E 22
+F00:0017       	ld a,1 ;# ask for zero terminated
+               S01:000020B6:  3E 01
+F00:0018       	call loadfile
+               S01:000020B8:  CD 7D 20
+F00:0019       	cp 0
+               S01:000020BB:  FE 00
+F00:0020       	jp nz,error
+               S01:000020BD:  C2 45 22
+F00:0021       	;# save the de register as it has the load size
+F00:0022       
+F00:0023       
+F00:0024       	ld ix,losize
+               S01:000020C0:  DD 21 2E 22
+F00:0025       	ld (ix),e
+               S01:000020C4:  DD 73 00
+F00:0026       	ld (ix+1),d
+               S01:000020C7:  DD 72 01
+F00:0027       
+F00:0028       	ld hl,dumparea
+               S01:000020CA:  21 90 22
+F00:0029       	call hexdumpprint
+               S01:000020CD:  CD DC 20
+F00:0030       	jp _exit
+               S01:000020D0:  C3 D9 20
+F00:0031       
+F00:0032       _error: 
+F00:0033       	ld hl,error
+               S01:000020D3:  21 45 22
+F00:0034       	call println
+               S01:000020D6:  CD 77 20
+F00:0035       _exit:
+F00:0036       	ld a,0
+               S01:000020D9:  3E 00
+F00:0037       	ret
+               S01:000020DB:  C9
+F00:0038       
+F00:0039       
+F00:0040       
+F00:0041       
+F00:0042       hexdumpprint:
+F00:0043       
+F00:0044       	;# print the heading
+F00:0045       
+F00:0046       	ld b,7
+               S01:000020DC:  06 07
+F00:0047       _sp$1:
+F00:0048       	ld a,' ' ;# 7 spaces
+               S01:000020DE:  3E 20
+F00:0049       	call putc
+               S01:000020E0:  CD 86 20
+F00:0050       	djnz _sp$1
+               S01:000020E3:  10 F9
+F00:0051       
+F00:0052       	ld a,0 ;# for column header
+               S01:000020E5:  3E 00
+F00:0053       	ld b,16 ;# 16 column headers
+               S01:000020E7:  06 10
+F00:0054       _col$1:
+F00:0055       	call printhex
+               S01:000020E9:  CD 7A 20
+F00:0056       	inc a
+               S01:000020EC:  3C
+F00:0057       
+F00:0058       	push af
+               S01:000020ED:  F5
+F00:0059       	ld a,' '
+               S01:000020EE:  3E 20
+F00:0060       	call putc
+               S01:000020F0:  CD 86 20
+F00:0061       	pop af
+               S01:000020F3:  F1
+F00:0062       
+F00:0063       	djnz _col$1
+               S01:000020F4:  10 F3
+F00:0064       
+F00:0065       	ld hl,0 ;# newline
+               S01:000020F6:  21 00 00
+F00:0066       	call println
+               S01:000020F9:  CD 77 20
+F00:0067       
+F00:0068       	ld hl,dumparea
+               S01:000020FC:  21 90 22
+F00:0069       
+F00:0070       _reload:
+F00:0071       	ld b,16 ;# outer loop
+               S01:000020FF:  06 10
+F00:0072       _hexdp0:
+F00:0073       	call issize0
+               S01:00002101:  CD 8F 21
+F00:0074       	cp 0
+               S01:00002104:  FE 00
+F00:0075       	ret z
+               S01:00002106:  C8
+F00:0076       
+F00:0077       	push bc
+               S01:00002107:  C5
+F00:0078       
+F00:0079       	ld b,16 ;# inner loop
+               S01:00002108:  06 10
+F00:0080       		;# print the address
+F00:0081       	push hl
+               S01:0000210A:  E5
+F00:0082       	ld hl,hexdumpprefix
+               S01:0000210B:  21 32 22
+F00:0083       	call print
+               S01:0000210E:  CD 74 20
+F00:0084       	;#new code
+F00:0085       	ld hl,(lolength)
+               S01:00002111:  2A 30 22
+F00:0086       	ld a,h
+               S01:00002114:  7C
+F00:0087       	call printhex
+               S01:00002115:  CD 7A 20
+F00:0088       	ld a,l
+               S01:00002118:  7D
+F00:0089       	call printhex
+               S01:00002119:  CD 7A 20
+F00:0090       	;# end new code
+F00:0091       	pop hl
+               S01:0000211C:  E1
+F00:0092       
+F00:0093       ;	ld a,h
+F00:0094       ;	call printhex
+F00:0095       ;	ld a,l
+F00:0096       ;	call printhex
+F00:0097       	ld a,' '
+               S01:0000211D:  3E 20
+F00:0098       	call putc
+               S01:0000211F:  CD 86 20
+F00:0099       _hexdp$1:
+F00:0100       
+F00:0101       ; moved	call lengthincrement
+F00:0102       	call sizedecrement
+               S01:00002122:  CD AD 21
+F00:0103       	;# print the byte values
+F00:0104       	ld a,(hl)
+               S01:00002125:  7E
+F00:0105       	call printhex
+               S01:00002126:  CD 7A 20
+F00:0106       	ld a,' '
+               S01:00002129:  3E 20
+F00:0107       	call putc
+               S01:0000212B:  CD 86 20
+F00:0108       	;# next byte
+F00:0109       
+F00:0110       	inc hl
+               S01:0000212E:  23
+F00:0111       	call issize0
+               S01:0000212F:  CD 8F 21
+F00:0112       	cp 0
+               S01:00002132:  FE 00
+F00:0113       	jp z,4$
+               S01:00002134:  CA 3C 21
+F00:0114       	djnz _hexdp$1
+               S01:00002137:  10 E9
+F00:0115       	jp 3$
+               S01:00002139:  C3 4A 21
+F00:0116       4$:
+F00:0117       	
+F00:0118       	push hl ;# save hl because we need to keep track of the location
+               S01:0000213C:  E5
+F00:0119       	pop de
+               S01:0000213D:  D1
+F00:0120       	dec b
+               S01:0000213E:  05
+F00:0121       41$:
+F00:0122       	ld hl,_3spaces
+               S01:0000213F:  21 A9 21
+F00:0123       	call print
+               S01:00002142:  CD 74 20
+F00:0124       	inc de
+               S01:00002145:  13
+F00:0125       
+F00:0126       	djnz 41$
+               S01:00002146:  10 F7
+F00:0127       	push de
+               S01:00002148:  D5
+F00:0128       	pop hl
+               S01:00002149:  E1
+F00:0129       3$:
+F00:0130       	;# now repeat the line and display the ascii value
+F00:0131       	or a ;# reset carry flag
+               S01:0000214A:  B7
+F00:0132       	ld de,16
+               S01:0000214B:  11 10 00
+F00:0133       	sbc hl,de ;# subtrack 16bytes
+               S01:0000214E:  ED 52
+F00:0134       
+F00:0135       	ld a,'|' ;# output border character
+               S01:00002150:  3E 7C
+F00:0136       	call putc
+               S01:00002152:  CD 86 20
+F00:0137       	ld b,16
+               S01:00002155:  06 10
+F00:0138       _dexdpc$1:
+F00:0139       	call getcharacter
+               S01:00002157:  CD 79 21
+F00:0140       	call putc
+               S01:0000215A:  CD 86 20
+F00:0141       	inc hl
+               S01:0000215D:  23
+F00:0142       	djnz _dexdpc$1
+               S01:0000215E:  10 F7
+F00:0143       
+F00:0144       	ld a,"|" ;# output border character
+               S01:00002160:  3E 7C
+F00:0145       	call putc
+               S01:00002162:  CD 86 20
+F00:0146       
+F00:0147       	;# next line
+F00:0148       	push hl
+               S01:00002165:  E5
+F00:0149       	ld hl,0
+               S01:00002166:  21 00 00
+F00:0150       	call println
+               S01:00002169:  CD 77 20
+F00:0151       	pop hl
+               S01:0000216C:  E1
+F00:0152       	pop bc
+               S01:0000216D:  C1
+F00:0153       	djnz _hexdp0
+               S01:0000216E:  10 91
+F00:0154       	call issize0
+               S01:00002170:  CD 8F 21
+F00:0155       	cp 0
+               S01:00002173:  FE 00
+F00:0156       	jp nz,_reload
+               S01:00002175:  C2 FF 20
+F00:0157       
+F00:0158       	ret
+               S01:00002178:  C9
+F00:0159       
+F00:0160       getcharacter: ;# need to move some code out of the djnz loop because it was too big
+F00:0161       
+F00:0162       
+F00:0163       	call lengthincrement
+               S01:00002179:  CD FC 21
+F00:0164       	ld a,(hl)
+               S01:0000217C:  7E
+F00:0165       	cp 32 ;# space
+               S01:0000217D:  FE 20
+F00:0166       	jp p, _nex$2 ;# if character >= 32 jump
+               S01:0000217F:  F2 87 21
+F00:0167       	ld a,'.'
+               S01:00002182:  3E 2E
+F00:0168       	jp _prt$
+               S01:00002184:  C3 8E 21
+F00:0169       _nex$2:
+F00:0170       	cp 127 ;# delete
+               S01:00002187:  FE 7F
+F00:0171       	jp m,_prt$ ;# if character < 127 jump print
+               S01:00002189:  FA 8E 21
+F00:0172       	ld a,'.' ;# else print a dot
+               S01:0000218C:  3E 2E
+F00:0173       
+F00:0174       _prt$:
+F00:0175       
+F00:0176       	ret
+               S01:0000218E:  C9
+F00:0177       
+F00:0178       issize0:
+F00:0179       	ld ix,losize
+               S01:0000218F:  DD 21 2E 22
+F00:0180       	ld a,(ix)
+               S01:00002193:  DD 7E 00
+F00:0181       	cp 0
+               S01:00002196:  FE 00
+F00:0182       	jp nz,_not
+               S01:00002198:  C2 A6 21
+F00:0183       
+F00:0184       	ld a,(ix+1)
+               S01:0000219B:  DD 7E 01
+F00:0185       	cp 0
+               S01:0000219E:  FE 00
+F00:0186       	jp nz,_not
+               S01:000021A0:  C2 A6 21
+F00:0187       	ld a,0
+               S01:000021A3:  3E 00
+F00:0188       	ret
+               S01:000021A5:  C9
+F00:0189       _not:
+F00:0190       	ld a,1
+               S01:000021A6:  3E 01
+F00:0191       	ret
+               S01:000021A8:  C9
+F00:0192       _3spaces: .string "   "
+               S01:000021A9:  20 20 20
+F00:0193       ;# this will decrement to zero but will not go below zero
+F00:0194       ;# if zero A register = 0
+F00:0195       ;# if not zero A register = 1
+F00:0196       sizedecrement:
+F00:0197       
+F00:0198       	push ix
+               S01:000021AD:  DD E5
+F00:0199       	push hl
+               S01:000021AF:  E5
+F00:0200       
+F00:0201       
+F00:0202       	ld ix,losize
+               S01:000021B0:  DD 21 2E 22
+F00:0203       	ld l,(ix)
+               S01:000021B4:  DD 6E 00
+F00:0204       	ld h,(ix+1)
+               S01:000021B7:  DD 66 01
+F00:0205       
+F00:0206       	ld a,l
+               S01:000021BA:  7D
+F00:0207       	
+F00:0208       	cp 0
+               S01:000021BB:  FE 00
+F00:0209       	jp nz,_4$
+               S01:000021BD:  C2 CB 21
+F00:0210       	ld a,h
+               S01:000021C0:  7C
+F00:0211       	cp 0
+               S01:000021C1:  FE 00
+F00:0212       	jp nz,_4$
+               S01:000021C3:  C2 CB 21
+F00:0213       	ld a,0
+               S01:000021C6:  3E 00
+F00:0214       	jp _2$
+               S01:000021C8:  C3 E5 21
+F00:0215       
+F00:0216       _4$:
+F00:0217       	dec HL
+               S01:000021CB:  2B
+F00:0218       	ld (ix),l
+               S01:000021CC:  DD 75 00
+F00:0219       	ld (ix+1),h
+               S01:000021CF:  DD 74 01
+F00:0220       	ld a,l
+               S01:000021D2:  7D
+F00:0221       	cp 0
+               S01:000021D3:  FE 00
+F00:0222       	jp nz, _1$
+               S01:000021D5:  C2 E3 21
+F00:0223       	ld a,h
+               S01:000021D8:  7C
+F00:0224       	cp 0
+               S01:000021D9:  FE 00
+F00:0225       	jp nz,_1$
+               S01:000021DB:  C2 E3 21
+F00:0226       
+F00:0227       
+F00:0228       
+F00:0229       	ld a,0	;# yes it's zero
+               S01:000021DE:  3E 00
+F00:0230       	jp _2$
+               S01:000021E0:  C3 E5 21
+F00:0231       _1$:		;# not zero yet
+F00:0232       	ld a,1
+               S01:000021E3:  3E 01
+F00:0233       	
+F00:0234       _2$:
+F00:0235       	pop hl
+               S01:000021E5:  E1
+F00:0236       	pop ix
+               S01:000021E6:  DD E1
+F00:0237       	ret
+               S01:000021E8:  C9
+F00:0238       
+F00:0239       lengthreset:
+F00:0240       	push ix
+               S01:000021E9:  DD E5
+F00:0241       	push af
+               S01:000021EB:  F5
+F00:0242       	ld a,0
+               S01:000021EC:  3E 00
+F00:0243       	ld ix,lolength
+               S01:000021EE:  DD 21 30 22
+F00:0244       	ld (ix),a
+               S01:000021F2:  DD 77 00
+F00:0245       	ld (ix+1),a
+               S01:000021F5:  DD 77 01
+F00:0246       	pop af
+               S01:000021F8:  F1
+F00:0247       	pop ix
+               S01:000021F9:  DD E1
+F00:0248       	ret
+               S01:000021FB:  C9
+F00:0249       
+F00:0250       lengthincrement:
+F00:0251       	push ix
+               S01:000021FC:  DD E5
+F00:0252       	push hl
+               S01:000021FE:  E5
+F00:0253       
+F00:0254       	ld ix,lolength
+               S01:000021FF:  DD 21 30 22
+F00:0255       	ld l,(ix)
+               S01:00002203:  DD 6E 00
+F00:0256       	ld h,(ix+1)
+               S01:00002206:  DD 66 01
+F00:0257       	inc HL
+               S01:00002209:  23
+F00:0258       	ld (ix),l
+               S01:0000220A:  DD 75 00
+F00:0259       	ld (ix+1),h
+               S01:0000220D:  DD 74 01
+F00:0260       
+F00:0261       	pop hl
+               S01:00002210:  E1
+F00:0262       	pop ix
+               S01:00002211:  DD E1
+F00:0263       	ret
+               S01:00002213:  C9
+F00:0264       
+F00:0265       islength0:
+F00:0266       	ld ix,lolength
+               S01:00002214:  DD 21 30 22
+F00:0267       	ld a,(ix)
+               S01:00002218:  DD 7E 00
+F00:0268       	cp 0
+               S01:0000221B:  FE 00
+F00:0269       	jp nz,_not
+               S01:0000221D:  C2 A6 21
+F00:0270       
+F00:0271       	ld a,(ix+1)
+               S01:00002220:  DD 7E 01
+F00:0272       	cp 0
+               S01:00002223:  FE 00
+F00:0273       	jp nz,_1$
+               S01:00002225:  C2 2B 22
+F00:0274       	ld a,0
+               S01:00002228:  3E 00
+F00:0275       	ret
+               S01:0000222A:  C9
+F00:0276       _1$:
+F00:0277       	ld a,1
+               S01:0000222B:  3E 01
+F00:0278       	ret
+               S01:0000222D:  C9
+F00:0279       
+F00:0280       
+F00:0281       losize: .byte 0
+               S01:0000222E:  00
+F00:0282       hisize: .byte 0
+               S01:0000222F:  00
+F00:0283       
+F00:0284       lolength: .byte 0
+               S01:00002230:  00
+F00:0285       hilength: .byte 0
+               S01:00002231:  00
+F00:0286       
+F00:0287       hexdumpprefix: .string "0x"
+               S01:00002232:  30 78
+F00:0288       	
+F00:0289       msg: .string "the params are:"
+               S01:00002235:  74 68 65 20 70 61 72 61 6D 73 20 61 72 65 3A
+F00:0290       error: .string "failed to load the file."
+               S01:00002245:  66 61 69 6C 65 64 20 74 6F 20 6C 6F 61 64 20 74
+               S01:00002255:  68 65 20 66 69 6C 65 2E
+F00:0291       params: .space 50
+F00:0292       dumparea: .space 1 ;# this is not correct the loadfile will expand passed this
+
+
+Sections:
+S01  seg2000
+
+
+Sources:
+F00  hexdump.s
+F01  Routines.inc
+F02  SERIAL.inc
+F03  SDCARD.inc
+F04  libs.inc
+
+
+Symbols:
+hilength EXPR(8753=0x2231) UNUSED ABS 
+hisize EXPR(8751=0x222f) UNUSED ABS 
+ islength0 _1$ EXPR(8747=0x222b) ABS 
+islength0 EXPR(8724=0x2214) UNUSED ABS 
+ sizedecrement _1$ EXPR(8675=0x21e3) ABS 
+ sizedecrement _2$ EXPR(8677=0x21e5) ABS 
+ sizedecrement _4$ EXPR(8651=0x21cb) ABS 
+_not EXPR(8614=0x21a6) ABS 
+_prt$ EXPR(8590=0x218e) ABS 
+_nex$2 EXPR(8583=0x2187) ABS 
+lengthincrement EXPR(8700=0x21fc) ABS 
+getcharacter EXPR(8569=0x2179) ABS 
+_dexdpc$1 EXPR(8535=0x2157) ABS 
+_3spaces EXPR(8617=0x21a9) ABS 
+ _hexdp$1 41$ EXPR(8511=0x213f) ABS 
+ _hexdp$1 3$ EXPR(8522=0x214a) ABS 
+ _hexdp$1 4$ EXPR(8508=0x213c) ABS 
+sizedecrement EXPR(8621=0x21ad) ABS 
+_hexdp$1 EXPR(8482=0x2122) ABS 
+lolength EXPR(8752=0x2230) ABS 
+hexdumpprefix EXPR(8754=0x2232) ABS 
+issize0 EXPR(8591=0x218f) ABS 
+_hexdp0 EXPR(8449=0x2101) ABS 
+_reload EXPR(8447=0x20ff) ABS 
+_col$1 EXPR(8425=0x20e9) ABS 
+_sp$1 EXPR(8414=0x20de) ABS 
+_error EXPR(8403=0x20d3) UNUSED ABS 
+_exit EXPR(8409=0x20d9) ABS 
+hexdumpprint EXPR(8412=0x20dc) ABS 
+losize EXPR(8750=0x222e) ABS 
+error EXPR(8773=0x2245) ABS 
+dumparea EXPR(8848=0x2290) ABS 
+params EXPR(8798=0x225e) ABS 
+msg EXPR(8757=0x2235) ABS 
+lengthreset EXPR(8681=0x21e9) ABS 
+getcommandparams EXPR(8347=0x209b) ABS 
+createProcess EXPR(8344=0x2098) UNUSED ABS 
+getfilename EXPR(8341=0x2095) UNUSED ABS 
+directorynextfile EXPR(8338=0x2092) UNUSED ABS 
+directoryopen EXPR(8335=0x208f) UNUSED ABS 
+hextobyte EXPR(8332=0x208c) UNUSED ABS 
+touppercase EXPR(8329=0x2089) UNUSED ABS 
+putc EXPR(8326=0x2086) ABS 
+strlen EXPR(8323=0x2083) UNUSED ABS 
+memset EXPR(8320=0x2080) UNUSED ABS 
+loadfile EXPR(8317=0x207d) ABS 
+printhex EXPR(8314=0x207a) ABS 
+println EXPR(8311=0x2077) ABS 
+print EXPR(8308=0x2074) ABS 
+functionlookups EXPR(8307=0x2073) UNUSED ABS 
+_main EXPR(8350=0x209e) ABS 
+getcommandparamsadr EXPR(8348=0x209c) ABS 
+createProcessadr EXPR(8345=0x2099) ABS 
+getfilenameadr EXPR(8342=0x2096) ABS 
+directorynextfileadr EXPR(8339=0x2093) ABS 
+directoryopenadr EXPR(8336=0x2090) ABS 
+printlnadr EXPR(8312=0x2078) ABS 
+hextobyteadr EXPR(8333=0x208d) ABS 
+touppercaseadr EXPR(8330=0x208a) ABS 
+putcadr EXPR(8327=0x2087) ABS 
+strlenadr EXPR(8324=0x2084) ABS 
+memsetadr EXPR(8321=0x2081) ABS 
+loadfileadr EXPR(8318=0x207e) ABS 
+printhexadr EXPR(8315=0x207b) ABS 
+printadr EXPR(8309=0x2075) ABS 
+NEXTNUMBER EXPR(18=0x12) UNUSED 
+GETFILENAME EXPR(15=0xf) 
+DIRECTORYNEXTFILE EXPR(14=0xe) UNUSED 
+DIRECTORYOPEN EXPR(13=0xd) 
+GETCOMMANDPARAMS EXPR(17=0x11) 
+CREATEPROCESS EXPR(16=0x10) 
+STRNCPY EXPR(10=0xa) UNUSED 
+HEXTOBYTE EXPR(8=0x8) 
+TOUPPERCASE EXPR(7=0x7) 
+PUTC EXPR(6=0x6) 
+STRLEN EXPR(5=0x5) 
+MEMSET EXPR(4=0x4) 
+LOADFILE EXPR(3=0x3) 
+PRINTHEX EXPR(2=0x2) 
+PRINTLN EXPR(9=0x9) 
+PRINT EXPR(1=0x1) 
+GetAddress EXPR(2052=0x804) 
+FALSE EXPR(0=0x0) UNUSED 
+TRUE EXPR(1=0x1) UNUSED 
+userMemory EXPR(8192=0x2000) 
+commandMemory EXPR(4096=0x1000) UNUSED 
+NEXTFILE EXPR(50=0x32) 
+OPENDIRECTORY EXPR(49=0x31) UNUSED 
+NAMEAVAILABLE EXPR(33=0x21) UNUSED 
+GETNAME EXPR(32=0x20) UNUSED 
+WRITEBYTE EXPR(8=0x8) UNUSED 
+OPENWRITE EXPR(7=0x7) UNUSED 
+AVAILABLE EXPR(6=0x6) UNUSED 
+READNEXTBYTE EXPR(5=0x5) UNUSED 
+FILENAMEAPPEND EXPR(4=0x4) UNUSED 
+CLOSE EXPR(3=0x3) UNUSED 
+OPEN EXPR(2=0x2) UNUSED 
+FILENAMECLEAR EXPR(1=0x1) UNUSED 
+SDCARD EXPR(5=0x5) UNUSED 
+SERIALPORT EXPR(1=0x1) UNUSED 
+__VASM EXPR(0=0x0) INTERNAL 
+__MSDOSFS EXPR(0=0x0) INTERNAL 
+
+There have been no errors.
