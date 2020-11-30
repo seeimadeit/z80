@@ -208,6 +208,11 @@ unsigned char WriteCmd(int command)
             case OPEN:
     //        DWRITE("OPEN"); DWRITE((char*)filename); DWRITE("****");
                 file = SD.open(filename);
+                if (!file) {
+                   SD.begin(chipSelect);
+                   file = SD.open(filename);
+
+                }
                 state=OPEN;
                 break;
             case OPENWRITE:
