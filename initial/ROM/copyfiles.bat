@@ -8,4 +8,7 @@ copy edit f:\
 copy dir f:\
 copy type f:\
 copy hexdump f:\
+copy asm f:\
+copy small.s f:\
+
 pause

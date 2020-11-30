@@ -294,7 +294,7 @@ _col$1:
 	call println
 
 	ld hl,(hidump)
-
+	ld l,0 ;# alway start at page boundry
 	ld b,16 ;# outer loop
 _hexdp0:
 	push bc
@@ -315,9 +315,31 @@ _hexdp0:
 _hexdp$1:
 
 	;# print the byte values
+	push hl
+	ld hl,hidump
 	ld a,(hl)
+	pop hl
+	cp l
+	jp nz,1$
+
+	push hl
+	ld hl,boldon ;# found the byte of interest turn on bold
+	call print
+	pop hl
+
+	ld a,(hl)  ;# print the hex value
 	call printhex
-	ld a,' '
+	
+	push hl
+	ld hl,boldoff ;# turn off bold
+	call print
+	pop hl
+
+	jp 2$ ;# continue
+
+1$:	ld a,(hl)
+	call printhex
+2$:	ld a,' '
 	call putc
 	;# next byte
 	inc hl
@@ -567,6 +589,8 @@ messages:
 	welcomemsg: .string "Welcome to Z80"
 	hexdumpmsg: .string "HEXDUMP"
 	hexdumpprefix: .string "0x"
+	boldon: .string "\033[1m"
+	boldoff: .string "\033[m"
 	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal"
 	loadmsg: .string "LOAD"
 	loadsyntaxmsg: .string "  load syntax: l,0xXXXX,filename - load file @ 0xXXXX address"

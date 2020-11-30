@@ -38,6 +38,8 @@
     </None>
     <None Include="dir.s" />
     <None Include="type.s" />
+    <None Include="asm.s" />
+    <None Include="small.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />
@@ -49,5 +51,6 @@
     <Text Include="type.txt" />
     <Text Include="hexdump.s" />
     <Text Include="hexdump.txt" />
+    <Text Include="asm.txt" />
   </ItemGroup>
 </Project>

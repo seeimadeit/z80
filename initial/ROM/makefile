@@ -2,7 +2,7 @@
 CC = vasm\vasm.exe 
 DEL = del
 CCOUT = -Fbin
-COPTS = $(CCOUT) 
+COPTS = $(CCOUT) -z80asm
 INC   = -I.
 TARGET = ROM
 TARGET2 = RAM
@@ -13,12 +13,13 @@ TARGET5 = edit
 TARGET6 = dir
 TARGET7 = type
 TARGET8 = hexdump
+TARGET9 = asm
 
 
-all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8)
+all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8) $(TARGET9)
 
 clean:
-	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8)
+	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8) $(TARGET9)
 
 
 $(TARGET):
@@ -47,4 +48,7 @@ $(TARGET7):
 
 $(TARGET8):
 	$(CC) $(OPTS) $(INC) $(CCOUT) -L hexdump.txt -o $(TARGET8) hexdump.s
+
+$(TARGET9):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L asm.txt -o $(TARGET9) asm.s
 

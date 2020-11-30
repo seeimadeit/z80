@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="asm.s" />
     <None Include="cmd.s" />
     <None Include="copyfiles.bat" />
     <None Include="dir.s" />
@@ -151,9 +152,11 @@
     <None Include="Routines.inc" />
     <None Include="SDCARD.inc" />
     <None Include="SERIAL.inc" />
+    <None Include="small.s" />
     <None Include="type.s" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="asm.txt" />
     <Text Include="CMD.txt" />
     <Text Include="dir.txt" />
     <Text Include="edit.txt" />
