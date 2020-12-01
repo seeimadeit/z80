@@ -123,14 +123,47 @@ resetcommandline:
 
 		ld hl,cmdlinebuffer ;# load buffer address into hl
 		add hl,bc ;# add the buffer length to get the last character pointer
-		ld (hl),a ;# store keyboard character
+
+		;# for delete or backspace
+		cp 8
+		jp nz,1$
+
+		ld a,(cmdlinebufferlen)
+		cp 0
+		jp z,4$
+
+		dec hl
+		ld a,0
+		ld (hl),a
+		ld a,8
+		ld hl,cmdlinebufferlen
+		dec (hl)
+		jp 2$
+
+1$:
+		cp 127
+		jp nz,3$
+
+		ld a,(cmdlinebufferlen)
+		cp 0
+		jp z,4$
+
+		dec hl
+		ld a,0
+		ld (hl),a
+		ld a,127
+		ld hl,cmdlinebufferlen
+		dec (hl)
+		jp 2$
+
+3$:		ld (hl),a ;# store keyboard character
 		
 		ld hl,cmdlinebufferlen ;# load buffer length
 		inc (hl) ;# increment buffer len
 		
 
-		out (SERIALPORT),a
-		ld a,0
+2$:		out (SERIALPORT),a
+4$:		ld a,0
 		ld hl,cmdlineexecute
 		ld (hl),a
 		jp executeexit
