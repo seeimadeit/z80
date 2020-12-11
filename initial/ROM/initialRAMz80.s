@@ -619,7 +619,7 @@ _loadaddress$16:
 		ei
 		reti
 	crlf: .string "\r\n"
-	loadedmsg: .string "my Z80 Ram loaded.\r\n"
+	loadedmsg: .string "JOSHUA\r\n"
 	readymsg: .string "\r\nReady v0.0\r\n"
 	commandprocessor: .string "cmd"
 	errorloadingmsg: .string "error loading program.\r\n\"

@@ -1,9 +1,13 @@
+#define SERIAL_TX_BUFFER_SIZE 2
 #define SERIALPORT 1
 #define VERSION "\nSerialPort Ready v0.0.0,Device id 0x01"
 // IO device port 0x01
 
 
 uint8_t character = 0; // character to send
+int characterpause = 0;
+#define keypressdelay  100
+int xcontrol = 1; // xon=char(19), xoff=char(17). xcontrol=1 = enabled
 
 bool clockset = LOW;
 #define CLK 12
@@ -161,14 +165,14 @@ void loop() {
        Serial.print(",M1=");Serial.println(m1);
   */
   if (ioreq == LOW && m1 == LOW) {
- 
-      if (character!=0 ) { // this is for interrupt mode 1 or mode 2
-    digitalWrite(INT, HIGH); // remove the interrupt flag.
-      write(2); // vector for mode 2, note this code will also work with mode1
-    digitalWrite(WAIT, HIGH);
-    while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
-    DoRead(INPUT);
-     }
+
+    if (character != 0 ) { // this is for interrupt mode 1 or mode 2
+      digitalWrite(INT, HIGH); // remove the interrupt flag.
+      write(2); // vector for mode 2, note this code will also work with mode 1
+      digitalWrite(WAIT, HIGH);
+      while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
+      DoRead(INPUT);
+    }
   } else {
     if (active == LOW) {
       digitalWrite(WAIT, LOW);
@@ -178,15 +182,18 @@ void loop() {
 
       bool IsRead = digitalRead(IOREAD);
       if (!IsRead) {
-        
+
+        if (c == 19) xcontrol = 0; // xoff - disable sending keystrokes - allow processor time to process
+        if (c == 17) xcontrol = 1; // xon - enable sending keystrokes again - keyboard
+
         Serial.print((char)c);
         digitalWrite(WAIT, HIGH);
         while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
       } else {// !isread
-        
+
         if (character != 0) {
           digitalWrite(WAIT, LOW);
-         
+
           write(character);
           character = 0;
         } // !isread
@@ -196,10 +203,20 @@ void loop() {
       }
 
     }
-    if (character == 0 && Serial.available()) {
-
-      character = Serial.read();
-      digitalWrite(INT, LOW); // hold it low until we get a response.
+    // xon/xoff flow control
+    if (xcontrol == 1) {
+      if (character == 0 && Serial.available()) {
+        // discovered the z80 will just allow interrupts after interrupts therefore not allowing
+        // the processor time to deal with the data. so we will not send keys without a pause between
+        // each character.
+        characterpause++;
+        if (characterpause > keypressdelay)
+        {
+          characterpause = 0;
+          character = Serial.read();
+          digitalWrite(INT, LOW); // hold it low until we get a response.
+        }
+      }
     }
     // change the current mode;
     setMode(digitalRead(HASPOWER));

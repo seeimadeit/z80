@@ -230,14 +230,14 @@ F04:0080       	getcommandparamsadr: .2byte 0
 F04:0081       
 F04:0082       _main:
 F00:0003       
-F00:0004       
+F00:0004       .equ buffersize,9
 F00:0005       
 F00:0006       	di
                S01:0000209E:  F3
 F00:0007       	im 2
                S01:0000209F:  ED 5E
 F00:0008       	ld a, interruptvectors/256
-               S01:000020A1:  3E 20
+               S01:000020A1:  3E 22
 F00:0009       	ld i,a
                S01:000020A3:  ED 47
 F00:0010       	ei
@@ -245,101 +245,267 @@ F00:0010       	ei
 F00:0011       
 F00:0012       loop:
 F00:0013       	call available
-               S01:000020A6:  CD B0 20
-F00:0014       	jp z,loop
-               S01:000020A9:  CA A6 20
-F00:0015       
-F00:0016       	jp loop
-               S01:000020AC:  C3 A6 20
-F00:0017       
-F00:0018       
-F00:0019       exit:
-F00:0020       	ret
-               S01:000020AF:  C9
-F00:0021       
-F00:0022       	;# check if a key is available in the buffer
-F00:0023       	;# if bufferwrite is # bufferread then there's a byte available
-F00:0024       	;# check Z flag on return
-F00:0025       	;# call available
-F00:0026       	;# jp z, no data
-F00:0027       	;# jp nz, has data
-F00:0028       available:
-F00:0029       	push bc
-               S01:000020B0:  C5
-F00:0030       	ld a,(bufferread)
-               S01:000020B1:  3A EA 20
-F00:0031       	ld b,a
-               S01:000020B4:  47
-F00:0032       	ld a,(bufferwrite)
-               S01:000020B5:  3A E9 20
-F00:0033       	cp b
-               S01:000020B8:  B8
-F00:0034       	pop bc
-               S01:000020B9:  C1
-F00:0035       	ret
-               S01:000020BA:  C9
-F00:0036       
-F00:0037       	#return next character from keybuffer
-F00:0038       	#tryagain:
-F00:0039       	#call available
-F00:0040       	#jp nz, tryagain
-F00:0041       	#call getc
-F00:0042       	# register A has the byte
-F00:0043       getc:
-F00:0044       	ld ix,keybuffer
-               S01:000020BB:  DD 21 DF 20
-F00:0045       	ld bc,(bufferread)
-               S01:000020BF:  ED 4B EA 20
-F00:0046       	add ix,bc
-               S01:000020C3:  DD 09
-F00:0047       	ld a,(ix) ;# contains byte from keybuffer
-               S01:000020C5:  DD 7E 00
-F00:0048       	ld a,(bufferread)
-               S01:000020C8:  3A EA 20
-F00:0049       	push af
-               S01:000020CB:  F5
-F00:0050       	inc a
-               S01:000020CC:  3C
-F00:0051       	cp 10
-               S01:000020CD:  FE 0A
-F00:0052       	jp m,_$ ;#  if A < 10 continue
-               S01:000020CF:  FA D4 20
-F00:0053       	ld a,0 ;# reset to 0
-               S01:000020D2:  3E 00
-F00:0054       _$:
-F00:0055       	ld (bufferread),a ;# save readbuffer
-               S01:000020D4:  32 EA 20
-F00:0056       	pop af
-               S01:000020D7:  F1
-F00:0057       	ret
-               S01:000020D8:  C9
-F00:0058       
-F00:0059       
-F00:0060       interrupthandler:
-F00:0061       	push af
-               S01:000020D9:  F5
-F00:0062       	in a,(SERIALPORT)
-               S01:000020DA:  DB 01
-F00:0063       	
-F00:0064       	pop af
-               S01:000020DC:  F1
-F00:0065       	reti
-               S01:000020DD:  ED 4D
-F00:0066       
-F00:0067       
-F00:0068       keybuffer: .space 10
-F00:0069       bufferwrite: .byte 0
-               S01:000020E9:  00
-F00:0070       bufferread: .byte 0
-               S01:000020EA:  00
-F00:0071       
-F00:0072       interruptvectors:
-F00:0073       .org 0x100
-F00:0074       	jumptable: ;# for keyboard interrupts
-F00:0075       	.2byte interrupthandler ;0
-               S01:00002100:  D9 20
-F00:0076       	.2byte interrupthandler ;0
-               S01:00002102:  D9 20
+               S01:000020A6:  CD C9 20
+F00:0014       	cp 0
+               S01:000020A9:  FE 00
+F00:0015       	jp z, loop
+               S01:000020AB:  CA A6 20
+F00:0016       
+F00:0017       1$:
+F00:0018       	call getc
+               S01:000020AE:  CD CD 20
+F00:0019       	cp 0x1b
+               S01:000020B1:  FE 1B
+F00:0020       	jp z,exit
+               S01:000020B3:  CA C6 20
+F00:0021       	call putc
+               S01:000020B6:  CD 86 20
+F00:0022       	
+F00:0023       	cp 0x0d
+               S01:000020B9:  FE 0D
+F00:0024       	jp nz,loop
+               S01:000020BB:  C2 A6 20
+F00:0025       	ld a,0x0a
+               S01:000020BE:  3E 0A
+F00:0026       	call putc
+               S01:000020C0:  CD 86 20
+F00:0027       	jp loop
+               S01:000020C3:  C3 A6 20
+F00:0028       
+F00:0029       
+F00:0030       exit:
+F00:0031       	ld a,0
+               S01:000020C6:  3E 00
+F00:0032       	ret
+               S01:000020C8:  C9
+F00:0033       
+F00:0034       available: ;# return number of characters in the buffer
+F00:0035       	ld a,(Counter)
+               S01:000020C9:  3A 75 21
+F00:0036       	ret
+               S01:000020CC:  C9
+F00:0037       
+F00:0038       getc:
+F00:0039       	push bc
+               S01:000020CD:  C5
+F00:0040       	push ix
+               S01:000020CE:  DD E5
+F00:0041       
+F00:0042       	ld a,(Counter) ;# cannot getc if there are no characters to get
+               S01:000020D0:  3A 75 21
+F00:0043       	cp 0
+               S01:000020D3:  FE 00
+F00:0044       	jp z,1$
+               S01:000020D5:  CA 01 21
+F00:0045       
+F00:0046       	ld a,(Rindex)
+               S01:000020D8:  3A 76 21
+F00:0047       	cp buffersize
+               S01:000020DB:  FE 09
+F00:0048       	jp nz,2$
+               S01:000020DD:  C2 E5 20
+F00:0049       	ld a,0 ;# need to reset the Rindex value
+               S01:000020E0:  3E 00
+F00:0050       	ld (Rindex),a
+               S01:000020E2:  32 76 21
+F00:0051       
+F00:0052       2$: ;# a contains the Rindex value
+F00:0053       	ld ix,buffer
+               S01:000020E5:  DD 21 78 21
+F00:0054       	ld b,0
+               S01:000020E9:  06 00
+F00:0055       	ld c,a
+               S01:000020EB:  4F
+F00:0056       	add ix,bc ;# ix now contains the location to store the character
+               S01:000020EC:  DD 09
+F00:0057       	ld a,(ix)
+               S01:000020EE:  DD 7E 00
+F00:0058       	push af ;# load the character and save onto stack
+               S01:000020F1:  F5
+F00:0059       	ld a,(Rindex)
+               S01:000020F2:  3A 76 21
+F00:0060       	inc a
+               S01:000020F5:  3C
+F00:0061       	ld (Rindex),a ;# update Rindex and save
+               S01:000020F6:  32 76 21
+F00:0062       	pop af
+               S01:000020F9:  F1
+F00:0063       	call subCounter ;# save the counter variable
+               S01:000020FA:  CD 5C 21
+F00:0064       
+F00:0065       	pop ix
+               S01:000020FD:  DD E1
+F00:0066       	pop bc
+               S01:000020FF:  C1
+F00:0067       	ret
+               S01:00002100:  C9
+F00:0068       1$: ;# no characters available
+F00:0069       	pop ix
+               S01:00002101:  DD E1
+F00:0070       	pop bc
+               S01:00002103:  C1
+F00:0071       	ld a,0
+               S01:00002104:  3E 00
+F00:0072       	ret
+               S01:00002106:  C9
+F00:0073       
+F00:0074       
+F00:0075       
+F00:0076       interrupthandler:
+F00:0077       	push af
+               S01:00002107:  F5
+F00:0078       	push ix
+               S01:00002108:  DD E5
+F00:0079       	in a,(SERIALPORT)
+               S01:0000210A:  DB 01
+F00:0080       	push af
+               S01:0000210C:  F5
+F00:0081       
+F00:0082       	ld a,(Counter) ;# cannot write character if no space to write into
+               S01:0000210D:  3A 75 21
+F00:0083       	cp buffersize
+               S01:00002110:  FE 09
+F00:0084       	jp z,2$
+               S01:00002112:  CA 3C 21
+F00:0085       
+F00:0086       
+F00:0087       	ld a,(Windex)
+               S01:00002115:  3A 77 21
+F00:0088       	cp buffersize ;# test we have not reached the max buffer size
+               S01:00002118:  FE 09
+F00:0089       	jp nz, 3$
+               S01:0000211A:  C2 22 21
+F00:0090       	;# need to cycle the Windex
+F00:0091       	ld a,0
+               S01:0000211D:  3E 00
+F00:0092       	ld (Windex),a
+               S01:0000211F:  32 77 21
+F00:0093       3$:	;# store the character in buffer, A = Windex value
+F00:0094       	ld ix,buffer
+               S01:00002122:  DD 21 78 21
+F00:0095       	ld b,0
+               S01:00002126:  06 00
+F00:0096       	ld c,a
+               S01:00002128:  4F
+F00:0097       	add ix,bc ;# ix now contains the location to store the character
+               S01:00002129:  DD 09
+F00:0098       	
+F00:0099       	pop af ;# get the character
+               S01:0000212B:  F1
+F00:0100       	ld (ix),a
+               S01:0000212C:  DD 77 00
+F00:0101       
+F00:0102       	ld a,(Windex) ;# reload index
+               S01:0000212F:  3A 77 21
+F00:0103       	inc a
+               S01:00002132:  3C
+F00:0104       	ld (Windex),a ;# save the updated index
+               S01:00002133:  32 77 21
+F00:0105       	call addCounter ;# update the counter variable
+               S01:00002136:  CD 43 21
+F00:0106       	jp 1$
+               S01:00002139:  C3 3D 21
+F00:0107       
+F00:0108       2$: pop af ;# throw away the character
+               S01:0000213C:  F1
+F00:0109       	
+F00:0110       1$:	pop ix
+               S01:0000213D:  DD E1
+F00:0111       	pop af
+               S01:0000213F:  F1
+F00:0112       	ei
+               S01:00002140:  FB
+F00:0113       	reti
+               S01:00002141:  ED 4D
+F00:0114       
+F00:0115       addCounter:
+F00:0116       	push af
+               S01:00002143:  F5
+F00:0117       	push hl
+               S01:00002144:  E5
+F00:0118       
+F00:0119       ;#	ld hl,incmsg
+F00:0120       ;#	call println
+F00:0121       	ld a,(Counter)
+               S01:00002145:  3A 75 21
+F00:0122       	inc a
+               S01:00002148:  3C
+F00:0123       	ld (Counter),a
+               S01:00002149:  32 75 21
+F00:0124       	cp buffersize-4 ;# test this value
+               S01:0000214C:  FE 05
+F00:0125       	jp nz,1$ ;# flow control
+               S01:0000214E:  C2 59 21
+F00:0126       	ld a,19 ;# xoff control
+               S01:00002151:  3E 13
+F00:0127       	out (SERIALPORT),a
+               S01:00002153:  D3 01
+F00:0128       	ld a,'*'
+               S01:00002155:  3E 2A
+F00:0129       	out (SERIALPORT),a
+               S01:00002157:  D3 01
+F00:0130       1$:	pop hl
+               S01:00002159:  E1
+F00:0131       	pop af
+               S01:0000215A:  F1
+F00:0132       	ret
+               S01:0000215B:  C9
+F00:0133       subCounter:
+F00:0134       ;#	di
+F00:0135       	push af
+               S01:0000215C:  F5
+F00:0136       	push hl
+               S01:0000215D:  E5
+F00:0137       ;#	ld hl,decmsg
+F00:0138       ;#	call println
+F00:0139       	ld a,(Counter)
+               S01:0000215E:  3A 75 21
+F00:0140       	dec a
+               S01:00002161:  3D
+F00:0141       	ld (Counter),a
+               S01:00002162:  32 75 21
+F00:0142       	cp 0
+               S01:00002165:  FE 00
+F00:0143       	jp nz,1$ ;# flow control
+               S01:00002167:  C2 72 21
+F00:0144       	ld a,17 ;# xon control
+               S01:0000216A:  3E 11
+F00:0145       	out (SERIALPORT),a
+               S01:0000216C:  D3 01
+F00:0146       	ld a,'&'
+               S01:0000216E:  3E 26
+F00:0147       	out (SERIALPORT),a
+               S01:00002170:  D3 01
+F00:0148       
+F00:0149       1$:	pop hl
+               S01:00002172:  E1
+F00:0150       	pop af
+               S01:00002173:  F1
+F00:0151       ;#	ei
+F00:0152       	ret
+               S01:00002174:  C9
+F00:0153       
+F00:0154       
+F00:0155       Counter: .byte 0
+               S01:00002175:  00
+F00:0156       Rindex: .byte 0 ;# read next character from this index
+               S01:00002176:  00
+F00:0157       Windex: .byte 0 ;# write next current at this index
+               S01:00002177:  00
+F00:0158       buffer: .space buffersize ;# at most 10 characters
+F00:0159       incmsg: .string "increment"
+               S01:00002181:  69 6E 63 72 65 6D 65 6E 74
+F00:0160       decmsg: .string "decrement"
+               S01:0000218B:  64 65 63 72 65 6D 65 6E 74
+F00:0161       
+F00:0162       .align 8
+F00:0163       interruptvectors:
+F00:0164       
+F00:0165       	jumptable: ;# for keyboard interrupts
+F00:0166       	.2byte interrupthandler ;0
+               S01:00002200:  07 21
+F00:0167       	.2byte interrupthandler ;0
+               S01:00002202:  07 21
 
 
 Sections:
@@ -355,17 +521,30 @@ F04  libs.inc
 
 
 Symbols:
-jumptable EXPR(8448=0x2100) UNUSED ABS 
-interrupthandler EXPR(8409=0x20d9) ABS 
-_$ EXPR(8404=0x20d4) ABS 
-keybuffer EXPR(8415=0x20df) ABS 
-getc EXPR(8379=0x20bb) UNUSED ABS 
-bufferwrite EXPR(8425=0x20e9) ABS 
-bufferread EXPR(8426=0x20ea) ABS 
-exit EXPR(8367=0x20af) UNUSED ABS 
-available EXPR(8368=0x20b0) ABS 
+jumptable EXPR(8704=0x2200) UNUSED ABS 
+decmsg EXPR(8587=0x218b) UNUSED ABS 
+incmsg EXPR(8577=0x2181) UNUSED ABS 
+ subCounter 1$ EXPR(8562=0x2172) ABS 
+ addCounter 1$ EXPR(8537=0x2159) ABS 
+ interrupthandler 1$ EXPR(8509=0x213d) ABS 
+addCounter EXPR(8515=0x2143) ABS 
+ interrupthandler 3$ EXPR(8482=0x2122) ABS 
+Windex EXPR(8567=0x2177) ABS 
+ interrupthandler 2$ EXPR(8508=0x213c) ABS 
+interrupthandler EXPR(8455=0x2107) ABS 
+subCounter EXPR(8540=0x215c) ABS 
+buffer EXPR(8568=0x2178) ABS 
+ getc 2$ EXPR(8421=0x20e5) ABS 
+Rindex EXPR(8566=0x2176) ABS 
+ getc 1$ EXPR(8449=0x2101) ABS 
+Counter EXPR(8565=0x2175) ABS 
+exit EXPR(8390=0x20c6) ABS 
+getc EXPR(8397=0x20cd) ABS 
+ loop 1$ EXPR(8366=0x20ae) UNUSED ABS 
+available EXPR(8393=0x20c9) ABS 
 loop EXPR(8358=0x20a6) ABS 
-interruptvectors EXPR(8427=0x20eb) ABS 
+interruptvectors EXPR(8704=0x2200) ABS 
+buffersize EXPR(9=0x9) 
 getcommandparams EXPR(8347=0x209b) UNUSED ABS 
 createProcess EXPR(8344=0x2098) UNUSED ABS 
 getfilename EXPR(8341=0x2095) UNUSED ABS 
@@ -373,7 +552,7 @@ directorynextfile EXPR(8338=0x2092) UNUSED ABS
 directoryopen EXPR(8335=0x208f) UNUSED ABS 
 hextobyte EXPR(8332=0x208c) UNUSED ABS 
 touppercase EXPR(8329=0x2089) UNUSED ABS 
-putc EXPR(8326=0x2086) UNUSED ABS 
+putc EXPR(8326=0x2086) ABS 
 strlen EXPR(8323=0x2083) UNUSED ABS 
 memset EXPR(8320=0x2080) UNUSED ABS 
 loadfile EXPR(8317=0x207d) UNUSED ABS 

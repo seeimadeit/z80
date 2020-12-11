@@ -7,7 +7,18 @@
 
 	ld hl,welcomemsg
 	call println
+	ld a,0
+	ld (doreload),a
+
 newcommand:
+	ld a,(doreload)
+	cp 1
+	jp nz,1$ ;# will force command program reload
+	ld hl,reloadmsg
+	call println
+	ret
+
+1$:
 	; #setup/reset the interrupt vector who knows what could have happen to it
 	di
 	im 2
@@ -40,6 +51,7 @@ loop:
 	ld hl,0
 	call println
 	jp newcommand
+doreload: .byte 0
 
 loadandrun:
 	
@@ -51,12 +63,20 @@ loadandrun:
 ;	cp 0
 ;	jp nz,loaderr ;# if load returned anything except 0, its an error
 ;	jp runuserMemory
+
+	ld a,1
+	ld (ignorekeyboard),a
+
 	call createprocess
 	cp 0
 	jp nz,loaderr
 	call resetcommandline
+	ld a,0
+	ld (ignorekeyboard),a
 	ret
 
+
+ignorekeyboard: .byte 0
 
 loaderr:
 	call printhex ;# print return code
@@ -66,6 +86,8 @@ loaderr:
 	call println ;# print msg
 	call hexdumpcmdline
 ;#	call resetcommandline
+	ld a,0
+	ld (ignorekeyboard),a
 	ret
 
 
@@ -86,11 +108,14 @@ _hexdp$99:
 	djnz _hexdp$99
 	ret
 
-runuserMemory:
+;runuserMemory:
 	
-	call userMemory
-	call resetcommandline
-	ret
+
+;	call userMemory
+;	call resetcommandline
+;	ret
+
+
 
 resetcommandline:
 	push af
@@ -109,11 +134,19 @@ resetcommandline:
 	;##############################################################
 	cmdline: ;#/* interrupt 2, echo what was sent*/
 		in a,(SERIALPORT)
+		
+		push af  ;# if a program is runing the ignorekeyboard flag is set
+		ld a,(ignorekeyboard) ;# so we look for that flag and ignore any keypresses if set true
+		cp a,1
+		jp nz,12$
+		pop af
+		jp executeexit
+12$:	
+		pop af
 		cp 0x0d
 		jp z, executecmd
 		cp 0x0a
 		jp z,executeexit
-		
 
 	
 		ld hl,cmdlinebufferlen # load the length into b
@@ -608,6 +641,13 @@ _2$:
 	call createProcess
 	ret
 
+#=== reload builtin ==#
+reloadcmd: .string "exit"
+reload:
+	ld a,1
+	ld (doreload),a
+	ld a,TRUE
+	ret
 
 ;# shared variables for builtin functions
 runfrom: .byte 0xc3 ;# jump instruction - must be next to hidump
@@ -619,7 +659,7 @@ lodump: .byte 0 ;# used by hexdump and load
 messages:
 ;	dbug1: .string "debug1"
 ;	dbug2: .string "debug2"
-	welcomemsg: .string "Welcome to Z80"
+	welcomemsg: .string "Would you like to play a game?"
 	hexdumpmsg: .string "HEXDUMP"
 	hexdumpprefix: .string "0x"
 	boldon: .string "\033[1m"
@@ -637,16 +677,20 @@ messages:
 	outsyntaxmsg: .string "  peripheral out syntax: out,0xXX,0xYY - executes\r\nLD A,0xXX\r\nOUT (0xYY), A\r\nwhere 0xYY is the device address, XX is byte to send"
 	outerrormsg: .string " out error."
 	createprocessmsg: .string "hell no"
+	reloadmsg: .string "reloading."
+
+
 
 	commandPromptmsg: .string "\r\n>";
-	invalidcommandmsg: .string ": Invalid command."
-	helpmsg: .byte "Z80 command line builtin commands:\r\n"
+	invalidcommandmsg: .string ": Invalid command.Shall we play a game?"
+	helpmsg: .byte "Joshua MCP builtin commands:\r\n"
 			 .byte "? - help, you are reading help right now\r\n"
 			 .byte "h,0xXXXX - hexdump from address 0xXXXX for 255 bytes\r\n"
 			 .byte "l,0xXXXX,filename - load into memory at 0xXXXX the file filename\r\n"
 			 .byte "r,0xXXXX - run from address 0xXXXX\r\n"
 			 .byte "in,0xYY - receive from peripheral at address 0xYY\r\n"
 			 .byte "out,0xXX,0xYY - send to peripheral at address 0xYY then value 0xXX\r\n"
+			 .byte "exit - exit and reload the MCP\r\n"
 			 .string 0
 builtin:
 	;# 2bytes pointer to command - zero terminated, 2bytes pointer to handler Routines
@@ -659,6 +703,7 @@ builtin:
 		.2byte outcmd,dout
 		.2byte incmd,din
 		.2byte createprocesscmd,createprocess
+		.2byte reloadcmd,reload
 
 	endoflist: .2byte 0,0
 

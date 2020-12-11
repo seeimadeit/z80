@@ -136,7 +136,7 @@ F00:0021
 F00:0022       	di
                S01:0000080A:  F3
 F00:0023       	ld hl,readymsg
-               S01:0000080B:  21 D2 0A
+               S01:0000080B:  21 C6 0A
 F00:0024       	call print
                S01:0000080E:  CD 9B 08
 F00:0025       		;ld b, endlabel2-label2
@@ -159,7 +159,7 @@ F00:0035       		call print
 F00:0036       		#== ******* Command processor Loop ******** ==#
 F00:0037       	commandprocessloop:	
 F00:0038       		ld hl,commandprocessor
-               S01:0000081E:  21 E1 0A
+               S01:0000081E:  21 D5 0A
 F00:0039       		ld de,commandMemory
                S01:00000821:  11 00 10
 F00:0040       		call loadFILE
@@ -181,7 +181,7 @@ F00:0048       	errorloading:
 F00:0049       		call printhex
                S01:00000838:  CD B7 08
 F00:0050       		ld hl,errorloadingmsg
-               S01:0000083B:  21 E5 0A
+               S01:0000083B:  21 D9 0A
 F00:0051       		call println
                S01:0000083E:  CD 8D 08
 F00:0052       		jp commandprocessloop
@@ -1066,7 +1066,7 @@ F00:0601       	ret
 F00:0602       _loadaddress$16:
 F00:0603       	#----- not defined ---
 F00:0604       	ld hl,addressfailedmsg
-               S01:00000AA6:  21 FF 0A
+               S01:00000AA6:  21 F3 0A
 F00:0605       	call print 
                S01:00000AA9:  CD 9B 08
 F00:0606       	call printhex
@@ -1093,19 +1093,18 @@ F00:0620       		reti
                S01:00000AB8:  ED 4D
 F00:0621       	crlf: .string "\r\n"
                S01:00000ABA:  0D 0A
-F00:0622       	loadedmsg: .string "my Z80 Ram loaded.\r\n"
-               S01:00000ABD:  6D 79 20 5A 38 30 20 52 61 6D 20 6C 6F 61 64 65
-               S01:00000ACD:  64 2E 0D 0A
+F00:0622       	loadedmsg: .string "JOSHUA\r\n"
+               S01:00000ABD:  4A 4F 53 48 55 41 0D 0A
 F00:0623       	readymsg: .string "\r\nReady v0.0\r\n"
-               S01:00000AD2:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+               S01:00000AC6:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
 F00:0624       	commandprocessor: .string "cmd"
-               S01:00000AE1:  63 6D 64
+               S01:00000AD5:  63 6D 64
 F00:0625       	errorloadingmsg: .string "error loading program.\r\n\"
-               S01:00000AE5:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
-               S01:00000AF5:  6F 67 72 61 6D 2E 0D 0A 22
+               S01:00000AD9:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
+               S01:00000AE9:  6F 67 72 61 6D 2E 0D 0A 22
 F00:0626       	addressfailedmsg: .string "GetAddress failed for code:"
-               S01:00000AFF:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
-               S01:00000B0F:  64 20 66 6F 72 20 63 6F 64 65 3A
+               S01:00000AF3:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
+               S01:00000B03:  64 20 66 6F 72 20 63 6F 64 65 3A
 F00:0627       
 F00:0628       
 F00:0629       	; I could set the org address but I'm going to let that move as needed	.org 0x????
@@ -1139,7 +1138,7 @@ F04  SDCARD.inc
 
 Symbols:
 serialport EXPR(2739=0xab3) ABS 
-addressfailedmsg EXPR(2815=0xaff) ABS 
+addressfailedmsg EXPR(2803=0xaf3) ABS 
 _loadaddress$16 EXPR(2726=0xaa6) ABS 
 _loadaddress$15 EXPR(2717=0xa9d) ABS 
 _loadaddress$14 EXPR(2708=0xa94) ABS 
@@ -1196,17 +1195,17 @@ _strlen$ EXPR(2129=0x851) ABS
 strlen EXPR(2125=0x84d) ABS 
 _metset$1 EXPR(2118=0x846) ABS 
 memset EXPR(2116=0x844) ABS 
-errorloadingmsg EXPR(2789=0xae5) ABS 
+errorloadingmsg EXPR(2777=0xad9) ABS 
 printhex EXPR(2231=0x8b7) ABS 
 println EXPR(2189=0x88d) ABS 
 errorloading EXPR(2104=0x838) ABS 
 loadFILE EXPR(2256=0x8d0) ABS 
-commandprocessor EXPR(2785=0xae1) ABS 
+commandprocessor EXPR(2773=0xad5) ABS 
 commandprocessloop EXPR(2078=0x81e) ABS 
 loadedmsg EXPR(2749=0xabd) ABS 
 jumptable EXPR(3072=0xc00) ABS 
 print EXPR(2203=0x89b) ABS 
-readymsg EXPR(2770=0xad2) ABS 
+readymsg EXPR(2758=0xac6) ABS 
 loadaddress EXPR(2591=0xa1f) ABS 
 start EXPR(2052=0x804) UNUSED ABS 
 boot EXPR(2055=0x807) ABS 
