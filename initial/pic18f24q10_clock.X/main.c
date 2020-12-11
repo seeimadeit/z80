@@ -46,7 +46,7 @@
 /*
                          Main application
  */
-volatile int counter=0;
+volatile int counter=1;
 void main(void)
 {
     // Initialize the device
