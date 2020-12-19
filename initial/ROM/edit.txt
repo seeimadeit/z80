@@ -3,7 +3,8 @@ F01:0001
 F01:0002       # address where user programs load
 F01:0003       .include "SERIAL.inc"
 F02:0001       .equ SERIALPORT , 0x01
-F02:0002       
+F02:0002       .equ SERIALPORT2, 0x02
+F02:0003       
 F01:0004       .include "SDCARD.inc"
 F03:0001       .equ SDCARD,0x05
 F03:0002       ; ******* SDCARD *********
@@ -281,7 +282,7 @@ F00:0032       	ret
 F00:0033       
 F00:0034       available: ;# return number of characters in the buffer
 F00:0035       	ld a,(Counter)
-               S01:000020C9:  3A 75 21
+               S01:000020C9:  3A 79 21
 F00:0036       	ret
                S01:000020CC:  C9
 F00:0037       
@@ -292,14 +293,14 @@ F00:0040       	push ix
                S01:000020CE:  DD E5
 F00:0041       
 F00:0042       	ld a,(Counter) ;# cannot getc if there are no characters to get
-               S01:000020D0:  3A 75 21
+               S01:000020D0:  3A 79 21
 F00:0043       	cp 0
                S01:000020D3:  FE 00
 F00:0044       	jp z,1$
                S01:000020D5:  CA 01 21
 F00:0045       
 F00:0046       	ld a,(Rindex)
-               S01:000020D8:  3A 76 21
+               S01:000020D8:  3A 7A 21
 F00:0047       	cp buffersize
                S01:000020DB:  FE 09
 F00:0048       	jp nz,2$
@@ -307,11 +308,11 @@ F00:0048       	jp nz,2$
 F00:0049       	ld a,0 ;# need to reset the Rindex value
                S01:000020E0:  3E 00
 F00:0050       	ld (Rindex),a
-               S01:000020E2:  32 76 21
+               S01:000020E2:  32 7A 21
 F00:0051       
 F00:0052       2$: ;# a contains the Rindex value
 F00:0053       	ld ix,buffer
-               S01:000020E5:  DD 21 78 21
+               S01:000020E5:  DD 21 7C 21
 F00:0054       	ld b,0
                S01:000020E9:  06 00
 F00:0055       	ld c,a
@@ -323,15 +324,15 @@ F00:0057       	ld a,(ix)
 F00:0058       	push af ;# load the character and save onto stack
                S01:000020F1:  F5
 F00:0059       	ld a,(Rindex)
-               S01:000020F2:  3A 76 21
+               S01:000020F2:  3A 7A 21
 F00:0060       	inc a
                S01:000020F5:  3C
 F00:0061       	ld (Rindex),a ;# update Rindex and save
-               S01:000020F6:  32 76 21
+               S01:000020F6:  32 7A 21
 F00:0062       	pop af
                S01:000020F9:  F1
 F00:0063       	call subCounter ;# save the counter variable
-               S01:000020FA:  CD 5C 21
+               S01:000020FA:  CD 60 21
 F00:0064       
 F00:0065       	pop ix
                S01:000020FD:  DD E1
@@ -362,149 +363,155 @@ F00:0080       	push af
                S01:0000210C:  F5
 F00:0081       
 F00:0082       	ld a,(Counter) ;# cannot write character if no space to write into
-               S01:0000210D:  3A 75 21
+               S01:0000210D:  3A 79 21
 F00:0083       	cp buffersize
                S01:00002110:  FE 09
 F00:0084       	jp z,2$
-               S01:00002112:  CA 3C 21
+               S01:00002112:  CA 29 21
 F00:0085       
 F00:0086       
-F00:0087       	ld a,(Windex)
-               S01:00002115:  3A 77 21
-F00:0088       	cp buffersize ;# test we have not reached the max buffer size
-               S01:00002118:  FE 09
-F00:0089       	jp nz, 3$
-               S01:0000211A:  C2 22 21
-F00:0090       	;# need to cycle the Windex
-F00:0091       	ld a,0
-               S01:0000211D:  3E 00
-F00:0092       	ld (Windex),a
-               S01:0000211F:  32 77 21
-F00:0093       3$:	;# store the character in buffer, A = Windex value
-F00:0094       	ld ix,buffer
-               S01:00002122:  DD 21 78 21
-F00:0095       	ld b,0
-               S01:00002126:  06 00
-F00:0096       	ld c,a
-               S01:00002128:  4F
-F00:0097       	add ix,bc ;# ix now contains the location to store the character
-               S01:00002129:  DD 09
-F00:0098       	
-F00:0099       	pop af ;# get the character
-               S01:0000212B:  F1
-F00:0100       	ld (ix),a
-               S01:0000212C:  DD 77 00
-F00:0101       
-F00:0102       	ld a,(Windex) ;# reload index
-               S01:0000212F:  3A 77 21
-F00:0103       	inc a
-               S01:00002132:  3C
-F00:0104       	ld (Windex),a ;# save the updated index
-               S01:00002133:  32 77 21
-F00:0105       	call addCounter ;# update the counter variable
-               S01:00002136:  CD 43 21
-F00:0106       	jp 1$
-               S01:00002139:  C3 3D 21
-F00:0107       
-F00:0108       2$: pop af ;# throw away the character
-               S01:0000213C:  F1
-F00:0109       	
-F00:0110       1$:	pop ix
-               S01:0000213D:  DD E1
-F00:0111       	pop af
-               S01:0000213F:  F1
-F00:0112       	ei
-               S01:00002140:  FB
-F00:0113       	reti
-               S01:00002141:  ED 4D
-F00:0114       
-F00:0115       addCounter:
-F00:0116       	push af
-               S01:00002143:  F5
-F00:0117       	push hl
-               S01:00002144:  E5
-F00:0118       
-F00:0119       ;#	ld hl,incmsg
-F00:0120       ;#	call println
-F00:0121       	ld a,(Counter)
-               S01:00002145:  3A 75 21
-F00:0122       	inc a
-               S01:00002148:  3C
-F00:0123       	ld (Counter),a
-               S01:00002149:  32 75 21
-F00:0124       	cp buffersize-4 ;# test this value
-               S01:0000214C:  FE 05
-F00:0125       	jp nz,1$ ;# flow control
-               S01:0000214E:  C2 59 21
-F00:0126       	ld a,19 ;# xoff control
-               S01:00002151:  3E 13
-F00:0127       	out (SERIALPORT),a
-               S01:00002153:  D3 01
-F00:0128       	ld a,'*'
-               S01:00002155:  3E 2A
-F00:0129       	out (SERIALPORT),a
+F00:0087       	call getWriteAddress
+               S01:00002115:  CD 30 21
+F00:0088       	
+F00:0089       	pop af ;# get the character
+               S01:00002118:  F1
+F00:0090       	ld (ix),a
+               S01:00002119:  DD 77 00
+F00:0091       
+F00:0092       	ld a,(Windex) ;# reload index
+               S01:0000211C:  3A 7B 21
+F00:0093       	inc a
+               S01:0000211F:  3C
+F00:0094       	ld (Windex),a ;# save the updated index
+               S01:00002120:  32 7B 21
+F00:0095       	call addCounter ;# update the counter variable
+               S01:00002123:  CD 47 21
+F00:0096       	jp 1$
+               S01:00002126:  C3 2A 21
+F00:0097       
+F00:0098       2$: pop af ;# throw away the character
+               S01:00002129:  F1
+F00:0099       	
+F00:0100       1$:	pop ix
+               S01:0000212A:  DD E1
+F00:0101       	pop af
+               S01:0000212C:  F1
+F00:0102       	ei
+               S01:0000212D:  FB
+F00:0103       	reti
+               S01:0000212E:  ED 4D
+F00:0104       
+F00:0105       getWriteAddress:
+F00:0106       	ld a,(Windex)
+               S01:00002130:  3A 7B 21
+F00:0107       	cp buffersize ;# test we have not reached the max buffer size
+               S01:00002133:  FE 09
+F00:0108       	jp nz, 3$
+               S01:00002135:  C2 3D 21
+F00:0109       	;# need to cycle the Windex
+F00:0110       	ld a,0
+               S01:00002138:  3E 00
+F00:0111       	ld (Windex),a
+               S01:0000213A:  32 7B 21
+F00:0112       3$:	;# store the character in buffer, A = Windex value
+F00:0113       	ld ix,buffer
+               S01:0000213D:  DD 21 7C 21
+F00:0114       	ld b,0
+               S01:00002141:  06 00
+F00:0115       	ld c,a
+               S01:00002143:  4F
+F00:0116       	add ix,bc ;# ix now contains the location to store the character
+               S01:00002144:  DD 09
+F00:0117       
+F00:0118       	ret
+               S01:00002146:  C9
+F00:0119       addCounter:
+F00:0120       	push af
+               S01:00002147:  F5
+F00:0121       	push hl
+               S01:00002148:  E5
+F00:0122       
+F00:0123       ;#	ld hl,incmsg
+F00:0124       ;#	call println
+F00:0125       	ld a,(Counter)
+               S01:00002149:  3A 79 21
+F00:0126       	inc a
+               S01:0000214C:  3C
+F00:0127       	ld (Counter),a
+               S01:0000214D:  32 79 21
+F00:0128       	cp buffersize-4 ;# test this value
+               S01:00002150:  FE 05
+F00:0129       	jp nz,1$ ;# flow control
+               S01:00002152:  C2 5D 21
+F00:0130       	ld a,19 ;# xoff control
+               S01:00002155:  3E 13
+F00:0131       	out (SERIALPORT),a
                S01:00002157:  D3 01
-F00:0130       1$:	pop hl
-               S01:00002159:  E1
-F00:0131       	pop af
-               S01:0000215A:  F1
-F00:0132       	ret
-               S01:0000215B:  C9
-F00:0133       subCounter:
-F00:0134       ;#	di
-F00:0135       	push af
-               S01:0000215C:  F5
-F00:0136       	push hl
-               S01:0000215D:  E5
-F00:0137       ;#	ld hl,decmsg
-F00:0138       ;#	call println
-F00:0139       	ld a,(Counter)
-               S01:0000215E:  3A 75 21
-F00:0140       	dec a
-               S01:00002161:  3D
-F00:0141       	ld (Counter),a
-               S01:00002162:  32 75 21
-F00:0142       	cp 0
-               S01:00002165:  FE 00
-F00:0143       	jp nz,1$ ;# flow control
-               S01:00002167:  C2 72 21
-F00:0144       	ld a,17 ;# xon control
-               S01:0000216A:  3E 11
-F00:0145       	out (SERIALPORT),a
-               S01:0000216C:  D3 01
-F00:0146       	ld a,'&'
-               S01:0000216E:  3E 26
-F00:0147       	out (SERIALPORT),a
+F00:0132       	ld a,'*'
+               S01:00002159:  3E 2A
+F00:0133       	out (SERIALPORT),a
+               S01:0000215B:  D3 01
+F00:0134       1$:	pop hl
+               S01:0000215D:  E1
+F00:0135       	pop af
+               S01:0000215E:  F1
+F00:0136       	ret
+               S01:0000215F:  C9
+F00:0137       subCounter:
+F00:0138       ;#	di
+F00:0139       	push af
+               S01:00002160:  F5
+F00:0140       	push hl
+               S01:00002161:  E5
+F00:0141       ;#	ld hl,decmsg
+F00:0142       ;#	call println
+F00:0143       	ld a,(Counter)
+               S01:00002162:  3A 79 21
+F00:0144       	dec a
+               S01:00002165:  3D
+F00:0145       	ld (Counter),a
+               S01:00002166:  32 79 21
+F00:0146       	cp 0
+               S01:00002169:  FE 00
+F00:0147       	jp nz,1$ ;# flow control
+               S01:0000216B:  C2 76 21
+F00:0148       	ld a,17 ;# xon control
+               S01:0000216E:  3E 11
+F00:0149       	out (SERIALPORT),a
                S01:00002170:  D3 01
-F00:0148       
-F00:0149       1$:	pop hl
-               S01:00002172:  E1
-F00:0150       	pop af
-               S01:00002173:  F1
-F00:0151       ;#	ei
-F00:0152       	ret
-               S01:00002174:  C9
-F00:0153       
-F00:0154       
-F00:0155       Counter: .byte 0
-               S01:00002175:  00
-F00:0156       Rindex: .byte 0 ;# read next character from this index
-               S01:00002176:  00
-F00:0157       Windex: .byte 0 ;# write next current at this index
-               S01:00002177:  00
-F00:0158       buffer: .space buffersize ;# at most 10 characters
-F00:0159       incmsg: .string "increment"
-               S01:00002181:  69 6E 63 72 65 6D 65 6E 74
-F00:0160       decmsg: .string "decrement"
-               S01:0000218B:  64 65 63 72 65 6D 65 6E 74
-F00:0161       
-F00:0162       .align 8
-F00:0163       interruptvectors:
-F00:0164       
-F00:0165       	jumptable: ;# for keyboard interrupts
-F00:0166       	.2byte interrupthandler ;0
+F00:0150       	ld a,'&'
+               S01:00002172:  3E 26
+F00:0151       	out (SERIALPORT),a
+               S01:00002174:  D3 01
+F00:0152       
+F00:0153       1$:	pop hl
+               S01:00002176:  E1
+F00:0154       	pop af
+               S01:00002177:  F1
+F00:0155       ;#	ei
+F00:0156       	ret
+               S01:00002178:  C9
+F00:0157       
+F00:0158       
+F00:0159       Counter: .byte 0
+               S01:00002179:  00
+F00:0160       Rindex: .byte 0 ;# read next character from this index
+               S01:0000217A:  00
+F00:0161       Windex: .byte 0 ;# write next current at this index
+               S01:0000217B:  00
+F00:0162       buffer: .space buffersize ;# at most 10 characters
+F00:0163       incmsg: .string "increment"
+               S01:00002185:  69 6E 63 72 65 6D 65 6E 74
+F00:0164       decmsg: .string "decrement"
+               S01:0000218F:  64 65 63 72 65 6D 65 6E 74
+F00:0165       
+F00:0166       .align 8
+F00:0167       interruptvectors:
+F00:0168       
+F00:0169       	jumptable: ;# for keyboard interrupts
+F00:0170       	.2byte interrupthandler ;0
                S01:00002200:  07 21
-F00:0167       	.2byte interrupthandler ;0
+F00:0171       	.2byte interrupthandler ;0
                S01:00002202:  07 21
 
 
@@ -522,22 +529,23 @@ F04  libs.inc
 
 Symbols:
 jumptable EXPR(8704=0x2200) UNUSED ABS 
-decmsg EXPR(8587=0x218b) UNUSED ABS 
-incmsg EXPR(8577=0x2181) UNUSED ABS 
- subCounter 1$ EXPR(8562=0x2172) ABS 
- addCounter 1$ EXPR(8537=0x2159) ABS 
- interrupthandler 1$ EXPR(8509=0x213d) ABS 
-addCounter EXPR(8515=0x2143) ABS 
- interrupthandler 3$ EXPR(8482=0x2122) ABS 
-Windex EXPR(8567=0x2177) ABS 
- interrupthandler 2$ EXPR(8508=0x213c) ABS 
+decmsg EXPR(8591=0x218f) UNUSED ABS 
+incmsg EXPR(8581=0x2185) UNUSED ABS 
+ subCounter 1$ EXPR(8566=0x2176) ABS 
+ addCounter 1$ EXPR(8541=0x215d) ABS 
+ getWriteAddress 3$ EXPR(8509=0x213d) ABS 
+ interrupthandler 1$ EXPR(8490=0x212a) ABS 
+addCounter EXPR(8519=0x2147) ABS 
+Windex EXPR(8571=0x217b) ABS 
+getWriteAddress EXPR(8496=0x2130) ABS 
+ interrupthandler 2$ EXPR(8489=0x2129) ABS 
 interrupthandler EXPR(8455=0x2107) ABS 
-subCounter EXPR(8540=0x215c) ABS 
-buffer EXPR(8568=0x2178) ABS 
+subCounter EXPR(8544=0x2160) ABS 
+buffer EXPR(8572=0x217c) ABS 
  getc 2$ EXPR(8421=0x20e5) ABS 
-Rindex EXPR(8566=0x2176) ABS 
+Rindex EXPR(8570=0x217a) ABS 
  getc 1$ EXPR(8449=0x2101) ABS 
-Counter EXPR(8565=0x2175) ABS 
+Counter EXPR(8569=0x2179) ABS 
 exit EXPR(8390=0x20c6) ABS 
 getc EXPR(8397=0x20cd) ABS 
  loop 1$ EXPR(8366=0x20ae) UNUSED ABS 
@@ -609,6 +617,7 @@ CLOSE EXPR(3=0x3) UNUSED
 OPEN EXPR(2=0x2) UNUSED 
 FILENAMECLEAR EXPR(1=0x1) UNUSED 
 SDCARD EXPR(5=0x5) UNUSED 
+SERIALPORT2 EXPR(2=0x2) UNUSED 
 SERIALPORT EXPR(1=0x1) 
 __VASM EXPR(0=0x0) INTERNAL 
 __MSDOSFS EXPR(0=0x0) INTERNAL 

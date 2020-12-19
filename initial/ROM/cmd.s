@@ -136,6 +136,7 @@ resetcommandline:
 		in a,(SERIALPORT)
 		
 		push af  ;# if a program is runing the ignorekeyboard flag is set
+	
 		ld a,(ignorekeyboard) ;# so we look for that flag and ignore any keypresses if set true
 		cp a,1
 		jp nz,12$
@@ -189,7 +190,12 @@ resetcommandline:
 		dec (hl)
 		jp 2$
 
-3$:		ld (hl),a ;# store keyboard character
+3$:		
+		cp 0
+		jp nz,5$
+		ld a,'`'
+
+5$:		ld (hl),a ;# store keyboard character
 		
 		ld hl,cmdlinebufferlen ;# load buffer length
 		inc (hl) ;# increment buffer len

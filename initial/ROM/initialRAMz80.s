@@ -608,13 +608,21 @@ _loadaddress$16:
 	ld hl,0
 	ret
 	# ======================== end subroutines ========== #
-		
+	
+	nullroutine: 
+		ei
+		reti
+
 	serialport: ;#/* interrupt 2, echo what was sent*/
 	#	di
 		#ld a,'*'
 		#out (SERIALPORT),a
 
 		in a,(SERIALPORT)
+		cp 0
+		jp nz,_1$
+		ld a,'`'
+_1$:
 		out (SERIALPORT),a
 		ei
 		reti
@@ -630,10 +638,10 @@ _loadaddress$16:
 	;#.org 0x0A00-start
 	.align 8
 	jumptable:
-	.2byte serialport ;0
-	.2byte serialport ;1
+	.2byte nullroutine ;0
 	.2byte serialport ;2
-	.2byte serialport ;3
+	.2byte serialport ;4
+	.2byte serialport ;6
 
 	
 	

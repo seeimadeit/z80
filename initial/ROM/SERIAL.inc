@@ -1,1 +1,2 @@
 .equ SERIALPORT , 0x01
+.equ SERIALPORT2, 0x02

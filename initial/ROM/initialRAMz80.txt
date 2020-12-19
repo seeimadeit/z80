@@ -47,7 +47,8 @@ F02:0001
 F02:0002       # address where user programs load
 F02:0003       .include "SERIAL.inc"
 F03:0001       .equ SERIALPORT , 0x01
-F03:0002       
+F03:0002       .equ SERIALPORT2, 0x02
+F03:0003       
 F02:0004       .include "SDCARD.inc"
 F04:0001       .equ SDCARD,0x05
 F04:0002       ; ******* SDCARD *********
@@ -136,7 +137,7 @@ F00:0021
 F00:0022       	di
                S01:0000080A:  F3
 F00:0023       	ld hl,readymsg
-               S01:0000080B:  21 C6 0A
+               S01:0000080B:  21 D0 0A
 F00:0024       	call print
                S01:0000080E:  CD 9B 08
 F00:0025       		;ld b, endlabel2-label2
@@ -153,13 +154,13 @@ F00:0032       		ei   ;#/* enable interrupts*/
                S01:00000817:  FB
 F00:0033       
 F00:0034       		ld hl,loadedmsg
-               S01:00000818:  21 BD 0A
+               S01:00000818:  21 C7 0A
 F00:0035       		call print
                S01:0000081B:  CD 9B 08
 F00:0036       		#== ******* Command processor Loop ******** ==#
 F00:0037       	commandprocessloop:	
 F00:0038       		ld hl,commandprocessor
-               S01:0000081E:  21 D5 0A
+               S01:0000081E:  21 DF 0A
 F00:0039       		ld de,commandMemory
                S01:00000821:  11 00 10
 F00:0040       		call loadFILE
@@ -181,7 +182,7 @@ F00:0048       	errorloading:
 F00:0049       		call printhex
                S01:00000838:  CD B7 08
 F00:0050       		ld hl,errorloadingmsg
-               S01:0000083B:  21 D9 0A
+               S01:0000083B:  21 E3 0A
 F00:0051       		call println
                S01:0000083E:  CD 8D 08
 F00:0052       		jp commandprocessloop
@@ -368,7 +369,7 @@ F00:0178       	push hl
 F00:0179       	push af
                S01:00000891:  F5
 F00:0180       	ld hl,crlf
-               S01:00000892:  21 BA 0A
+               S01:00000892:  21 C4 0A
 F00:0181       	call print
                S01:00000895:  CD 9B 08
 F00:0182       	pop af
@@ -1066,7 +1067,7 @@ F00:0601       	ret
 F00:0602       _loadaddress$16:
 F00:0603       	#----- not defined ---
 F00:0604       	ld hl,addressfailedmsg
-               S01:00000AA6:  21 F3 0A
+               S01:00000AA6:  21 FD 0A
 F00:0605       	call print 
                S01:00000AA9:  CD 9B 08
 F00:0606       	call printhex
@@ -1077,51 +1078,64 @@ F00:0608       	ld hl,0
 F00:0609       	ret
                S01:00000AB2:  C9
 F00:0610       	# ======================== end subroutines ========== #
-F00:0611       		
-F00:0612       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0613       	#	di
-F00:0614       		#ld a,'*'
-F00:0615       		#out (SERIALPORT),a
-F00:0616       
-F00:0617       		in a,(SERIALPORT)
-               S01:00000AB3:  DB 01
-F00:0618       		out (SERIALPORT),a
-               S01:00000AB5:  D3 01
-F00:0619       		ei
-               S01:00000AB7:  FB
-F00:0620       		reti
-               S01:00000AB8:  ED 4D
-F00:0621       	crlf: .string "\r\n"
-               S01:00000ABA:  0D 0A
-F00:0622       	loadedmsg: .string "JOSHUA\r\n"
-               S01:00000ABD:  4A 4F 53 48 55 41 0D 0A
-F00:0623       	readymsg: .string "\r\nReady v0.0\r\n"
-               S01:00000AC6:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
-F00:0624       	commandprocessor: .string "cmd"
-               S01:00000AD5:  63 6D 64
-F00:0625       	errorloadingmsg: .string "error loading program.\r\n\"
-               S01:00000AD9:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
-               S01:00000AE9:  6F 67 72 61 6D 2E 0D 0A 22
-F00:0626       	addressfailedmsg: .string "GetAddress failed for code:"
-               S01:00000AF3:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
-               S01:00000B03:  64 20 66 6F 72 20 63 6F 64 65 3A
-F00:0627       
-F00:0628       
-F00:0629       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0630       	;#.org 0x0A00-start
-F00:0631       	.align 8
-F00:0632       	jumptable:
-F00:0633       	.2byte serialport ;0
+F00:0611       	
+F00:0612       	nullroutine: 
+F00:0613       		ei
+               S01:00000AB3:  FB
+F00:0614       		reti
+               S01:00000AB4:  ED 4D
+F00:0615       
+F00:0616       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0617       	#	di
+F00:0618       		#ld a,'*'
+F00:0619       		#out (SERIALPORT),a
+F00:0620       
+F00:0621       		in a,(SERIALPORT)
+               S01:00000AB6:  DB 01
+F00:0622       		cp 0
+               S01:00000AB8:  FE 00
+F00:0623       		jp nz,_1$
+               S01:00000ABA:  C2 BF 0A
+F00:0624       		ld a,'`'
+               S01:00000ABD:  3E 60
+F00:0625       _1$:
+F00:0626       		out (SERIALPORT),a
+               S01:00000ABF:  D3 01
+F00:0627       		ei
+               S01:00000AC1:  FB
+F00:0628       		reti
+               S01:00000AC2:  ED 4D
+F00:0629       	crlf: .string "\r\n"
+               S01:00000AC4:  0D 0A
+F00:0630       	loadedmsg: .string "JOSHUA\r\n"
+               S01:00000AC7:  4A 4F 53 48 55 41 0D 0A
+F00:0631       	readymsg: .string "\r\nReady v0.0\r\n"
+               S01:00000AD0:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+F00:0632       	commandprocessor: .string "cmd"
+               S01:00000ADF:  63 6D 64
+F00:0633       	errorloadingmsg: .string "error loading program.\r\n\"
+               S01:00000AE3:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
+               S01:00000AF3:  6F 67 72 61 6D 2E 0D 0A 22
+F00:0634       	addressfailedmsg: .string "GetAddress failed for code:"
+               S01:00000AFD:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
+               S01:00000B0D:  64 20 66 6F 72 20 63 6F 64 65 3A
+F00:0635       
+F00:0636       
+F00:0637       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0638       	;#.org 0x0A00-start
+F00:0639       	.align 8
+F00:0640       	jumptable:
+F00:0641       	.2byte nullroutine ;0
                S01:00000C00:  B3 0A
-F00:0634       	.2byte serialport ;1
-               S01:00000C02:  B3 0A
-F00:0635       	.2byte serialport ;2
-               S01:00000C04:  B3 0A
-F00:0636       	.2byte serialport ;3
-               S01:00000C06:  B3 0A
-F00:0637       
-F00:0638       	
-F00:0639       	
+F00:0642       	.2byte serialport ;2
+               S01:00000C02:  B6 0A
+F00:0643       	.2byte serialport ;4
+               S01:00000C04:  B6 0A
+F00:0644       	.2byte serialport ;6
+               S01:00000C06:  B6 0A
+F00:0645       
+F00:0646       	
+F00:0647       	
 
 
 Sections:
@@ -1137,8 +1151,10 @@ F04  SDCARD.inc
 
 
 Symbols:
-serialport EXPR(2739=0xab3) ABS 
-addressfailedmsg EXPR(2803=0xaf3) ABS 
+ serialport _1$ EXPR(2751=0xabf) ABS 
+serialport EXPR(2742=0xab6) ABS 
+nullroutine EXPR(2739=0xab3) ABS 
+addressfailedmsg EXPR(2813=0xafd) ABS 
 _loadaddress$16 EXPR(2726=0xaa6) ABS 
 _loadaddress$15 EXPR(2717=0xa9d) ABS 
 _loadaddress$14 EXPR(2708=0xa94) ABS 
@@ -1181,7 +1197,7 @@ putc EXPR(2253=0x8cd) ABS
 _$ EXPR(2240=0x8c0) ABS 
 _$2 EXPR(2228=0x8b4) ABS 
 _$1 EXPR(2217=0x8a9) ABS 
-crlf EXPR(2746=0xaba) ABS 
+crlf EXPR(2756=0xac4) ABS 
 nextcharacter EXPR(2179=0x883) ABS 
 converttouppercaseletter EXPR(2176=0x880) ABS 
 goagain EXPR(2167=0x877) ABS 
@@ -1195,17 +1211,17 @@ _strlen$ EXPR(2129=0x851) ABS
 strlen EXPR(2125=0x84d) ABS 
 _metset$1 EXPR(2118=0x846) ABS 
 memset EXPR(2116=0x844) ABS 
-errorloadingmsg EXPR(2777=0xad9) ABS 
+errorloadingmsg EXPR(2787=0xae3) ABS 
 printhex EXPR(2231=0x8b7) ABS 
 println EXPR(2189=0x88d) ABS 
 errorloading EXPR(2104=0x838) ABS 
 loadFILE EXPR(2256=0x8d0) ABS 
-commandprocessor EXPR(2773=0xad5) ABS 
+commandprocessor EXPR(2783=0xadf) ABS 
 commandprocessloop EXPR(2078=0x81e) ABS 
-loadedmsg EXPR(2749=0xabd) ABS 
+loadedmsg EXPR(2759=0xac7) ABS 
 jumptable EXPR(3072=0xc00) ABS 
 print EXPR(2203=0x89b) ABS 
-readymsg EXPR(2758=0xac6) ABS 
+readymsg EXPR(2768=0xad0) ABS 
 loadaddress EXPR(2591=0xa1f) ABS 
 start EXPR(2052=0x804) UNUSED ABS 
 boot EXPR(2055=0x807) ABS 
@@ -1230,6 +1246,7 @@ FALSE EXPR(0=0x0) UNUSED
 TRUE EXPR(1=0x1) UNUSED 
 userMemory EXPR(8192=0x2000) 
 commandMemory EXPR(4096=0x1000) 
+SERIALPORT2 EXPR(2=0x2) UNUSED 
 SERIALPORT EXPR(1=0x1) 
 NEXTFILE EXPR(50=0x32) 
 OPENDIRECTORY EXPR(49=0x31) 
