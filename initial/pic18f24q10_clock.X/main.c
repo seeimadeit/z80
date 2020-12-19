@@ -82,7 +82,7 @@ void main(void)
        1    0x59    2Mhz
      */
  
-    int flag=0x67; // default 15
+    int flag=0x66; // default 31
     while (1)
     {
         // Add your application code
