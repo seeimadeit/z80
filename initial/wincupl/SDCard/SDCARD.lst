@@ -3,7 +3,7 @@ LISTING FOR LOGIC DESCRIPTION FILE: SDCARD.pld                       Page 1
 CUPL(WM): Universal Compiler for Programmable Logic
 Version 5.0a Serial# 60008009
 Copyright (c) 1983, 1998 Logical Devices, Inc.
-Created Mon Nov 23 17:21:31 2020
+Created Sat Dec 19 09:28:49 2020
 
   1:Name     SDCardController ;
   2:PartNo   00 ;
@@ -22,19 +22,29 @@ Created Mon Nov 23 17:21:31 2020
  15:Pin  4   =   a3a; /*                                 */ 
  16:Pin  5   =   _ioreq; /*   */
  17:Pin  6   =   _rfrsh; /*                              */ 
- 18:/* pins 13 - 18 have feedback paths in complex mode*/
- 19:
- 20:/* *************** OUTPUT PINS *********************/
- 21:Pin  19  =   !sdactive; /*                                 */ 
- 22:Pin  18  =   !serialactive;
+ 18:Pin  7   =   _ucWait; /* Microcontroller _Wait - active low */
+ 19:Pin  8  =   _m1;
+ 20:
+ 21:
+ 22:/* pins 13 - 18 have feedback paths in complex mode*/
  23:
- 24:
- 25:serialactive    =       !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a;
- 26:sdactive        =       !_ioreq & _rfrsh & a0a & !a1a &  a2a & !a3a;
- 27:
- 28:
+ 24:/* *************** OUTPUT PINS *********************/
+ 25:Pin  19  =   !sdactive; /*                                 */ 
+ 26:Pin  18  =   !serialactive;
+ 27:Pin  17  =   !serialactive2;
+ 28:Pin  16  =   !wait;
+ 29:serialactive    =       !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a; /* 0001 */
+ 30:sdactive        =       !_ioreq & _rfrsh & a0a & !a1a &  a2a & !a3a; /* 0101 */
+ 31:serialactive2 = !_ioreq & _rfrsh & !a0a & a1a & !a2a & !a3a; /* 0010 */
+ 32:/*wait =                serialactive $ !_ucWait
+ 33:                        # !_m1 & !_ioreq $ !_ucWait;
+ 34:*/
+ 35:wait =                  serialactive & !_ioreq
+ 36:                #       !_m1 & !_ioreq
+ 37:                $       !_ucWait;               
+ 38:
 
 
 
-Jedec Fuse Checksum       (1087)
-Jedec Transmit Checksum   (804c)
+Jedec Fuse Checksum       (32a9)
+Jedec Transmit Checksum   (c65e)

@@ -1,12 +1,16 @@
 %SIGNAL
 PIN   5 =  _ioreq 
+PIN   8 =  _m1 
 PIN   6 =  _rfrsh 
+PIN   7 =  _ucWait 
 PIN   1 =  a0a 
 PIN   2 =  a1a 
 PIN   3 =  a2a 
 PIN   4 =  a3a 
 PIN  19 = !sdactive 
 PIN  18 = !serialactive 
+PIN  17 = !serialactive2 
+PIN  16 = !wait 
 %END
 
 %FIELD
@@ -18,5 +22,26 @@ sdactive =>
 
 serialactive =>
     !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a
+
+serialactive2 =>
+    !_ioreq & _rfrsh & !a0a & a1a & !a2a & !a3a
+
+wait =>
+    !_ioreq & !_m1 & _ucWait
+  # !_ioreq & _ucWait & !serialactive
+  # _m1 & !_ucWait & serialactive
+  # _ioreq & !_ucWait
+
+sdactive.oe  =>
+    1 
+
+serialactive.oe  =>
+    1 
+
+serialactive2.oe  =>
+    1 
+
+wait.oe  =>
+    1 
 
 %END

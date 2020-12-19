@@ -10,9 +10,24 @@
 #H Device   g16v8a;
 #H 
 #H 
-#H ORDER: a3a, a2a, a1a, a0a, _ioreq, _rfrsh, !serialactive, !sdactive; 
+#H ORDER: a3a, a2a, a1a, a0a, _ioreq, _rfrsh, !serialactive, !sdactive, !serialactive2, _ucWait, !wait, _m1; 
 #H 
 #H 
-#V 0001 000101LH
-#V 0002 010101HL
-#V 0003 010100HH
+#V 0001 000101LHH1L1
+#V 0002 010101HLH0L1
+#V 0003 010100HHH1H1
+#V 0004 001001HHL1H1
+#V 0005 000101LHH1L1
+#V 0006 000101LHH0H1
+#V 0007 010101HLH1H1
+#V 0008 ******XXX*X1
+#E 0021 *
+#E 0021 *
+#E 0021 *
+#E 0021 *
+#E 0021 *
+#E 0021 *
+#E 0021 *
+
+#V 0009 000000HHH1L0
+#V 0010 000000HHH0H0

@@ -15,12 +15,23 @@ Pin  3   =   a2a; /*                                 */
 Pin  4   =   a3a; /*                                 */ 
 Pin  5   =   _ioreq; /*   */
 Pin  6   =   _rfrsh; /*                              */ 
+Pin  7   =   _ucWait; /* Microcontroller _Wait - active low */
+Pin  8  =   _m1;
+
+
 /* pins 13 - 18 have feedback paths in complex mode*/
 
 /* *************** OUTPUT PINS *********************/
 Pin  19  =   !sdactive; /*                                 */ 
 Pin  18  =   !serialactive;
-
-
-serialactive 	=	!_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a;
-sdactive 	=	!_ioreq & _rfrsh & a0a & !a1a &  a2a & !a3a;
+Pin  17  =   !serialactive2;
+Pin  16  =   !wait;
+serialactive 	=	!_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a; /* 0001 */
+sdactive 	=	!_ioreq & _rfrsh & a0a & !a1a &  a2a & !a3a; /* 0101 */
+serialactive2 =	!_ioreq & _rfrsh & !a0a & a1a & !a2a & !a3a; /* 0010 */
+/*wait =        	serialactive $ !_ucWait
+			# !_m1 & !_ioreq $ !_ucWait;
+*/
+wait =			serialactive & !_ioreq
+		#	!_m1 & !_ioreq
+		$	!_ucWait;		

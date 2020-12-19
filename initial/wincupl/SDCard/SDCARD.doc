@@ -4,8 +4,8 @@
 *******************************************************************************
 
 CUPL(WM)        5.0a Serial# 60008009
-Device          g16v8as  Library DLIB-h-40-2
-Created         Mon Nov 23 17:21:31 2020
+Device          g16v8ma  Library DLIB-h-40-8
+Created         Sat Dec 19 09:28:49 2020
 Name            SDCardController 
 Partno          00 
 Revision        01 
@@ -25,6 +25,27 @@ sdactive =>
 serialactive =>
     !_ioreq & _rfrsh & a0a & !a1a & !a2a & !a3a
 
+serialactive2 =>
+    !_ioreq & _rfrsh & !a0a & a1a & !a2a & !a3a
+
+wait =>
+    !_ioreq & !_m1 & _ucWait
+  # !_ioreq & _ucWait & serialactive
+  # _m1 & !_ucWait & !serialactive
+  # _ioreq & !_ucWait
+
+sdactive.oe  =>
+    1 
+
+serialactive.oe  =>
+    1 
+
+serialactive2.oe  =>
+    1 
+
+wait.oe  =>
+    1 
+
 
 ===============================================================================
                                  Symbol Table
@@ -35,13 +56,21 @@ Pol   Name              Ext     Pin     Type     Used   Pterms  Level
 --- --------            ---     ---     ----    ------  ------  -----   
 
     _ioreq                      5        V        -       -       -     
+    _m1                         8        V        -       -       -     
     _rfrsh                      6        V        -       -       -     
+    _ucWait                     7        V        -       -       -     
     a0a                         1        V        -       -       -     
     a1a                         2        V        -       -       -     
     a2a                         3        V        -       -       -     
     a3a                         4        V        -       -       -     
- !  sdactive                    19       V        1       8       1     
- !  serialactive                18       V        1       8       1     
+ !  sdactive                    19       V        1       7       1     
+ !  serialactive                18       V        1       7       1     
+ !  serialactive2               17       V        1       7       1     
+ !  wait                        16       V        4       7       1     
+    sdactive            oe      19       D        1       1       0     
+    serialactive        oe      18       D        1       1       0     
+    serialactive2       oe      17       D        1       1       0     
+    wait                oe      16       D        1       1       0     
 
 
 LEGEND    D : default variable         F : field      G : group
