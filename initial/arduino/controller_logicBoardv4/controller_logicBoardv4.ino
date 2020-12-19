@@ -15,6 +15,7 @@ int xcontrol = 1; // xon=char(19), xoff=char(17). xcontrol=1 = enabled
 
 #define RESETZ80 8
 #define WAIT 13
+#define CLOCKIN 12
 #define HASPOWER 11
 #define IOREQ 42 // not used I hope
 #define M1 4
@@ -54,7 +55,7 @@ void setup() {
   pinMode(M1, INPUT);
   pinMode(IOREAD, INPUT);
   pinMode(ACTIVE, INPUT);
-  // pinMode(12, OUTPUT); digitalWrite(12, LOW);
+  pinMode(CLOCKIN, INPUT);
   digitalWrite(WAIT, HIGH);
 
   DoRead(INPUT);
@@ -125,6 +126,89 @@ void readchannel( uint8_t *_c)
 }
 
 
+uint8_t c = 0;
+void handleioacknowledge()
+{
+
+  /*    Serial.print("ioreq="); Serial.print(ioreq);
+      Serial.print(",Active="); Serial.print(digitalRead(ACTIVE));
+      Serial.print(",M1="); Serial.println(m1);
+  */
+  digitalWrite(INT, HIGH);
+
+
+  if (character != 0  ) { // this is for interrupt mode 1 or mode 2
+    write(2); // vector for mode 2, note this code will also work with mode 1
+
+    // test ioreq pin
+    if (digitalRead(IOREQ) == HIGH) {
+      Serial.print("ooops");
+    }
+    int ccc = 0;
+    digitalWrite(WAIT, LOW);
+    // may need a pause
+    // while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
+    while (digitalRead(IOREQ) == LOW) ccc++; // wait for the low state to change
+    digitalWrite(WAIT, HIGH);
+    DoRead(INPUT);
+    Serial.println(ccc);
+
+  } else {
+    Serial.print("hey whats going on");
+    write(2); // vector for mode 2, note this code will also work with mode 1
+
+
+    digitalWrite(WAIT, LOW);
+    // may need a pause
+    while (digitalRead(IOREQ) == LOW); // wait for the low state to change
+    digitalWrite(WAIT, HIGH);
+    DoRead(INPUT);
+  }
+  //digitalWrite(WAIT, HIGH);
+
+
+}
+
+
+void handleiorequest()
+{
+  // only process when active = low
+
+
+  bool IsRead = digitalRead(IOREAD);
+  if (!IsRead) {
+    readchannel(&c);
+    if (c == 19) xcontrol = 0; // xoff - disable sending keystrokes - allow processor time to process
+    if (c == 17) xcontrol = 1; // xon - enable sending keystrokes again - keyboard
+    if (c == 0)
+    {
+      Serial.println("zero");
+    } else {
+      Serial.print((char)c);
+    }
+
+    digitalWrite(WAIT, LOW);
+    // may need a pause
+    while (digitalRead(ACTIVE) == LOW) ; // wait for the low state to change
+    digitalWrite(WAIT, HIGH);
+
+  } else {// !isread
+
+
+
+    if (character == 0) character = '+';
+    write(character);
+    character = 0;
+
+    digitalWrite(WAIT, LOW);
+    // may need a pause
+
+    while (digitalRead(ACTIVE) == LOW) ; // wait for the low state to change
+    digitalWrite(WAIT, HIGH);
+    DoRead(INPUT);
+
+  }
+}
 
 void loop() {
   //digitalWrite(WAIT, LOW);
@@ -133,82 +217,12 @@ void loop() {
   int m1 = digitalRead(M1);
 
   if (ioreq == LOW && m1 == LOW) {
-
-    /*    Serial.print("ioreq="); Serial.print(ioreq);
-        Serial.print(",Active="); Serial.print(digitalRead(ACTIVE));
-        Serial.print(",M1="); Serial.println(m1);
-    */
-    digitalWrite(INT, HIGH);
-
-
-    if (character != 0  ) { // this is for interrupt mode 1 or mode 2
-      write(2); // vector for mode 2, note this code will also work with mode 1
-
-      // test ioreq pin
-      if (digitalRead(IOREQ) == HIGH) {
-        Serial.print("ooops");
-      }
-      digitalWrite(WAIT, LOW);
-      // may need a pause
-      // while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
-      while (digitalRead(IOREQ) == LOW); // wait for the low state to change
-      DoRead(INPUT);
-      digitalWrite(WAIT, HIGH);
-
-    } else {
-      Serial.print("hey whats going on");
-      write(2); // vector for mode 2, note this code will also work with mode 1
-
-
-      digitalWrite(WAIT, LOW);
-      // may need a pause
-      while (digitalRead(IOREQ) == LOW); // wait for the low state to change
-      digitalWrite(WAIT, HIGH);
-      DoRead(INPUT);
-    }
-    //digitalWrite(WAIT, HIGH);
-
-
+    handleioacknowledge();
   } else {
 
     int active = digitalRead(ACTIVE);
     if (active == LOW) {
-      // only process when active = low
-      uint8_t c = 0;
-      readchannel(&c);
-
-      bool IsRead = digitalRead(IOREAD);
-      if (!IsRead) {
-        if (c == 19) xcontrol = 0; // xoff - disable sending keystrokes - allow processor time to process
-        if (c == 17) xcontrol = 1; // xon - enable sending keystrokes again - keyboard
-        if (c == 0)
-        {
-          Serial.println("zero");
-        } else {
-          Serial.print((char)c);
-        }
-
-        digitalWrite(WAIT, LOW);
-        // may need a pause
-        while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
-        digitalWrite(WAIT, HIGH);
-
-      } else {// !isread
-
-
-
-        if (character == 0) character = '+';
-        write(character);
-        character = 0;
-
-        digitalWrite(WAIT, LOW);
-        // may need a pause
-
-        while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
-        digitalWrite(WAIT, HIGH);
-        DoRead(INPUT);
-
-      }
+      handleiorequest();
 
     } else {
 
