@@ -15,7 +15,7 @@ int xcontrol = 1; // xon=char(19), xoff=char(17). xcontrol=1 = enabled
 
 #define RESETZ80 8
 #define WAIT 13
-#define CLOCKIN 12
+#define RFSH 12
 #define HASPOWER 11
 #define IOREQ 42 // not used I hope
 #define M1 4
@@ -55,7 +55,7 @@ void setup() {
   pinMode(M1, INPUT);
   pinMode(IOREAD, INPUT);
   pinMode(ACTIVE, INPUT);
-  pinMode(CLOCKIN, INPUT);
+  pinMode(RFSH, INPUT);
   digitalWrite(WAIT, HIGH);
 
   DoRead(INPUT);
@@ -135,6 +135,7 @@ void handleioacknowledge()
       Serial.print(",M1="); Serial.println(m1);
   */
   digitalWrite(INT, HIGH);
+ 
 
 
   if (character != 0  ) { // this is for interrupt mode 1 or mode 2
@@ -145,13 +146,24 @@ void handleioacknowledge()
       Serial.print("ooops");
     }
     int ccc = 0;
+
+
+    /*    digitalWrite(WAIT, LOW);
+        // may need a pause
+        // while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
+        while (digitalRead(IOREQ) == LOW) ccc++; // wait for the low state to change
+        digitalWrite(WAIT, HIGH);
+    */
+    // this is working for the interrupts, the refresh happens after the z80 has accepted the data byte
     digitalWrite(WAIT, LOW);
     // may need a pause
-    // while (digitalRead(ACTIVE) == LOW); // wait for the low state to change
-    while (digitalRead(IOREQ) == LOW) ccc++; // wait for the low state to change
     digitalWrite(WAIT, HIGH);
+    while (digitalRead(RFSH) == LOW) ; // wait for the low state to change
+
+
+
     DoRead(INPUT);
-    Serial.println(ccc);
+    //Serial.println(ccc);
 
   } else {
     Serial.print("hey whats going on");
@@ -161,8 +173,9 @@ void handleioacknowledge()
     digitalWrite(WAIT, LOW);
     // may need a pause
     while (digitalRead(IOREQ) == LOW); // wait for the low state to change
-    digitalWrite(WAIT, HIGH);
     DoRead(INPUT);
+    digitalWrite(WAIT, HIGH);
+    //  while (digitalRead(RFSH)==LOW); // extra 1 for testing
   }
   //digitalWrite(WAIT, HIGH);
 
@@ -187,10 +200,15 @@ void handleiorequest()
       Serial.print((char)c);
     }
 
-    digitalWrite(WAIT, LOW);
+
     // may need a pause
-    while (digitalRead(ACTIVE) == LOW) ; // wait for the low state to change
+    while (digitalRead(ACTIVE) == LOW)  {
+      digitalWrite(WAIT, LOW);  // wait for the low state to change
+//      Serial.print('P');
+    }
     digitalWrite(WAIT, HIGH);
+
+
 
   } else {// !isread
 
@@ -198,14 +216,29 @@ void handleiorequest()
 
     if (character == 0) character = '+';
     write(character);
-    character = 0;
+    character = 0; 
+    //Serial.print("X");
 
-    digitalWrite(WAIT, LOW);
-    // may need a pause
 
-    while (digitalRead(ACTIVE) == LOW) ; // wait for the low state to change
-    digitalWrite(WAIT, HIGH);
+    /*   digitalWrite(WAIT, LOW);
+       // may need a pause
+      //while (digitalRead(ACTIVE) == LOW) ; // wait for the low state to change
+      while (digitalRead(IOREQ) == LOW) ; // wait for the low state to change
+
+      digitalWrite(WAIT, HIGH);
+    */
+
+//delay(1000);
+    while (digitalRead(ACTIVE) == LOW) {
+      digitalWrite(WAIT, LOW) ;  // wait for the low state to change
+    //  Serial.print('*');
+    }
     DoRead(INPUT);
+    digitalWrite(WAIT, HIGH);
+
+   
+
+
 
   }
 }
@@ -242,13 +275,14 @@ void loop() {
     {
       characterpause = 0;
       character = Serial.read();
-
+     // Serial.print("N");
       digitalWrite(INT, LOW); // hold it low until we get a response.
-
+    
 
 
     }
-  }
+  } 
+
   //}
   // change the current mode;
   setMode(digitalRead(HASPOWER));

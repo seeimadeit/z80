@@ -40,7 +40,7 @@ volatile int state = NOTHING;
 
 
 #define ACTIVE 2 // comes from GAL ATF16V8 (ACTIVE LOW)
-#define RDWR 7 //comes from z80 _WR (write active low)
+#define IOREAD 7 //comes from z80 _WR (write active low)
 #define WAIT 8 // active low
 
 #define D7 4
@@ -93,7 +93,7 @@ void setup() {
     Serial.println("SD Card failed");
   }
 pinMode(ACTIVE,INPUT);
-pinMode(RDWR,INPUT);
+pinMode(IOREAD,INPUT);
 pinMode(WAIT,OUTPUT);
 digitalWrite(WAIT,HIGH);
 digitalWrite(WAIT,LOW);
@@ -294,8 +294,8 @@ void process()
 
  // uint8_t c=0;
  // readchannel(&c);DWRITE("GOT "); Serial.println(c,HEX);
-int isRead = digitalRead(RDWR);
-//DWRITE("RDWR"); DWRITE(isRead);
+int isRead = digitalRead(IOREAD);
+//DWRITE("IOREAD"); DWRITE(isRead);
 if (!isRead) {
   // this is a z80 OUT instruction
   uint8_t c=0;
@@ -327,6 +327,6 @@ void loop(void) {
  digitalWrite(WAIT,LOW);
     process();
   }
-  //int isRead = digitalRead(RDWR);
- // if (isRead==LOW) {Serial.print("xRDWR"); Serial.print(isRead);}
+  //int isRead = digitalRead(IOREAD);
+ // if (isRead==LOW) {Serial.print("xIOREAD"); Serial.print(isRead);}
 }

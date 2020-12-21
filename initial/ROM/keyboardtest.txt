@@ -1,0 +1,417 @@
+F00:0001       .equ SERIALPORT , 0x01
+F00:0002       .equ SERIALPORT2, 0x02
+F00:0003       
+F00:0004       	.org 0x800
+F00:0005       
+F00:0006       
+F00:0007       	ld sp,0xffff
+               S01:00000800:  31 FF FF
+F00:0008       
+F00:0009       	di
+               S01:00000803:  F3
+F00:0010       	ld hl,readymsg
+               S01:00000804:  21 61 08
+F00:0011       	call print
+               S01:00000807:  CD 1B 08
+F00:0012       
+F00:0013       		im 2 ;/* interrupt mode 2*/
+               S01:0000080A:  ED 5E
+F00:0014       		ld a, jumptable/256 ;// hibyte
+               S01:0000080C:  3E 09
+F00:0015       		ld i,a
+               S01:0000080E:  ED 47
+F00:0016       		ei   ;#/* enable interrupts*/
+               S01:00000810:  FB
+F00:0017       
+F00:0018       		ld hl,loadedmsg
+               S01:00000811:  21 51 08
+F00:0019       		call print
+               S01:00000814:  CD 1B 08
+F00:0020       loop:
+F00:0021       	halt
+               S01:00000817:  76
+F00:0022       	jp loop
+               S01:00000818:  C3 17 08
+F00:0023       
+F00:0024       	# === PRINT === #
+F00:0025       	print: ;// expecting a zero terminated string
+F00:0026       		push hl
+               S01:0000081B:  E5
+F00:0027       		push af
+               S01:0000081C:  F5
+F00:0028       		;# hl can be null so check for that first
+F00:0029       		ld a,h
+               S01:0000081D:  7C
+F00:0030       		cp 0
+               S01:0000081E:  FE 00
+F00:0031       		jp nz,_$1 ;# hibyte not null, no just print it
+               S01:00000820:  C2 29 08
+F00:0032       		ld a,l
+               S01:00000823:  7D
+F00:0033       		cp 0
+               S01:00000824:  FE 00
+F00:0034       		jp z,_$2 ;# lobyte is null and hibyte is null so just exit
+               S01:00000826:  CA 34 08
+F00:0035       		_$1:
+F00:0036       			ld a,(hl)
+               S01:00000829:  7E
+F00:0037       			cp 0
+               S01:0000082A:  FE 00
+F00:0038       			jr z,_$2
+               S01:0000082C:  28 06
+F00:0039       			out (SERIALPORT),a
+               S01:0000082E:  D3 01
+F00:0040       			inc hl
+               S01:00000830:  23
+F00:0041       			jp _$1
+               S01:00000831:  C3 29 08
+F00:0042       _$2:			
+F00:0043       		pop af
+               S01:00000834:  F1
+F00:0044       		pop hl
+               S01:00000835:  E1
+F00:0045       		ret
+               S01:00000836:  C9
+F00:0046       
+F00:0047       
+F00:0048       # ======================== end subroutines ========== #
+F00:0049       	
+F00:0050       	nullroutine: 
+F00:0051       		ld a,0
+               S01:00000837:  3E 00
+F00:0052       		out (SERIALPORT),a
+               S01:00000839:  D3 01
+F00:0053       		jp serialport
+               S01:0000083B:  C3 40 08
+F00:0054       		reti
+               S01:0000083E:  ED 4D
+F00:0055       
+F00:0056       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0057       	#	di
+F00:0058       		#ld a,'*'
+F00:0059       		#out (SERIALPORT),a
+F00:0060       
+F00:0061       		in a,(SERIALPORT)
+               S01:00000840:  DB 01
+F00:0062       		cp 0
+               S01:00000842:  FE 00
+F00:0063       		jp nz,_1$
+               S01:00000844:  C2 49 08
+F00:0064       		ld a,'`'
+               S01:00000847:  3E 60
+F00:0065       _1$:
+F00:0066       		out (SERIALPORT),a
+               S01:00000849:  D3 01
+F00:0067       		ei
+               S01:0000084B:  FB
+F00:0068       		reti
+               S01:0000084C:  ED 4D
+F00:0069       
+F00:0070       	crlf: .string "\r\n"
+               S01:0000084E:  0D 0A
+F00:0071       	loadedmsg: .string "keyboard test\r\n"
+               S01:00000851:  6B 65 79 62 6F 61 72 64 20 74 65 73 74 0D 0A
+F00:0072       		readymsg: .string "\r\nReady v0.0\r\n"
+               S01:00000861:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+F00:0073       
+F00:0074       
+F00:0075       	.align 8
+F00:0076       	jumptable:
+F00:0077       	.2byte nullroutine ;0
+               S01:00000900:  37 08
+F00:0078       	.2byte serialport ;2
+               S01:00000902:  40 08
+F00:0079       	.2byte serialport ;4
+               S01:00000904:  40 08
+F00:0080       	.2byte serialport ;6
+               S01:00000906:  40 08
+F00:0081       		.2byte nullroutine ;0
+               S01:00000908:  37 08
+F00:0082       	.2byte nullroutine ;0
+               S01:0000090A:  37 08
+F00:0083       	.2byte nullroutine ;0
+               S01:0000090C:  37 08
+F00:0084       	.2byte nullroutine ;0
+               S01:0000090E:  37 08
+F00:0085       	.2byte nullroutine ;0
+               S01:00000910:  37 08
+F00:0086       	.2byte nullroutine ;0
+               S01:00000912:  37 08
+F00:0087       #/* 10 */
+F00:0088       	.2byte nullroutine ;0
+               S01:00000914:  37 08
+F00:0089       	.2byte nullroutine ;0
+               S01:00000916:  37 08
+F00:0090       	.2byte nullroutine ;0
+               S01:00000918:  37 08
+F00:0091       	.2byte nullroutine ;0
+               S01:0000091A:  37 08
+F00:0092       	.2byte nullroutine ;0
+               S01:0000091C:  37 08
+F00:0093       	.2byte nullroutine ;0
+               S01:0000091E:  37 08
+F00:0094       	.2byte nullroutine ;0
+               S01:00000920:  37 08
+F00:0095       	.2byte nullroutine ;0
+               S01:00000922:  37 08
+F00:0096       	.2byte nullroutine ;0
+               S01:00000924:  37 08
+F00:0097       	.2byte nullroutine ;0
+               S01:00000926:  37 08
+F00:0098       #/* 20 */
+F00:0099       	.2byte nullroutine ;0
+               S01:00000928:  37 08
+F00:0100       	.2byte nullroutine ;0
+               S01:0000092A:  37 08
+F00:0101       	.2byte nullroutine ;0
+               S01:0000092C:  37 08
+F00:0102       	.2byte nullroutine ;0
+               S01:0000092E:  37 08
+F00:0103       	.2byte nullroutine ;0
+               S01:00000930:  37 08
+F00:0104       	.2byte nullroutine ;0
+               S01:00000932:  37 08
+F00:0105       	.2byte nullroutine ;0
+               S01:00000934:  37 08
+F00:0106       	.2byte nullroutine ;0
+               S01:00000936:  37 08
+F00:0107       	.2byte nullroutine ;0
+               S01:00000938:  37 08
+F00:0108       	.2byte nullroutine ;0
+               S01:0000093A:  37 08
+F00:0109       #/* 30 */
+F00:0110       	.2byte nullroutine ;0
+               S01:0000093C:  37 08
+F00:0111       	.2byte nullroutine ;0
+               S01:0000093E:  37 08
+F00:0112       	.2byte nullroutine ;0
+               S01:00000940:  37 08
+F00:0113       	.2byte nullroutine ;0
+               S01:00000942:  37 08
+F00:0114       	.2byte nullroutine ;0
+               S01:00000944:  37 08
+F00:0115       	.2byte nullroutine ;0
+               S01:00000946:  37 08
+F00:0116       	.2byte nullroutine ;0
+               S01:00000948:  37 08
+F00:0117       	.2byte nullroutine ;0
+               S01:0000094A:  37 08
+F00:0118       	.2byte nullroutine ;0
+               S01:0000094C:  37 08
+F00:0119       	.2byte nullroutine ;0
+               S01:0000094E:  37 08
+F00:0120       #/* 40 */
+F00:0121       	.2byte nullroutine ;0
+               S01:00000950:  37 08
+F00:0122       	.2byte nullroutine ;0
+               S01:00000952:  37 08
+F00:0123       	.2byte nullroutine ;0
+               S01:00000954:  37 08
+F00:0124       	.2byte nullroutine ;0
+               S01:00000956:  37 08
+F00:0125       	.2byte nullroutine ;0
+               S01:00000958:  37 08
+F00:0126       	.2byte nullroutine ;0
+               S01:0000095A:  37 08
+F00:0127       	.2byte nullroutine ;0
+               S01:0000095C:  37 08
+F00:0128       	.2byte nullroutine ;0
+               S01:0000095E:  37 08
+F00:0129       	.2byte nullroutine ;0
+               S01:00000960:  37 08
+F00:0130       	.2byte nullroutine ;0
+               S01:00000962:  37 08
+F00:0131       #/* 50 */
+F00:0132       	.2byte nullroutine ;0
+               S01:00000964:  37 08
+F00:0133       	.2byte nullroutine ;0
+               S01:00000966:  37 08
+F00:0134       	.2byte nullroutine ;0
+               S01:00000968:  37 08
+F00:0135       	.2byte nullroutine ;0
+               S01:0000096A:  37 08
+F00:0136       	.2byte nullroutine ;0
+               S01:0000096C:  37 08
+F00:0137       	.2byte nullroutine ;0
+               S01:0000096E:  37 08
+F00:0138       	.2byte nullroutine ;0
+               S01:00000970:  37 08
+F00:0139       	.2byte nullroutine ;0
+               S01:00000972:  37 08
+F00:0140       	.2byte nullroutine ;0
+               S01:00000974:  37 08
+F00:0141       	.2byte nullroutine ;0
+               S01:00000976:  37 08
+F00:0142       #/* 60 */
+F00:0143       	.2byte nullroutine ;0
+               S01:00000978:  37 08
+F00:0144       	.2byte nullroutine ;0
+               S01:0000097A:  37 08
+F00:0145       	.2byte nullroutine ;0
+               S01:0000097C:  37 08
+F00:0146       	.2byte nullroutine ;0
+               S01:0000097E:  37 08
+F00:0147       	.2byte nullroutine ;0
+               S01:00000980:  37 08
+F00:0148       	.2byte nullroutine ;0
+               S01:00000982:  37 08
+F00:0149       	.2byte nullroutine ;0
+               S01:00000984:  37 08
+F00:0150       	.2byte nullroutine ;0
+               S01:00000986:  37 08
+F00:0151       	.2byte nullroutine ;0
+               S01:00000988:  37 08
+F00:0152       	.2byte nullroutine ;0
+               S01:0000098A:  37 08
+F00:0153       #/* 70 */
+F00:0154       	.2byte nullroutine ;0
+               S01:0000098C:  37 08
+F00:0155       	.2byte nullroutine ;0
+               S01:0000098E:  37 08
+F00:0156       	.2byte nullroutine ;0
+               S01:00000990:  37 08
+F00:0157       	.2byte nullroutine ;0
+               S01:00000992:  37 08
+F00:0158       	.2byte nullroutine ;0
+               S01:00000994:  37 08
+F00:0159       	.2byte nullroutine ;0
+               S01:00000996:  37 08
+F00:0160       	.2byte nullroutine ;0
+               S01:00000998:  37 08
+F00:0161       	.2byte nullroutine ;0
+               S01:0000099A:  37 08
+F00:0162       	.2byte nullroutine ;0
+               S01:0000099C:  37 08
+F00:0163       	.2byte nullroutine ;0
+               S01:0000099E:  37 08
+F00:0164       #/* 80 */
+F00:0165       	.2byte nullroutine ;0
+               S01:000009A0:  37 08
+F00:0166       	.2byte nullroutine ;0
+               S01:000009A2:  37 08
+F00:0167       	.2byte nullroutine ;0
+               S01:000009A4:  37 08
+F00:0168       	.2byte nullroutine ;0
+               S01:000009A6:  37 08
+F00:0169       	.2byte nullroutine ;0
+               S01:000009A8:  37 08
+F00:0170       	.2byte nullroutine ;0
+               S01:000009AA:  37 08
+F00:0171       	.2byte nullroutine ;0
+               S01:000009AC:  37 08
+F00:0172       	.2byte nullroutine ;0
+               S01:000009AE:  37 08
+F00:0173       	.2byte nullroutine ;0
+               S01:000009B0:  37 08
+F00:0174       	.2byte nullroutine ;0
+               S01:000009B2:  37 08
+F00:0175       #/* 90 */
+F00:0176       	.2byte nullroutine ;0
+               S01:000009B4:  37 08
+F00:0177       	.2byte nullroutine ;0
+               S01:000009B6:  37 08
+F00:0178       	.2byte nullroutine ;0
+               S01:000009B8:  37 08
+F00:0179       	.2byte nullroutine ;0
+               S01:000009BA:  37 08
+F00:0180       	.2byte nullroutine ;0
+               S01:000009BC:  37 08
+F00:0181       	.2byte nullroutine ;0
+               S01:000009BE:  37 08
+F00:0182       	.2byte nullroutine ;0
+               S01:000009C0:  37 08
+F00:0183       	.2byte nullroutine ;0
+               S01:000009C2:  37 08
+F00:0184       	.2byte nullroutine ;0
+               S01:000009C4:  37 08
+F00:0185       	.2byte nullroutine ;0
+               S01:000009C6:  37 08
+F00:0186       #/* 100 */
+F00:0187       	.2byte nullroutine ;0
+               S01:000009C8:  37 08
+F00:0188       	.2byte nullroutine ;0
+               S01:000009CA:  37 08
+F00:0189       	.2byte nullroutine ;0
+               S01:000009CC:  37 08
+F00:0190       	.2byte nullroutine ;0
+               S01:000009CE:  37 08
+F00:0191       	.2byte nullroutine ;0
+               S01:000009D0:  37 08
+F00:0192       	.2byte nullroutine ;0
+               S01:000009D2:  37 08
+F00:0193       	.2byte nullroutine ;0
+               S01:000009D4:  37 08
+F00:0194       	.2byte nullroutine ;0
+               S01:000009D6:  37 08
+F00:0195       	.2byte nullroutine ;0
+               S01:000009D8:  37 08
+F00:0196       	.2byte nullroutine ;0
+               S01:000009DA:  37 08
+F00:0197       #/* 110 */
+F00:0198       	.2byte nullroutine ;0
+               S01:000009DC:  37 08
+F00:0199       	.2byte nullroutine ;0
+               S01:000009DE:  37 08
+F00:0200       	.2byte nullroutine ;0
+               S01:000009E0:  37 08
+F00:0201       	.2byte nullroutine ;0
+               S01:000009E2:  37 08
+F00:0202       	.2byte nullroutine ;0
+               S01:000009E4:  37 08
+F00:0203       	.2byte nullroutine ;0
+               S01:000009E6:  37 08
+F00:0204       	.2byte nullroutine ;0
+               S01:000009E8:  37 08
+F00:0205       	.2byte nullroutine ;0
+               S01:000009EA:  37 08
+F00:0206       	.2byte nullroutine ;0
+               S01:000009EC:  37 08
+F00:0207       	.2byte nullroutine ;0
+               S01:000009EE:  37 08
+F00:0208       #/* 120 */
+F00:0209       	.2byte nullroutine ;0
+               S01:000009F0:  37 08
+F00:0210       	.2byte nullroutine ;0
+               S01:000009F2:  37 08
+F00:0211       	.2byte nullroutine ;0
+               S01:000009F4:  37 08
+F00:0212       	.2byte nullroutine ;0
+               S01:000009F6:  37 08
+F00:0213       	.2byte nullroutine ;0
+               S01:000009F8:  37 08
+F00:0214       	.2byte nullroutine ;0
+               S01:000009FA:  37 08
+F00:0215       	.2byte nullroutine ;0
+               S01:000009FC:  37 08
+F00:0216       	.2byte nullroutine ;0
+               S01:000009FE:  37 08
+F00:0217       
+F00:0218       
+
+
+Sections:
+S01  seg800
+
+
+Sources:
+F00  keyboardtest.s
+
+
+Symbols:
+crlf EXPR(2126=0x84e) UNUSED ABS 
+ serialport _1$ EXPR(2121=0x849) ABS 
+serialport EXPR(2112=0x840) ABS 
+nullroutine EXPR(2103=0x837) ABS 
+_$2 EXPR(2100=0x834) ABS 
+_$1 EXPR(2089=0x829) ABS 
+loop EXPR(2071=0x817) ABS 
+loadedmsg EXPR(2129=0x851) ABS 
+jumptable EXPR(2304=0x900) ABS 
+print EXPR(2075=0x81b) ABS 
+readymsg EXPR(2145=0x861) ABS 
+SERIALPORT2 EXPR(2=0x2) UNUSED 
+SERIALPORT EXPR(1=0x1) 
+__VASM EXPR(0=0x0) INTERNAL 
+__MSDOSFS EXPR(0=0x0) INTERNAL 
+
+There have been no errors.

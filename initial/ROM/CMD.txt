@@ -1458,18 +1458,287 @@ F00:0718       	cmdlinebufferlen: .byte 0
 F00:0719       	cmdlinebuffer: .space 50
 F00:0720       	cmdlinebuffer$:
 F00:0721       
-F00:0722       
-F00:0723       
-F00:0724       	
+F00:0722       	nullroutine:
+F00:0723       		ei
+               S01:000018C6:  FB
+F00:0724       		reti
+               S01:000018C7:  ED 4D
 F00:0725       
-F00:0726       
-F00:0727       	;#.org 0x700
-F00:0728       	.align 8
-F00:0729       	jumptable: ;# for keyboard interrupts
-F00:0730       	.2byte cmdline ;0
-               S01:00001900:  54 11
-F00:0731       	.2byte cmdline ;0
+F00:0726       	
+F00:0727       
+F00:0728       
+F00:0729       	;#.org 0x700
+F00:0730       	.align 8
+F00:0731       	jumptable: ;# for keyboard interrupts
+F00:0732       	.2byte nullroutine ;0
+               S01:00001900:  C6 18
+F00:0733       	.2byte cmdline ;2
                S01:00001902:  54 11
+F00:0734       	.2byte nullroutine ;4
+               S01:00001904:  C6 18
+F00:0735       	.2byte nullroutine ;6
+               S01:00001906:  C6 18
+F00:0736       	.2byte nullroutine ;0
+               S01:00001908:  C6 18
+F00:0737       	.2byte nullroutine ;0
+               S01:0000190A:  C6 18
+F00:0738       	.2byte nullroutine ;0
+               S01:0000190C:  C6 18
+F00:0739       	.2byte nullroutine ;0
+               S01:0000190E:  C6 18
+F00:0740       	.2byte nullroutine ;0
+               S01:00001910:  C6 18
+F00:0741       	.2byte nullroutine ;0
+               S01:00001912:  C6 18
+F00:0742       #/* 10 */
+F00:0743       	.2byte nullroutine ;0
+               S01:00001914:  C6 18
+F00:0744       	.2byte nullroutine ;0
+               S01:00001916:  C6 18
+F00:0745       	.2byte nullroutine ;0
+               S01:00001918:  C6 18
+F00:0746       	.2byte nullroutine ;0
+               S01:0000191A:  C6 18
+F00:0747       	.2byte nullroutine ;0
+               S01:0000191C:  C6 18
+F00:0748       	.2byte nullroutine ;0
+               S01:0000191E:  C6 18
+F00:0749       	.2byte nullroutine ;0
+               S01:00001920:  C6 18
+F00:0750       	.2byte nullroutine ;0
+               S01:00001922:  C6 18
+F00:0751       	.2byte nullroutine ;0
+               S01:00001924:  C6 18
+F00:0752       	.2byte nullroutine ;0
+               S01:00001926:  C6 18
+F00:0753       #/* 20 */
+F00:0754       	.2byte nullroutine ;0
+               S01:00001928:  C6 18
+F00:0755       	.2byte nullroutine ;0
+               S01:0000192A:  C6 18
+F00:0756       	.2byte nullroutine ;0
+               S01:0000192C:  C6 18
+F00:0757       	.2byte nullroutine ;0
+               S01:0000192E:  C6 18
+F00:0758       	.2byte nullroutine ;0
+               S01:00001930:  C6 18
+F00:0759       	.2byte nullroutine ;0
+               S01:00001932:  C6 18
+F00:0760       	.2byte nullroutine ;0
+               S01:00001934:  C6 18
+F00:0761       	.2byte nullroutine ;0
+               S01:00001936:  C6 18
+F00:0762       	.2byte nullroutine ;0
+               S01:00001938:  C6 18
+F00:0763       	.2byte nullroutine ;0
+               S01:0000193A:  C6 18
+F00:0764       #/* 30 */
+F00:0765       	.2byte nullroutine ;0
+               S01:0000193C:  C6 18
+F00:0766       	.2byte nullroutine ;0
+               S01:0000193E:  C6 18
+F00:0767       	.2byte nullroutine ;0
+               S01:00001940:  C6 18
+F00:0768       	.2byte nullroutine ;0
+               S01:00001942:  C6 18
+F00:0769       	.2byte nullroutine ;0
+               S01:00001944:  C6 18
+F00:0770       	.2byte nullroutine ;0
+               S01:00001946:  C6 18
+F00:0771       	.2byte nullroutine ;0
+               S01:00001948:  C6 18
+F00:0772       	.2byte nullroutine ;0
+               S01:0000194A:  C6 18
+F00:0773       	.2byte nullroutine ;0
+               S01:0000194C:  C6 18
+F00:0774       	.2byte nullroutine ;0
+               S01:0000194E:  C6 18
+F00:0775       #/* 40 */
+F00:0776       	.2byte nullroutine ;0
+               S01:00001950:  C6 18
+F00:0777       	.2byte nullroutine ;0
+               S01:00001952:  C6 18
+F00:0778       	.2byte nullroutine ;0
+               S01:00001954:  C6 18
+F00:0779       	.2byte nullroutine ;0
+               S01:00001956:  C6 18
+F00:0780       	.2byte nullroutine ;0
+               S01:00001958:  C6 18
+F00:0781       	.2byte nullroutine ;0
+               S01:0000195A:  C6 18
+F00:0782       	.2byte nullroutine ;0
+               S01:0000195C:  C6 18
+F00:0783       	.2byte nullroutine ;0
+               S01:0000195E:  C6 18
+F00:0784       	.2byte nullroutine ;0
+               S01:00001960:  C6 18
+F00:0785       	.2byte nullroutine ;0
+               S01:00001962:  C6 18
+F00:0786       #/* 50 */
+F00:0787       	.2byte nullroutine ;0
+               S01:00001964:  C6 18
+F00:0788       	.2byte nullroutine ;0
+               S01:00001966:  C6 18
+F00:0789       	.2byte nullroutine ;0
+               S01:00001968:  C6 18
+F00:0790       	.2byte nullroutine ;0
+               S01:0000196A:  C6 18
+F00:0791       	.2byte nullroutine ;0
+               S01:0000196C:  C6 18
+F00:0792       	.2byte nullroutine ;0
+               S01:0000196E:  C6 18
+F00:0793       	.2byte nullroutine ;0
+               S01:00001970:  C6 18
+F00:0794       	.2byte nullroutine ;0
+               S01:00001972:  C6 18
+F00:0795       	.2byte nullroutine ;0
+               S01:00001974:  C6 18
+F00:0796       	.2byte nullroutine ;0
+               S01:00001976:  C6 18
+F00:0797       #/* 60 */
+F00:0798       	.2byte nullroutine ;0
+               S01:00001978:  C6 18
+F00:0799       	.2byte nullroutine ;0
+               S01:0000197A:  C6 18
+F00:0800       	.2byte nullroutine ;0
+               S01:0000197C:  C6 18
+F00:0801       	.2byte nullroutine ;0
+               S01:0000197E:  C6 18
+F00:0802       	.2byte nullroutine ;0
+               S01:00001980:  C6 18
+F00:0803       	.2byte nullroutine ;0
+               S01:00001982:  C6 18
+F00:0804       	.2byte nullroutine ;0
+               S01:00001984:  C6 18
+F00:0805       	.2byte nullroutine ;0
+               S01:00001986:  C6 18
+F00:0806       	.2byte nullroutine ;0
+               S01:00001988:  C6 18
+F00:0807       	.2byte nullroutine ;0
+               S01:0000198A:  C6 18
+F00:0808       #/* 70 */
+F00:0809       	.2byte nullroutine ;0
+               S01:0000198C:  C6 18
+F00:0810       	.2byte nullroutine ;0
+               S01:0000198E:  C6 18
+F00:0811       	.2byte nullroutine ;0
+               S01:00001990:  C6 18
+F00:0812       	.2byte nullroutine ;0
+               S01:00001992:  C6 18
+F00:0813       	.2byte nullroutine ;0
+               S01:00001994:  C6 18
+F00:0814       	.2byte nullroutine ;0
+               S01:00001996:  C6 18
+F00:0815       	.2byte nullroutine ;0
+               S01:00001998:  C6 18
+F00:0816       	.2byte nullroutine ;0
+               S01:0000199A:  C6 18
+F00:0817       	.2byte nullroutine ;0
+               S01:0000199C:  C6 18
+F00:0818       	.2byte nullroutine ;0
+               S01:0000199E:  C6 18
+F00:0819       #/* 80 */
+F00:0820       	.2byte nullroutine ;0
+               S01:000019A0:  C6 18
+F00:0821       	.2byte nullroutine ;0
+               S01:000019A2:  C6 18
+F00:0822       	.2byte nullroutine ;0
+               S01:000019A4:  C6 18
+F00:0823       	.2byte nullroutine ;0
+               S01:000019A6:  C6 18
+F00:0824       	.2byte nullroutine ;0
+               S01:000019A8:  C6 18
+F00:0825       	.2byte nullroutine ;0
+               S01:000019AA:  C6 18
+F00:0826       	.2byte nullroutine ;0
+               S01:000019AC:  C6 18
+F00:0827       	.2byte nullroutine ;0
+               S01:000019AE:  C6 18
+F00:0828       	.2byte nullroutine ;0
+               S01:000019B0:  C6 18
+F00:0829       	.2byte nullroutine ;0
+               S01:000019B2:  C6 18
+F00:0830       #/* 90 */
+F00:0831       	.2byte nullroutine ;0
+               S01:000019B4:  C6 18
+F00:0832       	.2byte nullroutine ;0
+               S01:000019B6:  C6 18
+F00:0833       	.2byte nullroutine ;0
+               S01:000019B8:  C6 18
+F00:0834       	.2byte nullroutine ;0
+               S01:000019BA:  C6 18
+F00:0835       	.2byte nullroutine ;0
+               S01:000019BC:  C6 18
+F00:0836       	.2byte nullroutine ;0
+               S01:000019BE:  C6 18
+F00:0837       	.2byte nullroutine ;0
+               S01:000019C0:  C6 18
+F00:0838       	.2byte nullroutine ;0
+               S01:000019C2:  C6 18
+F00:0839       	.2byte nullroutine ;0
+               S01:000019C4:  C6 18
+F00:0840       	.2byte nullroutine ;0
+               S01:000019C6:  C6 18
+F00:0841       #/* 100 */
+F00:0842       	.2byte nullroutine ;0
+               S01:000019C8:  C6 18
+F00:0843       	.2byte nullroutine ;0
+               S01:000019CA:  C6 18
+F00:0844       	.2byte nullroutine ;0
+               S01:000019CC:  C6 18
+F00:0845       	.2byte nullroutine ;0
+               S01:000019CE:  C6 18
+F00:0846       	.2byte nullroutine ;0
+               S01:000019D0:  C6 18
+F00:0847       	.2byte nullroutine ;0
+               S01:000019D2:  C6 18
+F00:0848       	.2byte nullroutine ;0
+               S01:000019D4:  C6 18
+F00:0849       	.2byte nullroutine ;0
+               S01:000019D6:  C6 18
+F00:0850       	.2byte nullroutine ;0
+               S01:000019D8:  C6 18
+F00:0851       	.2byte nullroutine ;0
+               S01:000019DA:  C6 18
+F00:0852       #/* 110 */
+F00:0853       	.2byte nullroutine ;0
+               S01:000019DC:  C6 18
+F00:0854       	.2byte nullroutine ;0
+               S01:000019DE:  C6 18
+F00:0855       	.2byte nullroutine ;0
+               S01:000019E0:  C6 18
+F00:0856       	.2byte nullroutine ;0
+               S01:000019E2:  C6 18
+F00:0857       	.2byte nullroutine ;0
+               S01:000019E4:  C6 18
+F00:0858       	.2byte nullroutine ;0
+               S01:000019E6:  C6 18
+F00:0859       	.2byte nullroutine ;0
+               S01:000019E8:  C6 18
+F00:0860       	.2byte nullroutine ;0
+               S01:000019EA:  C6 18
+F00:0861       	.2byte nullroutine ;0
+               S01:000019EC:  C6 18
+F00:0862       	.2byte nullroutine ;0
+               S01:000019EE:  C6 18
+F00:0863       #/* 120 */
+F00:0864       	.2byte nullroutine ;0
+               S01:000019F0:  C6 18
+F00:0865       	.2byte nullroutine ;0
+               S01:000019F2:  C6 18
+F00:0866       	.2byte nullroutine ;0
+               S01:000019F4:  C6 18
+F00:0867       	.2byte nullroutine ;0
+               S01:000019F6:  C6 18
+F00:0868       	.2byte nullroutine ;0
+               S01:000019F8:  C6 18
+F00:0869       	.2byte nullroutine ;0
+               S01:000019FA:  C6 18
+F00:0870       	.2byte nullroutine ;0
+               S01:000019FC:  C6 18
+F00:0871       	.2byte nullroutine ;0
+               S01:000019FE:  C6 18
+F00:0872       
 
 
 Sections:
@@ -1485,6 +1754,7 @@ F04  libs.inc
 
 
 Symbols:
+nullroutine EXPR(6342=0x18c6) ABS 
 data EXPR(6290=0x1892) UNUSED ABS 
 endoflist EXPR(6286=0x188e) UNUSED ABS 
 outerrormsg EXPR(5798=0x16a6) UNUSED ABS 

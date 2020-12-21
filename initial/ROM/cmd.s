@@ -719,7 +719,9 @@ data:
 	cmdlinebuffer: .space 50
 	cmdlinebuffer$:
 
-
+	nullroutine:
+		ei
+		reti
 
 	
 
@@ -727,5 +729,143 @@ data:
 	;#.org 0x700
 	.align 8
 	jumptable: ;# for keyboard interrupts
-	.2byte cmdline ;0
-	.2byte cmdline ;0
+	.2byte nullroutine ;0
+	.2byte cmdline ;2
+	.2byte nullroutine ;4
+	.2byte nullroutine ;6
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 10 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 20 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 30 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 40 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 50 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 60 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 70 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 80 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 90 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 100 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 110 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 120 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0

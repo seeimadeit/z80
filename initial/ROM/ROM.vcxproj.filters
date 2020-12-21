@@ -40,6 +40,10 @@
     <None Include="type.s" />
     <None Include="asm.s" />
     <None Include="small.s" />
+    <None Include="keyboardtest.s" />
+    <None Include="copyfiles_keyboard.bat">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />
@@ -52,5 +56,6 @@
     <Text Include="hexdump.s" />
     <Text Include="hexdump.txt" />
     <Text Include="asm.txt" />
+    <Text Include="keyboardtest.txt" />
   </ItemGroup>
 </Project>
