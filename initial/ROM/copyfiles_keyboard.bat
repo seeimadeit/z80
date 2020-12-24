@@ -2,7 +2,7 @@
 echo max 8 characters
 
 if exist "keyboardtest" (
-	copy keyboardtest f:\RAM 
+	copy keyboardtestboot f:\RAM 
 ) else (
 	echo "no keyboardtest file."
 	pause

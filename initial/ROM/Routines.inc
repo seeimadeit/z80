@@ -4,6 +4,7 @@
 .include "SDCARD.inc"
 .equ commandMemory, 0x1000
 .equ userMemory,0x2000
+.equ dllMemory,0xF000
 
 .equ TRUE, 1
 .equ FALSE, 0

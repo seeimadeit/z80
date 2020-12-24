@@ -81,6 +81,13 @@ if exist "small.s" (
 	pause
 	)
 
+if exist "keyboardtest" (
+	copy keyboardtest f:\ 
+) else (
+	echo "no keyboardtest file."
+	pause
+	)
+
 
 
 rem if exist "x" (	copy x f:\ ) else (	echo "no x file."	pause	)

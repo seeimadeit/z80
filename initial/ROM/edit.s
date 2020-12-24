@@ -156,6 +156,9 @@ subCounter:
 	ret
 
 
+nullroutine: ei
+			reti
+
 Counter: .byte 0
 Rindex: .byte 0 ;# read next character from this index
 Windex: .byte 0 ;# write next current at this index
@@ -167,5 +170,144 @@ decmsg: .string "decrement"
 interruptvectors:
 
 	jumptable: ;# for keyboard interrupts
+	.2byte nullroutine ;0
 	.2byte interrupthandler ;0
-	.2byte interrupthandler ;0
+
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 10 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 20 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 30 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 40 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 50 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 60 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 70 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 80 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 90 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 100 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 110 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 120 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0

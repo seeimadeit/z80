@@ -145,6 +145,7 @@
     <None Include="copyfiles_keyboard.bat" />
     <None Include="dir.s" />
     <None Include="edit.s" />
+    <None Include="ansicodes.inc" />
     <None Include="hello.s" />
     <None Include="initialRAMz80.s" />
     <None Include="initialROMz80.s" />
@@ -152,6 +153,7 @@
     <None Include="libs.inc" />
     <None Include="makefile" />
     <None Include="Routines.inc" />
+    <None Include="screen.s" />
     <None Include="SDCARD.inc" />
     <None Include="SERIAL.inc" />
     <None Include="small.s" />
@@ -168,6 +170,7 @@
     <Text Include="initialROMz80.txt" />
     <Text Include="keyboardtest.txt" />
     <Text Include="run%405000.s" />
+    <Text Include="screen.txt" />
     <Text Include="type.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

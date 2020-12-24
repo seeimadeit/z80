@@ -1,6 +1,11 @@
 
 .ifndef __CMD__
-	.org userMemory
+	.ifdef __DLL__
+		.org dllMemory
+		.2byte $
+	.else
+		.org userMemory
+	.endif
 .endif
 	ld a,PRINT
 	call GetAddress

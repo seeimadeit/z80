@@ -15,12 +15,13 @@ TARGET7 = type
 TARGET8 = hexdump
 TARGET9 = asm
 TARGET10 = keyboardtest
+TARGET11 = screen
 
 
-all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8) $(TARGET9) $(TARGET10)
+all: clean $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8) $(TARGET9) $(TARGET10) $(TARGET11)
 
 clean:
-	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8) $(TARGET9) $(TARGET10)
+	$(DEL) $(TARGET) $(TARGET2) $(TARGET3) $(hello) $(TARGET4) $(TARGET5) $(TARGET6) $(TARGET7) $(TARGET8) $(TARGET9) $(TARGET10) $(TARGET)
 
 
 $(TARGET):
@@ -54,5 +55,10 @@ $(TARGET9):
 	$(CC) $(OPTS) $(INC) $(CCOUT) -L asm.txt -o $(TARGET9) asm.s
 
 $(TARGET10):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L keyboardtestboot.txt -DBOOT -o $(TARGET10)boot keyboardtest.s
 	$(CC) $(OPTS) $(INC) $(CCOUT) -L keyboardtest.txt -o $(TARGET10) keyboardtest.s
+
+
+$(TARGET11):
+	$(CC) $(OPTS) $(INC) $(CCOUT) -L screen.txt -o $(TARGET11).dll screen.s
 

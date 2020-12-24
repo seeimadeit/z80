@@ -44,6 +44,10 @@
     <None Include="copyfiles_keyboard.bat">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="ansicodes.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="screen.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />
@@ -57,5 +61,6 @@
     <Text Include="hexdump.txt" />
     <Text Include="asm.txt" />
     <Text Include="keyboardtest.txt" />
+    <Text Include="screen.txt" />
   </ItemGroup>
 </Project>

@@ -1,414 +1,1472 @@
-F00:0001       .equ SERIALPORT , 0x01
-F00:0002       .equ SERIALPORT2, 0x02
-F00:0003       
-F00:0004       	.org 0x800
-F00:0005       
+F00:0001       .ifndef BOOT
+F00:0002       	.include "Routines.inc"
+F01:0001       
+F01:0002       # address where user programs load
+F01:0003       .include "SERIAL.inc"
+F02:0001       .equ SERIALPORT , 0x01
+F02:0002       .equ SERIALPORT2, 0x02
+F02:0003       
+F01:0004       .include "SDCARD.inc"
+F03:0001       .equ SDCARD,0x05
+F03:0002       ; ******* SDCARD *********
+F03:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
+F03:0004       .equ FILENAMECLEAR ,1
+F03:0005       
+F03:0006       ; z80 out + in -open: will return a status 1 if file open successfull, 0 if open failed
+F03:0007       .equ OPEN ,2
+F03:0008       
+F03:0009       ; z80 out - close: no return value
+F03:0010       .equ CLOSE ,3
+F03:0011       
+F03:0012       ; z80 out + out - filenameappend: no return value
+F03:0013       .equ FILENAMEAPPEND ,4
+F03:0014       
+F03:0015       ; z80 out + in - readnextbyte: will return 0xFF is nothing to read, which might be a problem if you don't check the avai
+F03:0016       .equ READNEXTBYTE ,5
+F03:0017       
+F03:0018       ; z80 out + in - available: return 1 is data is available, 0 if no data available
+F03:0019       .equ AVAILABLE ,6
+F03:0020       
+F03:0021       ; z80 out + in - openwrite: open file for write ,will return a status 1 if file open successfull, 0 if open failed
+F03:0022       .equ OPENWRITE,7
+F03:0023       
+F03:0024       ; z80 - out + out -writebyte: will write data to an open file,is no file is open or the file is not writable nothing wil
+F03:0025       .equ WRITEBYTE,8
+F03:0026       
+F03:0027       ;#===============================
+F03:0028       ; z80 - out -getname: prepares to get the openfilename, use NAMEAVAILABLE to read the bytes, no return value
+F03:0029       .equ GETNAME,0x20
+F03:0030       ; z80 out + in - nameavailable: return next character of the filename, or 0 it no more characters
+F03:0031       .equ NAMEAVAILABLE,0x21
+F03:0032       ;z80 - out - opendirectory : will open the root directory for directory listing, no return value
+F03:0033       .equ OPENDIRECTORY,0x31
+F03:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
+F03:0035       .equ NEXTFILE,0x32
+F01:0005       .equ commandMemory, 0x1000
+F01:0006       .equ userMemory,0x2000
+F01:0007       .equ dllMemory,0xF000
+F01:0008       
+F01:0009       .equ TRUE, 1
+F01:0010       .equ FALSE, 0
+F01:0011       
+F01:0012       # the only fixed address (i hope), use it to get the address of utilities methods
+F01:0013       # ld a, PRINT
+F01:0014       # call GetAddress
+F01:0015       # address for print loaded into hl
+F01:0016       # the value in hl can change between os versions so do not hard code the values
+F01:0017       
+F01:0018       .equ GetAddress, 0x0804
+F01:0019       .equ PRINT,		1
+F01:0020       .equ PRINTLN,	9
+F01:0021       .equ PRINTHEX,	2
+F01:0022       .equ LOADFILE,	3
+F01:0023       .equ MEMSET,	4
+F01:0024       .equ STRLEN,	5
+F01:0025       .equ PUTC,		6
+F01:0026       .equ TOUPPERCASE,7
+F01:0027       .equ HEXTOBYTE,	8
+F01:0028       .equ STRNCPY,10
+F01:0029       .equ CREATEPROCESS,16
+F01:0030       .equ GETCOMMANDPARAMS,17
+F01:0031       # filesystem - primitive functions, probably going to change 
+F01:0032       .equ DIRECTORYOPEN,13
+F01:0033       .equ DIRECTORYNEXTFILE,14
+F01:0034       .equ GETFILENAME,15
+F01:0035       
+F01:0036       
+F01:0037       
+F01:0038       .equ NEXTNUMBER,18
+F01:0039       
+F01:0040       
+F00:0003       	.include "libs.inc"
+F04:0001       
+F04:0002       .ifndef __CMD__
+F04:0003       	.ifdef __DLL__
+F04:0004       		.org dllMemory
+F04:0005       		.2byte $
+F04:0006       	.else
+F04:0007       		.org userMemory
+F04:0008       	.endif
+F04:0009       .endif
+F04:0010       	ld a,PRINT
+               S01:00002000:  3E 01
+F04:0011       	call GetAddress
+               S01:00002002:  CD 04 08
+F04:0012       	ld (printadr),hl
+               S01:00002005:  22 75 20
+F04:0013       	ld a,PRINTHEX
+               S01:00002008:  3E 02
+F04:0014       	call GetAddress
+               S01:0000200A:  CD 04 08
+F04:0015       	ld (printhexadr),hl
+               S01:0000200D:  22 7B 20
+F04:0016       	ld a,LOADFILE
+               S01:00002010:  3E 03
+F04:0017       	call GetAddress
+               S01:00002012:  CD 04 08
+F04:0018       	ld (loadfileadr),hl
+               S01:00002015:  22 7E 20
+F04:0019       	ld a,MEMSET
+               S01:00002018:  3E 04
+F04:0020       	call GetAddress
+               S01:0000201A:  CD 04 08
+F04:0021       	ld (memsetadr),hl
+               S01:0000201D:  22 81 20
+F04:0022       	ld a,STRLEN
+               S01:00002020:  3E 05
+F04:0023       	call GetAddress
+               S01:00002022:  CD 04 08
+F04:0024       	ld (strlenadr),hl
+               S01:00002025:  22 84 20
+F04:0025       	ld a,PUTC
+               S01:00002028:  3E 06
+F04:0026       	call GetAddress
+               S01:0000202A:  CD 04 08
+F04:0027       	ld (putcadr),hl
+               S01:0000202D:  22 87 20
+F04:0028       	ld a,TOUPPERCASE
+               S01:00002030:  3E 07
+F04:0029       	call GetAddress
+               S01:00002032:  CD 04 08
+F04:0030       	ld (touppercaseadr),hl
+               S01:00002035:  22 8A 20
+F04:0031       	ld a,HEXTOBYTE
+               S01:00002038:  3E 08
+F04:0032       	call GetAddress
+               S01:0000203A:  CD 04 08
+F04:0033       	ld (hextobyteadr),hl
+               S01:0000203D:  22 8D 20
+F04:0034       	ld a,PRINTLN
+               S01:00002040:  3E 09
+F04:0035       	call GetAddress
+               S01:00002042:  CD 04 08
+F04:0036       	ld (printlnadr),hl
+               S01:00002045:  22 78 20
+F04:0037       	ld a,DIRECTORYOPEN
+               S01:00002048:  3E 0D
+F04:0038       	call GetAddress
+               S01:0000204A:  CD 04 08
+F04:0039       	ld (directoryopenadr),hl
+               S01:0000204D:  22 90 20
+F04:0040       	ld a,NEXTFILE
+               S01:00002050:  3E 32
+F04:0041       	call GetAddress
+               S01:00002052:  CD 04 08
+F04:0042       	ld (directorynextfileadr),hl
+               S01:00002055:  22 93 20
+F04:0043       	ld a,GETFILENAME
+               S01:00002058:  3E 0F
+F04:0044       	call GetAddress
+               S01:0000205A:  CD 04 08
+F04:0045       	ld (getfilenameadr),hl
+               S01:0000205D:  22 96 20
+F04:0046       	ld a,CREATEPROCESS
+               S01:00002060:  3E 10
+F04:0047       	call GetAddress
+               S01:00002062:  CD 04 08
+F04:0048       	ld (createProcessadr),hl
+               S01:00002065:  22 99 20
+F04:0049       	ld a,GETCOMMANDPARAMS
+               S01:00002068:  3E 11
+F04:0050       	call GetAddress
+               S01:0000206A:  CD 04 08
+F04:0051       	ld (getcommandparamsadr),hl
+               S01:0000206D:  22 9C 20
+F04:0052       
+F04:0053       
+F04:0054       	jp _main
+               S01:00002070:  C3 9E 20
+F04:0055       
+F04:0056       	functionlookups:
+F04:0057       	.align 2
+F04:0058       	print: .byte 0xc3
+               S01:00002074:  C3
+F04:0059       	printadr: .2byte 0
+               S01:00002075:  00 00
+F04:0060       	println: .byte 0xc3
+               S01:00002077:  C3
+F04:0061       	printlnadr: .2byte 0
+               S01:00002078:  00 00
+F04:0062       	printhex: .byte 0xc3
+               S01:0000207A:  C3
+F04:0063       	printhexadr: .2byte 0
+               S01:0000207B:  00 00
+F04:0064       	loadfile: .byte 0xc3
+               S01:0000207D:  C3
+F04:0065       	loadfileadr: .2byte 0
+               S01:0000207E:  00 00
+F04:0066       	memset: .byte 0xc3
+               S01:00002080:  C3
+F04:0067       	memsetadr: .2byte 0
+               S01:00002081:  00 00
+F04:0068       	strlen: .byte 0xc3
+               S01:00002083:  C3
+F04:0069       	strlenadr: .2byte 0
+               S01:00002084:  00 00
+F04:0070       	putc: .byte 0xc3
+               S01:00002086:  C3
+F04:0071       	putcadr: .2byte 0
+               S01:00002087:  00 00
+F04:0072       	touppercase: .byte 0xc3
+               S01:00002089:  C3
+F04:0073       	touppercaseadr: .2byte 0
+               S01:0000208A:  00 00
+F04:0074       	hextobyte: .byte 0xc3
+               S01:0000208C:  C3
+F04:0075       	hextobyteadr: .2byte 0
+               S01:0000208D:  00 00
+F04:0076       	directoryopen: .byte 0xc3
+               S01:0000208F:  C3
+F04:0077       	directoryopenadr: .2byte 0
+               S01:00002090:  00 00
+F04:0078       	directorynextfile: .byte 0xc3
+               S01:00002092:  C3
+F04:0079       	directorynextfileadr: .2byte 0
+               S01:00002093:  00 00
+F04:0080       	getfilename: .byte 0xc3
+               S01:00002095:  C3
+F04:0081       	getfilenameadr: .2byte 0
+               S01:00002096:  00 00
+F04:0082       	createProcess: .byte 0xc3
+               S01:00002098:  C3
+F04:0083       	createProcessadr: .2byte 0
+               S01:00002099:  00 00
+F04:0084       	getcommandparams: .byte 0xc3
+               S01:0000209B:  C3
+F04:0085       	getcommandparamsadr: .2byte 0
+               S01:0000209C:  00 00
+F04:0086       
+F04:0087       _main:
+F00:0004       .endif
+F00:0005       	.include "ansicodes.inc"
+F05:0001       
+F05:0002       #ansicode - see keyboardtest.s
+F05:0003       	# A - code to call
+F05:0004       
+F05:0005       
+F05:0006       .equ CLEARSCREEN,		1
+F05:0007       .equ CLEARENDOFSCREEN,	2
+F05:0008       .equ CLEARBEGINOFSCREEN,3
+F05:0009       .equ CLEARWHOLESCREEN,	4
+F05:0010       .equ CLEARCURRENTLINE,	5
+F05:0011       .equ CLEARTOENDOFLINE,	6
+F05:0012       .equ CLEARFROMSTARTOFLINE,7
+F05:0013       .equ CLEARLINE,			8
+F05:0014       .equ COLORRESET,		9
+F05:0015       .equ COLORBOLD,			10
+F05:0016       .equ COLORDIM,			11
+F05:0017       .equ COLORFGBLACK,		12
+F05:0018       .equ COLORFGRED,		13
+F05:0019       .equ COLORFGGREEN,		14
+F05:0020       .equ COLORFGYELLOW,		15
+F05:0021       .equ COLORFGBLUE,		16
+F05:0022       .equ COLORFGMAGENTA,	17
+F05:0023       .equ COLORFGCYAN,		18
+F05:0024       .equ COLORFGWHITE,		19
+F05:0025       .equ COLORBGBLACK,		20
+F05:0026       .equ COLORBGRED,		21
+F05:0027       .equ COLORBGGREEN,		22
+F05:0028       .equ COLORBGYELLOW,		23
+F05:0029       .equ COLORBGBLUE,		24
+F05:0030       .equ COLORBGMAGENTA,	25
+F05:0031       .equ COLORBGCYAN,		26
+F05:0032       .equ COLORBGWHITE,		27
 F00:0006       
-F00:0007       	ld sp,0xffff
-               S01:00000800:  31 FF FF
-F00:0008       
-F00:0009       	di
-               S01:00000803:  F3
-F00:0010       	ld hl,readymsg
-               S01:00000804:  21 61 08
-F00:0011       	call print
-               S01:00000807:  CD 1B 08
-F00:0012       
-F00:0013       		im 2 ;/* interrupt mode 2*/
-               S01:0000080A:  ED 5E
-F00:0014       		ld a, jumptable/256 ;// hibyte
-               S01:0000080C:  3E 09
-F00:0015       		ld i,a
-               S01:0000080E:  ED 47
-F00:0016       		ei   ;#/* enable interrupts*/
-               S01:00000810:  FB
+F00:0007       .ifdef BOOT
+F00:0008       	.equ SERIALPORT , 0x01
+F00:0009       	.equ SERIALPORT2, 0x02
+F00:0010       
+F00:0011       	.org 0x800
+F00:0012       	ld sp,0xffff
+F00:0013       .endif
+F00:0014       
+F00:0015       	.equ  BUFFERSIZE, 128
+F00:0016       
 F00:0017       
-F00:0018       		ld hl,loadedmsg
-               S01:00000811:  21 51 08
-F00:0019       		call print
-               S01:00000814:  CD 1B 08
-F00:0020       loop:
-F00:0021       	halt
-               S01:00000817:  76
-F00:0022       	jp loop
-               S01:00000818:  C3 17 08
+F00:0018       
+F00:0019       
+F00:0020       	di
+               S01:0000209E:  F3
+F00:0021       	ld hl,readymsg
+               S01:0000209F:  21 7F 23
+F00:0022       	call print
+               S01:000020A2:  CD 74 20
 F00:0023       
-F00:0024       	# === PRINT === #
-F00:0025       	print: ;// expecting a zero terminated string
-F00:0026       		push hl
-               S01:0000081B:  E5
-F00:0027       		push af
-               S01:0000081C:  F5
-F00:0028       		;# hl can be null so check for that first
-F00:0029       		ld a,h
-               S01:0000081D:  7C
-F00:0030       		cp 0
-               S01:0000081E:  FE 00
-F00:0031       		jp nz,_$1 ;# hibyte not null, no just print it
-               S01:00000820:  C2 29 08
-F00:0032       		ld a,l
-               S01:00000823:  7D
-F00:0033       		cp 0
-               S01:00000824:  FE 00
-F00:0034       		jp z,_$2 ;# lobyte is null and hibyte is null so just exit
-               S01:00000826:  CA 34 08
-F00:0035       		_$1:
-F00:0036       			ld a,(hl)
-               S01:00000829:  7E
-F00:0037       			cp 0
-               S01:0000082A:  FE 00
-F00:0038       			jr z,_$2
-               S01:0000082C:  28 06
-F00:0039       			out (SERIALPORT),a
-               S01:0000082E:  D3 01
-F00:0040       			inc hl
-               S01:00000830:  23
-F00:0041       			jp _$1
-               S01:00000831:  C3 29 08
-F00:0042       _$2:			
-F00:0043       		pop af
-               S01:00000834:  F1
-F00:0044       		pop hl
-               S01:00000835:  E1
-F00:0045       		ret
-               S01:00000836:  C9
-F00:0046       
-F00:0047       
-F00:0048       # ======================== end subroutines ========== #
-F00:0049       	
-F00:0050       	nullroutine: 
-F00:0051       		ld a,0
-               S01:00000837:  3E 00
-F00:0052       		out (SERIALPORT),a
-               S01:00000839:  D3 01
-F00:0053       		jp serialport
-               S01:0000083B:  C3 40 08
-F00:0054       		reti
-               S01:0000083E:  ED 4D
-F00:0055       
-F00:0056       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0057       	#	di
-F00:0058       		#ld a,'*'
-F00:0059       		#out (SERIALPORT),a
-F00:0060       
-F00:0061       		in a,(SERIALPORT)
-               S01:00000840:  DB 01
-F00:0062       		cp 0
-               S01:00000842:  FE 00
-F00:0063       		jp nz,_1$
-               S01:00000844:  C2 49 08
-F00:0064       		ld a,'`'
-               S01:00000847:  3E 60
-F00:0065       _1$:
-F00:0066       		out (SERIALPORT),a
-               S01:00000849:  D3 01
-F00:0067       		ei
-               S01:0000084B:  FB
-F00:0068       		reti
-               S01:0000084C:  ED 4D
-F00:0069       
-F00:0070       	crlf: .string "\r\n"
-               S01:0000084E:  0D 0A
-F00:0071       	loadedmsg: .string "keyboard test\r\n"
-               S01:00000851:  6B 65 79 62 6F 61 72 64 20 74 65 73 74 0D 0A
-F00:0072       		readymsg: .string "\r\nReady v0.0\r\n"
-               S01:00000861:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
-F00:0073       
-F00:0074       
-F00:0075       	.align 8
-F00:0076       	jumptable:
-F00:0077       	.2byte nullroutine ;0
-               S01:00000900:  37 08
-F00:0078       	.2byte serialport ;2
-               S01:00000902:  40 08
-F00:0079       	.2byte serialport ;4
-               S01:00000904:  40 08
-F00:0080       	.2byte serialport ;6
-               S01:00000906:  40 08
-F00:0081       		.2byte nullroutine ;0
-               S01:00000908:  37 08
-F00:0082       	.2byte nullroutine ;0
-               S01:0000090A:  37 08
-F00:0083       	.2byte nullroutine ;0
-               S01:0000090C:  37 08
-F00:0084       	.2byte nullroutine ;0
-               S01:0000090E:  37 08
-F00:0085       	.2byte nullroutine ;0
-               S01:00000910:  37 08
-F00:0086       	.2byte nullroutine ;0
-               S01:00000912:  37 08
-F00:0087       #/* 10 */
-F00:0088       	.2byte nullroutine ;0
-               S01:00000914:  37 08
-F00:0089       	.2byte nullroutine ;0
-               S01:00000916:  37 08
-F00:0090       	.2byte nullroutine ;0
-               S01:00000918:  37 08
-F00:0091       	.2byte nullroutine ;0
-               S01:0000091A:  37 08
-F00:0092       	.2byte nullroutine ;0
-               S01:0000091C:  37 08
-F00:0093       	.2byte nullroutine ;0
-               S01:0000091E:  37 08
-F00:0094       	.2byte nullroutine ;0
-               S01:00000920:  37 08
-F00:0095       	.2byte nullroutine ;0
-               S01:00000922:  37 08
-F00:0096       	.2byte nullroutine ;0
-               S01:00000924:  37 08
-F00:0097       	.2byte nullroutine ;0
-               S01:00000926:  37 08
-F00:0098       #/* 20 */
-F00:0099       	.2byte nullroutine ;0
-               S01:00000928:  37 08
-F00:0100       	.2byte nullroutine ;0
-               S01:0000092A:  37 08
-F00:0101       	.2byte nullroutine ;0
-               S01:0000092C:  37 08
-F00:0102       	.2byte nullroutine ;0
-               S01:0000092E:  37 08
-F00:0103       	.2byte nullroutine ;0
-               S01:00000930:  37 08
-F00:0104       	.2byte nullroutine ;0
-               S01:00000932:  37 08
-F00:0105       	.2byte nullroutine ;0
-               S01:00000934:  37 08
-F00:0106       	.2byte nullroutine ;0
-               S01:00000936:  37 08
-F00:0107       	.2byte nullroutine ;0
-               S01:00000938:  37 08
-F00:0108       	.2byte nullroutine ;0
-               S01:0000093A:  37 08
-F00:0109       #/* 30 */
-F00:0110       	.2byte nullroutine ;0
-               S01:0000093C:  37 08
-F00:0111       	.2byte nullroutine ;0
-               S01:0000093E:  37 08
-F00:0112       	.2byte nullroutine ;0
-               S01:00000940:  37 08
-F00:0113       	.2byte nullroutine ;0
-               S01:00000942:  37 08
-F00:0114       	.2byte nullroutine ;0
-               S01:00000944:  37 08
-F00:0115       	.2byte nullroutine ;0
-               S01:00000946:  37 08
-F00:0116       	.2byte nullroutine ;0
-               S01:00000948:  37 08
-F00:0117       	.2byte nullroutine ;0
-               S01:0000094A:  37 08
-F00:0118       	.2byte nullroutine ;0
-               S01:0000094C:  37 08
-F00:0119       	.2byte nullroutine ;0
-               S01:0000094E:  37 08
-F00:0120       #/* 40 */
-F00:0121       	.2byte nullroutine ;0
-               S01:00000950:  37 08
-F00:0122       	.2byte nullroutine ;0
-               S01:00000952:  37 08
-F00:0123       	.2byte nullroutine ;0
-               S01:00000954:  37 08
-F00:0124       	.2byte nullroutine ;0
-               S01:00000956:  37 08
-F00:0125       	.2byte nullroutine ;0
-               S01:00000958:  37 08
-F00:0126       	.2byte nullroutine ;0
-               S01:0000095A:  37 08
-F00:0127       	.2byte nullroutine ;0
-               S01:0000095C:  37 08
-F00:0128       	.2byte nullroutine ;0
-               S01:0000095E:  37 08
-F00:0129       	.2byte nullroutine ;0
-               S01:00000960:  37 08
-F00:0130       	.2byte nullroutine ;0
-               S01:00000962:  37 08
-F00:0131       #/* 50 */
-F00:0132       	.2byte nullroutine ;0
-               S01:00000964:  37 08
-F00:0133       	.2byte nullroutine ;0
-               S01:00000966:  37 08
-F00:0134       	.2byte nullroutine ;0
-               S01:00000968:  37 08
-F00:0135       	.2byte nullroutine ;0
-               S01:0000096A:  37 08
-F00:0136       	.2byte nullroutine ;0
-               S01:0000096C:  37 08
-F00:0137       	.2byte nullroutine ;0
-               S01:0000096E:  37 08
-F00:0138       	.2byte nullroutine ;0
-               S01:00000970:  37 08
-F00:0139       	.2byte nullroutine ;0
-               S01:00000972:  37 08
-F00:0140       	.2byte nullroutine ;0
-               S01:00000974:  37 08
-F00:0141       	.2byte nullroutine ;0
-               S01:00000976:  37 08
-F00:0142       #/* 60 */
-F00:0143       	.2byte nullroutine ;0
-               S01:00000978:  37 08
-F00:0144       	.2byte nullroutine ;0
-               S01:0000097A:  37 08
-F00:0145       	.2byte nullroutine ;0
-               S01:0000097C:  37 08
-F00:0146       	.2byte nullroutine ;0
-               S01:0000097E:  37 08
-F00:0147       	.2byte nullroutine ;0
-               S01:00000980:  37 08
-F00:0148       	.2byte nullroutine ;0
-               S01:00000982:  37 08
-F00:0149       	.2byte nullroutine ;0
-               S01:00000984:  37 08
-F00:0150       	.2byte nullroutine ;0
-               S01:00000986:  37 08
-F00:0151       	.2byte nullroutine ;0
-               S01:00000988:  37 08
-F00:0152       	.2byte nullroutine ;0
-               S01:0000098A:  37 08
-F00:0153       #/* 70 */
-F00:0154       	.2byte nullroutine ;0
-               S01:0000098C:  37 08
-F00:0155       	.2byte nullroutine ;0
-               S01:0000098E:  37 08
-F00:0156       	.2byte nullroutine ;0
-               S01:00000990:  37 08
-F00:0157       	.2byte nullroutine ;0
-               S01:00000992:  37 08
-F00:0158       	.2byte nullroutine ;0
-               S01:00000994:  37 08
-F00:0159       	.2byte nullroutine ;0
-               S01:00000996:  37 08
-F00:0160       	.2byte nullroutine ;0
-               S01:00000998:  37 08
-F00:0161       	.2byte nullroutine ;0
-               S01:0000099A:  37 08
-F00:0162       	.2byte nullroutine ;0
-               S01:0000099C:  37 08
-F00:0163       	.2byte nullroutine ;0
-               S01:0000099E:  37 08
-F00:0164       #/* 80 */
-F00:0165       	.2byte nullroutine ;0
-               S01:000009A0:  37 08
-F00:0166       	.2byte nullroutine ;0
-               S01:000009A2:  37 08
-F00:0167       	.2byte nullroutine ;0
-               S01:000009A4:  37 08
-F00:0168       	.2byte nullroutine ;0
-               S01:000009A6:  37 08
-F00:0169       	.2byte nullroutine ;0
-               S01:000009A8:  37 08
-F00:0170       	.2byte nullroutine ;0
-               S01:000009AA:  37 08
-F00:0171       	.2byte nullroutine ;0
-               S01:000009AC:  37 08
-F00:0172       	.2byte nullroutine ;0
-               S01:000009AE:  37 08
-F00:0173       	.2byte nullroutine ;0
-               S01:000009B0:  37 08
-F00:0174       	.2byte nullroutine ;0
-               S01:000009B2:  37 08
-F00:0175       #/* 90 */
-F00:0176       	.2byte nullroutine ;0
-               S01:000009B4:  37 08
-F00:0177       	.2byte nullroutine ;0
-               S01:000009B6:  37 08
-F00:0178       	.2byte nullroutine ;0
-               S01:000009B8:  37 08
-F00:0179       	.2byte nullroutine ;0
-               S01:000009BA:  37 08
-F00:0180       	.2byte nullroutine ;0
-               S01:000009BC:  37 08
-F00:0181       	.2byte nullroutine ;0
-               S01:000009BE:  37 08
-F00:0182       	.2byte nullroutine ;0
-               S01:000009C0:  37 08
-F00:0183       	.2byte nullroutine ;0
-               S01:000009C2:  37 08
-F00:0184       	.2byte nullroutine ;0
-               S01:000009C4:  37 08
-F00:0185       	.2byte nullroutine ;0
-               S01:000009C6:  37 08
-F00:0186       #/* 100 */
-F00:0187       	.2byte nullroutine ;0
-               S01:000009C8:  37 08
-F00:0188       	.2byte nullroutine ;0
-               S01:000009CA:  37 08
-F00:0189       	.2byte nullroutine ;0
-               S01:000009CC:  37 08
-F00:0190       	.2byte nullroutine ;0
-               S01:000009CE:  37 08
-F00:0191       	.2byte nullroutine ;0
-               S01:000009D0:  37 08
-F00:0192       	.2byte nullroutine ;0
-               S01:000009D2:  37 08
-F00:0193       	.2byte nullroutine ;0
-               S01:000009D4:  37 08
-F00:0194       	.2byte nullroutine ;0
-               S01:000009D6:  37 08
-F00:0195       	.2byte nullroutine ;0
-               S01:000009D8:  37 08
-F00:0196       	.2byte nullroutine ;0
-               S01:000009DA:  37 08
-F00:0197       #/* 110 */
-F00:0198       	.2byte nullroutine ;0
-               S01:000009DC:  37 08
-F00:0199       	.2byte nullroutine ;0
-               S01:000009DE:  37 08
-F00:0200       	.2byte nullroutine ;0
-               S01:000009E0:  37 08
-F00:0201       	.2byte nullroutine ;0
-               S01:000009E2:  37 08
-F00:0202       	.2byte nullroutine ;0
-               S01:000009E4:  37 08
-F00:0203       	.2byte nullroutine ;0
-               S01:000009E6:  37 08
-F00:0204       	.2byte nullroutine ;0
-               S01:000009E8:  37 08
-F00:0205       	.2byte nullroutine ;0
-               S01:000009EA:  37 08
-F00:0206       	.2byte nullroutine ;0
-               S01:000009EC:  37 08
-F00:0207       	.2byte nullroutine ;0
-               S01:000009EE:  37 08
-F00:0208       #/* 120 */
-F00:0209       	.2byte nullroutine ;0
-               S01:000009F0:  37 08
-F00:0210       	.2byte nullroutine ;0
-               S01:000009F2:  37 08
-F00:0211       	.2byte nullroutine ;0
-               S01:000009F4:  37 08
-F00:0212       	.2byte nullroutine ;0
-               S01:000009F6:  37 08
-F00:0213       	.2byte nullroutine ;0
-               S01:000009F8:  37 08
-F00:0214       	.2byte nullroutine ;0
-               S01:000009FA:  37 08
-F00:0215       	.2byte nullroutine ;0
-               S01:000009FC:  37 08
-F00:0216       	.2byte nullroutine ;0
-               S01:000009FE:  37 08
+F00:0024       		im 2 ;/* interrupt mode 2*/
+               S01:000020A5:  ED 5E
+F00:0025       		ld a, jumptable/256 ;// hibyte
+               S01:000020A7:  3E 25
+F00:0026       		ld i,a
+               S01:000020A9:  ED 47
+F00:0027       		ei   ;#/* enable interrupts*/
+               S01:000020AB:  FB
+F00:0028       
+F00:0029       		ld hl,loadedmsg
+               S01:000020AC:  21 6F 23
+F00:0030       		call print
+               S01:000020AF:  CD 74 20
+F00:0031       .ifndef BOOT
+F00:0032       		ld hl,notboot
+               S01:000020B2:  21 95 23
+F00:0033       	call print
+               S01:000020B5:  CD 74 20
+F00:0034       .endif
+F00:0035       
+F00:0036       call displaytitle
+               S01:000020B8:  CD 55 22
+F00:0037       call move1_0
+               S01:000020BB:  CD 5C 22
+F00:0038       
+F00:0039       	
+F00:0040       
+F00:0041       loop:
+F00:0042       	ld a,(exit)
+               S01:000020BE:  3A 6B 23
+F00:0043       	cp 0
+               S01:000020C1:  FE 00
+F00:0044       	jp nz,_exit$
+               S01:000020C3:  C2 D7 20
+F00:0045       
+F00:0046       	call haskeys
+               S01:000020C6:  CD 67 23
+F00:0047       	cp 0
+               S01:000020C9:  FE 00
+F00:0048       	jp z,loop
+               S01:000020CB:  CA BE 20
+F00:0049       #	ld a,'*'
+F00:0050       #	ld a,(getkeypos)
+F00:0051       #	call printhex
+F00:0052       	call getchar
+               S01:000020CE:  CD DD 20
+F00:0053       	#out (SERIALPORT),a
+F00:0054       	#ld a,'!'
+F00:0055       	call putc
+               S01:000020D1:  CD 86 20
+F00:0056       
+F00:0057       	jp loop
+               S01:000020D4:  C3 BE 20
+F00:0058       	
+F00:0059       _exit$:	;#exit
+F00:0060       	ld a,0
+               S01:000020D7:  3E 00
+F00:0061       	call printhex
+               S01:000020D9:  CD 7A 20
+F00:0062       	ret
+               S01:000020DC:  C9
+F00:0063       
+F00:0064       
+F00:0065       getchar: 
+F00:0066       	di
+               S01:000020DD:  F3
+F00:0067       	;# read a byte from the keyboard buffer
+F00:0068       	ld ix,buffer ;# the keyboard buffer
+               S01:000020DE:  DD 21 A5 23
+F00:0069       	ld a,(getkeypos) ;# read from index position
+               S01:000020E2:  3A 27 24
+F00:0070       	ld b,0
+               S01:000020E5:  06 00
+F00:0071       	ld c,a
+               S01:000020E7:  4F
+F00:0072       	add ix,bc ;# ix now contains the memory location to read
+               S01:000020E8:  DD 09
+F00:0073       	ld a,(ix)
+               S01:000020EA:  DD 7E 00
+F00:0074       	push af ;# byte now stored in the stack
+               S01:000020ED:  F5
+F00:0075       	ld a,c ;# restore index position
+               S01:000020EE:  79
+F00:0076       	inc a
+               S01:000020EF:  3C
+F00:0077       	cp BUFFERSIZE+1
+               S01:000020F0:  FE 81
+F00:0078       	jp nz,_1$ 
+               S01:000020F2:  C2 F7 20
+F00:0079       	# input position has overflowed
+F00:0080       	ld a,0 ;# reset indexpos
+               S01:000020F5:  3E 00
+F00:0081       
+F00:0082       _1$:
+F00:0083       	ld (getkeypos),a ;# save the new indexposition
+               S01:000020F7:  32 27 24
+F00:0084       	pop af
+               S01:000020FA:  F1
+F00:0085       	call decbuffer
+               S01:000020FB:  CD 5D 23
+F00:0086       	ei
+               S01:000020FE:  FB
+F00:0087       	ret
+               S01:000020FF:  C9
+F00:0088       
+F00:0089       #==== print ansi escape codes =======
+F00:0090       
+F00:0091       ansicode:
+F00:0092       	# A - code to call
+F00:0093       	push af
+               S01:00002100:  F5
+F00:0094       
+F00:0095       	ld hl,escapeintro
+               S01:00002101:  21 6A 22
+F00:0096       	call print
+               S01:00002104:  CD 74 20
+F00:0097       
+F00:0098       	cp CLEARSCREEN
+               S01:00002107:  FE 01
+F00:0099       	jp nz,1$
+               S01:00002109:  C2 12 21
+F00:0100       	ld hl,clearscreen
+               S01:0000210C:  21 6D 22
+F00:0101       	jp 99$
+               S01:0000210F:  C3 33 22
+F00:0102       1$:	cp CLEARENDOFSCREEN
+               S01:00002112:  FE 02
+F00:0103       	jp nz,2$
+               S01:00002114:  C2 1D 21
+F00:0104       	ld hl,clearendofscreen
+               S01:00002117:  21 76 22
+F00:0105       	jp 99$
+               S01:0000211A:  C3 33 22
+F00:0106       2$:	cp CLEARBEGINOFSCREEN
+               S01:0000211D:  FE 03
+F00:0107       	jp nz,3$
+               S01:0000211F:  C2 28 21
+F00:0108       	ld hl,clearbeginofscreen
+               S01:00002122:  21 79 22
+F00:0109       	jp 99$
+               S01:00002125:  C3 33 22
+F00:0110       3$:	cp CLEARWHOLESCREEN
+               S01:00002128:  FE 04
+F00:0111       	jp nz,4$
+               S01:0000212A:  C2 33 21
+F00:0112       	ld hl,clearwholescreen
+               S01:0000212D:  21 7C 22
+F00:0113       	jp 99$
+               S01:00002130:  C3 33 22
+F00:0114       4$:	cp CLEARCURRENTLINE
+               S01:00002133:  FE 05
+F00:0115       	jp nz,5$
+               S01:00002135:  C2 3E 21
+F00:0116       	ld hl,clearcurrentline
+               S01:00002138:  21 7F 22
+F00:0117       	jp 99$
+               S01:0000213B:  C3 33 22
+F00:0118       5$:	cp CLEARTOENDOFLINE
+               S01:0000213E:  FE 06
+F00:0119       	jp nz,6$
+               S01:00002140:  C2 49 21
+F00:0120       	ld hl,cleartoendofline
+               S01:00002143:  21 81 22
+F00:0121       	jp 99$
+               S01:00002146:  C3 33 22
+F00:0122       6$:	cp CLEARFROMSTARTOFLINE
+               S01:00002149:  FE 07
+F00:0123       	jp nz,7$
+               S01:0000214B:  C2 54 21
+F00:0124       	ld hl,clearfromstartofline
+               S01:0000214E:  21 84 22
+F00:0125       	jp 99$
+               S01:00002151:  C3 33 22
+F00:0126       7$:	cp CLEARLINE
+               S01:00002154:  FE 08
+F00:0127       	jp nz,8$
+               S01:00002156:  C2 5F 21
+F00:0128       	ld hl,clearline
+               S01:00002159:  21 87 22
+F00:0129       	jp 99$
+               S01:0000215C:  C3 33 22
+F00:0130       8$:	cp COLORRESET
+               S01:0000215F:  FE 09
+F00:0131       	jp nz,9$
+               S01:00002161:  C2 6A 21
+F00:0132       	ld hl,colorreset
+               S01:00002164:  21 8A 22
+F00:0133       	jp 99$
+               S01:00002167:  C3 33 22
+F00:0134       9$:	cp COLORBOLD
+               S01:0000216A:  FE 0A
+F00:0135       	jp nz,10$
+               S01:0000216C:  C2 75 21
+F00:0136       	ld hl,colorbold
+               S01:0000216F:  21 8D 22
+F00:0137       	jp 99$
+               S01:00002172:  C3 33 22
+F00:0138       10$:	cp COLORDIM
+               S01:00002175:  FE 0B
+F00:0139       	jp nz,11$
+               S01:00002177:  C2 80 21
+F00:0140       	ld hl,colordim
+               S01:0000217A:  21 90 22
+F00:0141       	jp 99$
+               S01:0000217D:  C3 33 22
+F00:0142       11$:	cp COLORFGBLACK
+               S01:00002180:  FE 0C
+F00:0143       	jp nz,12$
+               S01:00002182:  C2 8B 21
+F00:0144       	ld hl,colorfgblack
+               S01:00002185:  21 93 22
+F00:0145       	jp 99$
+               S01:00002188:  C3 33 22
+F00:0146       12$:	cp COLORFGRED
+               S01:0000218B:  FE 0D
+F00:0147       	jp nz,13$
+               S01:0000218D:  C2 96 21
+F00:0148       	ld hl,colorfgred
+               S01:00002190:  21 97 22
+F00:0149       	jp 99$
+               S01:00002193:  C3 33 22
+F00:0150       13$:	cp COLORFGGREEN
+               S01:00002196:  FE 0E
+F00:0151       	jp nz,14$
+               S01:00002198:  C2 A1 21
+F00:0152       	ld hl,colorfggreen
+               S01:0000219B:  21 9B 22
+F00:0153       	jp 99$
+               S01:0000219E:  C3 33 22
+F00:0154       14$:	cp COLORFGYELLOW
+               S01:000021A1:  FE 0F
+F00:0155       	jp nz,15$
+               S01:000021A3:  C2 AC 21
+F00:0156       	ld hl,colorfgyellow
+               S01:000021A6:  21 9F 22
+F00:0157       	jp 99$
+               S01:000021A9:  C3 33 22
+F00:0158       15$:	cp COLORFGBLUE
+               S01:000021AC:  FE 10
+F00:0159       	jp nz,16$
+               S01:000021AE:  C2 B7 21
+F00:0160       	ld hl,colorfgblue
+               S01:000021B1:  21 A3 22
+F00:0161       	jp 99$
+               S01:000021B4:  C3 33 22
+F00:0162       16$:	cp COLORFGMAGENTA
+               S01:000021B7:  FE 11
+F00:0163       	jp nz,17$
+               S01:000021B9:  C2 C2 21
+F00:0164       	ld hl,colorfgmagenta
+               S01:000021BC:  21 A7 22
+F00:0165       	jp 99$
+               S01:000021BF:  C3 33 22
+F00:0166       17$:	cp COLORFGCYAN
+               S01:000021C2:  FE 12
+F00:0167       	jp nz,18$
+               S01:000021C4:  C2 CD 21
+F00:0168       	ld hl,colorfgmagenta
+               S01:000021C7:  21 A7 22
+F00:0169       	jp 99$
+               S01:000021CA:  C3 33 22
+F00:0170       18$:	cp COLORFGWHITE
+               S01:000021CD:  FE 13
+F00:0171       	jp nz,19$
+               S01:000021CF:  C2 D8 21
+F00:0172       	ld hl,colorfgwhite
+               S01:000021D2:  21 AF 22
+F00:0173       	jp 99$
+               S01:000021D5:  C3 33 22
+F00:0174       19$:	cp COLORBGBLACK
+               S01:000021D8:  FE 14
+F00:0175       	jp nz,20$
+               S01:000021DA:  C2 E3 21
+F00:0176       	ld hl,colorbgblack
+               S01:000021DD:  21 B3 22
+F00:0177       	jp 99$
+               S01:000021E0:  C3 33 22
+F00:0178       20$:	cp COLORBGRED
+               S01:000021E3:  FE 15
+F00:0179       	jp nz,21$
+               S01:000021E5:  C2 EE 21
+F00:0180       	ld hl,colorbgred
+               S01:000021E8:  21 B7 22
+F00:0181       	jp 99$
+               S01:000021EB:  C3 33 22
+F00:0182       21$:	cp COLORBGGREEN
+               S01:000021EE:  FE 16
+F00:0183       	jp nz,22$
+               S01:000021F0:  C2 F9 21
+F00:0184       	ld hl,colorbggreen
+               S01:000021F3:  21 BB 22
+F00:0185       	jp 99$
+               S01:000021F6:  C3 33 22
+F00:0186       22$:	cp COLORBGYELLOW
+               S01:000021F9:  FE 17
+F00:0187       	jp nz,23$
+               S01:000021FB:  C2 04 22
+F00:0188       	ld hl,colorbgyellow
+               S01:000021FE:  21 BF 22
+F00:0189       	jp 99$
+               S01:00002201:  C3 33 22
+F00:0190       23$:	cp COLORBGBLUE
+               S01:00002204:  FE 18
+F00:0191       	jp nz,24$
+               S01:00002206:  C2 0F 22
+F00:0192       	ld hl,colorbgblue
+               S01:00002209:  21 C3 22
+F00:0193       	jp 99$
+               S01:0000220C:  C3 33 22
+F00:0194       24$:	cp COLORBGMAGENTA
+               S01:0000220F:  FE 19
+F00:0195       	jp nz,25$
+               S01:00002211:  C2 1A 22
+F00:0196       	ld hl,colorbgmagenta
+               S01:00002214:  21 C7 22
+F00:0197       	jp 99$
+               S01:00002217:  C3 33 22
+F00:0198       25$:	cp COLORBGCYAN
+               S01:0000221A:  FE 1A
+F00:0199       	jp nz,26$
+               S01:0000221C:  C2 25 22
+F00:0200       	ld hl,colorbgcyan
+               S01:0000221F:  21 CB 22
+F00:0201       	jp 99$
+               S01:00002222:  C3 33 22
+F00:0202       26$:	cp COLORBGWHITE
+               S01:00002225:  FE 1B
+F00:0203       	jp nz,98$
+               S01:00002227:  C2 30 22
+F00:0204       	ld hl,colorbgwhite
+               S01:0000222A:  21 CF 22
+F00:0205       	jp 99$
+               S01:0000222D:  C3 33 22
+F00:0206       98$: ;#default
+F00:0207       	ld hl,colorreset
+               S01:00002230:  21 8A 22
+F00:0208       99$:call print
+               S01:00002233:  CD 74 20
+F00:0209       	pop af
+               S01:00002236:  F1
+F00:0210       	ret
+               S01:00002237:  C9
+F00:0211       
+F00:0212       _resetscreenmsg: .string 0x1b,"[0m",0x1b,"[1;1H]",0x1b,"[2J",0x1b,"[1;30HEDITOR"
+               S01:00002238:  1B
+               S01:00002239:  5B 30 6D
+               S01:0000223C:  1B
+               S01:0000223D:  5B 31 3B 31 48 5D
+               S01:00002243:  1B
+               S01:00002244:  5B 32 4A
+               S01:00002247:  1B
+               S01:00002248:  5B 31 3B 33 30 48 45 44 49 54 4F 52
+F00:0213       displaytitle:
+F00:0214       	ld hl,_resetscreenmsg
+               S01:00002255:  21 38 22
+F00:0215       	call print
+               S01:00002258:  CD 74 20
+F00:0216       	ret
+               S01:0000225B:  C9
 F00:0217       
-F00:0218       
+F00:0218       move1_0: ld hl,_move1_0
+               S01:0000225C:  21 63 22
+F00:0219       	call print
+               S01:0000225F:  CD 74 20
+F00:0220       	ret
+               S01:00002262:  C9
+F00:0221       _move1_0: .string 0x1b,"[2;1H"
+               S01:00002263:  1B
+               S01:00002264:  5B 32 3B 31 48
+F00:0222       
+F00:0223       escapeintro: .string 0x1b,"["
+               S01:0000226A:  1B
+               S01:0000226B:  5B
+F00:0224       clearscreen: .string "0;0H",0x1b,"[2J"
+               S01:0000226D:  30 3B 30 48
+               S01:00002271:  1B
+               S01:00002272:  5B 32 4A
+F00:0225       clearendofscreen: .string "0J"
+               S01:00002276:  30 4A
+F00:0226       clearbeginofscreen: .string "1J"
+               S01:00002279:  31 4A
+F00:0227       clearwholescreen: .string "2J"
+               S01:0000227C:  32 4A
+F00:0228       clearcurrentline: .string "K"
+               S01:0000227F:  4B
+F00:0229       cleartoendofline: .string "0K"
+               S01:00002281:  30 4B
+F00:0230       clearfromstartofline: .string "1K"
+               S01:00002284:  31 4B
+F00:0231       clearline: .string "2K"
+               S01:00002287:  32 4B
+F00:0232       colorreset: .string "0m"
+               S01:0000228A:  30 6D
+F00:0233       colorbold: .string "1m"
+               S01:0000228D:  31 6D
+F00:0234       colordim: .string "2m"
+               S01:00002290:  32 6D
+F00:0235       colorfgblack: .string "30m"
+               S01:00002293:  33 30 6D
+F00:0236       colorfgred: .string "31m"
+               S01:00002297:  33 31 6D
+F00:0237       colorfggreen: .string "32m"
+               S01:0000229B:  33 32 6D
+F00:0238       colorfgyellow: .string "33m"
+               S01:0000229F:  33 33 6D
+F00:0239       colorfgblue: .string "34m"
+               S01:000022A3:  33 34 6D
+F00:0240       colorfgmagenta: .string "35m"
+               S01:000022A7:  33 35 6D
+F00:0241       colorfgcyan: .string "36m"
+               S01:000022AB:  33 36 6D
+F00:0242       colorfgwhite: .string "37m"
+               S01:000022AF:  33 37 6D
+F00:0243       colorbgblack: .string "40m"
+               S01:000022B3:  34 30 6D
+F00:0244       colorbgred: .string "41m"
+               S01:000022B7:  34 31 6D
+F00:0245       colorbggreen: .string "42m"
+               S01:000022BB:  34 32 6D
+F00:0246       colorbgyellow: .string "43m"
+               S01:000022BF:  34 33 6D
+F00:0247       colorbgblue: .string "44m"
+               S01:000022C3:  34 34 6D
+F00:0248       colorbgmagenta: .string "45m"
+               S01:000022C7:  34 35 6D
+F00:0249       colorbgcyan: .string "46m"
+               S01:000022CB:  34 36 6D
+F00:0250       colorbgwhite: .string "47m"
+               S01:000022CF:  34 37 6D
+F00:0251       asciibuffer: .space 10 ;# working buffer to build characters positions. really bad idea but I can't get my head around i
+F00:0252       
+F00:0253       #=========== useful routines =====
+F00:0254       
+F00:0255       ;# append byte - ascii characters
+F00:0256       ;# a - character to append
+F00:0257       ;# hl = base address
+F00:0258       ;# looks for null byte, then stores the a register character and appends a null
+F00:0259       
+F00:0260       appendchar:
+F00:0261       	push hl
+               S01:000022DD:  E5
+F00:0262       	push af
+               S01:000022DE:  F5
+F00:0263       2$:	ld a,(hl)
+               S01:000022DF:  7E
+F00:0264       	cp 0
+               S01:000022E0:  FE 00
+F00:0265       	jp nz,1$ ;# if not null inc hl and repeat
+               S01:000022E2:  C2 ED 22
+F00:0266       	pop af ;# save the character now
+               S01:000022E5:  F1
+F00:0267       	ld (hl),a
+               S01:000022E6:  77
+F00:0268       	inc hl
+               S01:000022E7:  23
+F00:0269       	ld a,0 ;# append the null byte
+               S01:000022E8:  3E 00
+F00:0270       	ld (hl),a
+               S01:000022EA:  77
+F00:0271       	pop hl
+               S01:000022EB:  E1
+F00:0272       	ret
+               S01:000022EC:  C9
+F00:0273       1$: inc hl ;# incremen address and repeat
+               S01:000022ED:  23
+F00:0274       	jp 2$
+               S01:000022EE:  C3 DF 22
+F00:0275       	
+F00:0276       
+F00:0277       
+F00:0278       ;# http://tutorials.eeems.ca/Z80ASM/part4.htm#div8
+F00:0279       ;# result stored in HL
+F00:0280       ;# ld hl,4
+F00:0281       ;# ld d,2
+F00:0282       ;# call Div8
+F00:0283       Div8:                            ; this routine performs the operation HL=HL/D
+F00:0284         xor a                          ; clearing the upper 8 bits of AHL
+               S01:000022F1:  AF
+F00:0285         ld b,16                        ; the length of the dividend (16 bits)
+               S01:000022F2:  06 10
+F00:0286       Div8Loop:
+F00:0287         add hl,hl                      ; advancing a bit
+               S01:000022F4:  29
+F00:0288         rla
+               S01:000022F5:  17
+F00:0289         cp d                           ; checking if the divisor divides the digits chosen (in A)
+               S01:000022F6:  BA
+F00:0290         jp c,Div8NextBit               ; if not, advancing without subtraction
+               S01:000022F7:  DA FC 22
+F00:0291         sub d                          ; subtracting the divisor
+               S01:000022FA:  92
+F00:0292         inc l                          ; and setting the next digit of the quotient
+               S01:000022FB:  2C
+F00:0293       Div8NextBit:
+F00:0294         djnz Div8Loop
+               S01:000022FC:  10 F6
+F00:0295         ret
+               S01:000022FE:  C9
+F00:0296       
+F00:0297       
+F00:0298       	.ifdef BOOT
+F00:0299       	# === PRINT === #
+F00:0300       	print: ;// expecting a zero terminated string
+F00:0301       		push hl
+F00:0302       		push af
+F00:0303       		;# hl can be null so check for that first
+F00:0304       		ld a,h
+F00:0305       		cp 0
+F00:0306       		jp nz,_$1 ;# hibyte not null, no just print it
+F00:0307       		ld a,l
+F00:0308       		cp 0
+F00:0309       		jp z,_$2 ;# lobyte is null and hibyte is null so just exit
+F00:0310       		_$1:
+F00:0311       			ld a,(hl)
+F00:0312       			cp 0
+F00:0313       			jr z,_$2
+F00:0314       			out (SERIALPORT),a
+F00:0315       			inc hl
+F00:0316       			jp _$1
+F00:0317       _$2:			
+F00:0318       		pop af
+F00:0319       		pop hl
+F00:0320       		ret
+F00:0321       
+F00:0322       printhex: ret ;# not in boot code
+F00:0323       putc: ret
+F00:0324       
+F00:0325       .endif
+F00:0326       
+F00:0327       
+F00:0328       # ======================== end subroutines ========== #
+F00:0329       	
+F00:0330       	nullroutine: 
+F00:0331       		ld a,0
+               S01:000022FF:  3E 00
+F00:0332       		out (SERIALPORT),a
+               S01:00002301:  D3 01
+F00:0333       		jp serialport
+               S01:00002303:  C3 08 23
+F00:0334       		reti
+               S01:00002306:  ED 4D
+F00:0335       
+F00:0336       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0337       	#	di
+F00:0338       		#ld a,'*'
+F00:0339       		#out (SERIALPORT),a
+F00:0340       		push af
+               S01:00002308:  F5
+F00:0341       
+F00:0342       
+F00:0343       		in a,(SERIALPORT)
+               S01:00002309:  DB 01
+F00:0344       		cp 0
+               S01:0000230B:  FE 00
+F00:0345       		jp nz,_1$
+               S01:0000230D:  C2 15 23
+F00:0346       		ld a,'`'
+               S01:00002310:  3E 60
+F00:0347       		jp _2$
+               S01:00002312:  C3 23 23
+F00:0348       _1$:
+F00:0349       		cp 0x1b
+               S01:00002315:  FE 1B
+F00:0350       		jp nz,_2$
+               S01:00002317:  C2 23 23
+F00:0351       		ld a,1
+               S01:0000231A:  3E 01
+F00:0352       		ld (exit),a
+               S01:0000231C:  32 6B 23
+F00:0353       		pop af
+               S01:0000231F:  F1
+F00:0354       		ei
+               S01:00002320:  FB
+F00:0355       		reti
+               S01:00002321:  ED 4D
+F00:0356       _2$:
+F00:0357       
+F00:0358       		call storeinbuffer
+               S01:00002323:  CD 2A 23
+F00:0359       		;# not needed to output anymore - out (SERIALPORT),a
+F00:0360       		pop af
+               S01:00002326:  F1
+F00:0361       		ei
+               S01:00002327:  FB
+F00:0362       		reti
+               S01:00002328:  ED 4D
+F00:0363       
+F00:0364       storeinbuffer:
+F00:0365       		push bc
+               S01:0000232A:  C5
+F00:0366       		push ix
+               S01:0000232B:  DD E5
+F00:0367       		push af
+               S01:0000232D:  F5
+F00:0368       		push af ;# save the data to be written
+               S01:0000232E:  F5
+F00:0369       		ld ix,buffer ;# get the base buffer
+               S01:0000232F:  DD 21 A5 23
+F00:0370       		ld a,(bufferpos) ;# get the index position
+               S01:00002333:  3A 25 24
+F00:0371       		ld b,0
+               S01:00002336:  06 00
+F00:0372       		ld c,a
+               S01:00002338:  4F
+F00:0373       		add ix,bc ;# adjust IX
+               S01:00002339:  DD 09
+F00:0374       		pop af ;# restore data to be written
+               S01:0000233B:  F1
+F00:0375       		ld (ix),a ;# store byte
+               S01:0000233C:  DD 77 00
+F00:0376       		
+F00:0377       		ld a,c ;# copy back the index position
+               S01:0000233F:  79
+F00:0378       		inc a ;# increment the index position
+               S01:00002340:  3C
+F00:0379       		cp BUFFERSIZE+1
+               S01:00002341:  FE 81
+F00:0380       		jp nz, _1$
+               S01:00002343:  C2 48 23
+F00:0381       		ld a,0 ;# the buffer overflowed so reset to 0
+               S01:00002346:  3E 00
+F00:0382       
+F00:0383       _1$:
+F00:0384       		ld (bufferpos),a ;# store the new position
+               S01:00002348:  32 25 24
+F00:0385       		pop af
+               S01:0000234B:  F1
+F00:0386       		pop ix
+               S01:0000234C:  DD E1
+F00:0387       		pop bc
+               S01:0000234E:  C1
+F00:0388       		call incbuffer
+               S01:0000234F:  CD 53 23
+F00:0389       		ret
+               S01:00002352:  C9
+F00:0390       
+F00:0391       incbuffer:
+F00:0392       	push af
+               S01:00002353:  F5
+F00:0393       	ld a,(buffersize)
+               S01:00002354:  3A 26 24
+F00:0394       	inc a
+               S01:00002357:  3C
+F00:0395       	ld (buffersize),a
+               S01:00002358:  32 26 24
+F00:0396       	pop af
+               S01:0000235B:  F1
+F00:0397       	ret
+               S01:0000235C:  C9
+F00:0398       
+F00:0399       
+F00:0400       decbuffer:
+F00:0401       	push af
+               S01:0000235D:  F5
+F00:0402       	ld a,(buffersize)
+               S01:0000235E:  3A 26 24
+F00:0403       	dec a
+               S01:00002361:  3D
+F00:0404       	ld (buffersize),a
+               S01:00002362:  32 26 24
+F00:0405       	pop af
+               S01:00002365:  F1
+F00:0406       	ret
+               S01:00002366:  C9
+F00:0407       
+F00:0408       haskeys:
+F00:0409       	ld a,(buffersize)
+               S01:00002367:  3A 26 24
+F00:0410       	ret
+               S01:0000236A:  C9
+F00:0411       
+F00:0412       		exit: .byte 0 ;#if true time to exit program, escape key sets to true
+               S01:0000236B:  00
+F00:0413       	crlf: .string "\r\n"
+               S01:0000236C:  0D 0A
+F00:0414       	loadedmsg: .string "keyboard test\r\n"
+               S01:0000236F:  6B 65 79 62 6F 61 72 64 20 74 65 73 74 0D 0A
+F00:0415       	readymsg: .string "\r\nReady v0.0\r\n"
+               S01:0000237F:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+F00:0416       	editormsg: .string "EDITOR"
+               S01:0000238E:  45 44 49 54 4F 52
+F00:0417       .ifndef BOOT
+F00:0418       		notboot: .string "program space\r\n"
+               S01:00002395:  70 72 6F 67 72 61 6D 20 73 70 61 63 65 0D 0A
+F00:0419       .endif
+F00:0420       
+F00:0421       
+F00:0422       buffer: .space BUFFERSIZE ;# data received will be stored in buffer
+F00:0423       bufferpos: .byte 0 ;# this is the location where the next received byte will be stored
+               S01:00002425:  00
+F00:0424       
+F00:0425       # keep a count of the number of characters in the buffer and the number read from the buffer
+F00:0426       # its the delta change or difference between saved characters and read characters
+F00:0427       buffersize: .byte 0 
+               S01:00002426:  00
+F00:0428       
+F00:0429       getkeypos: .byte 0;# index into the next byte to read
+               S01:00002427:  00
+F00:0430       
+F00:0431       
+F00:0432       
+F00:0433       
+F00:0434       	.align 8
+F00:0435       	jumptable:
+F00:0436       	.2byte nullroutine ;0
+               S01:00002500:  FF 22
+F00:0437       	.2byte serialport ;2
+               S01:00002502:  08 23
+F00:0438       	.2byte serialport ;4
+               S01:00002504:  08 23
+F00:0439       	.2byte serialport ;6
+               S01:00002506:  08 23
+F00:0440       	.2byte nullroutine ;0
+               S01:00002508:  FF 22
+F00:0441       	.2byte nullroutine ;0
+               S01:0000250A:  FF 22
+F00:0442       	.2byte nullroutine ;0
+               S01:0000250C:  FF 22
+F00:0443       	.2byte nullroutine ;0
+               S01:0000250E:  FF 22
+F00:0444       	.2byte nullroutine ;0
+               S01:00002510:  FF 22
+F00:0445       	.2byte nullroutine ;0
+               S01:00002512:  FF 22
+F00:0446       #/* 10 */
+F00:0447       	.2byte nullroutine ;0
+               S01:00002514:  FF 22
+F00:0448       	.2byte nullroutine ;0
+               S01:00002516:  FF 22
+F00:0449       	.2byte nullroutine ;0
+               S01:00002518:  FF 22
+F00:0450       	.2byte nullroutine ;0
+               S01:0000251A:  FF 22
+F00:0451       	.2byte nullroutine ;0
+               S01:0000251C:  FF 22
+F00:0452       	.2byte nullroutine ;0
+               S01:0000251E:  FF 22
+F00:0453       	.2byte nullroutine ;0
+               S01:00002520:  FF 22
+F00:0454       	.2byte nullroutine ;0
+               S01:00002522:  FF 22
+F00:0455       	.2byte nullroutine ;0
+               S01:00002524:  FF 22
+F00:0456       	.2byte nullroutine ;0
+               S01:00002526:  FF 22
+F00:0457       #/* 20 */
+F00:0458       	.2byte nullroutine ;0
+               S01:00002528:  FF 22
+F00:0459       	.2byte nullroutine ;0
+               S01:0000252A:  FF 22
+F00:0460       	.2byte nullroutine ;0
+               S01:0000252C:  FF 22
+F00:0461       	.2byte nullroutine ;0
+               S01:0000252E:  FF 22
+F00:0462       	.2byte nullroutine ;0
+               S01:00002530:  FF 22
+F00:0463       	.2byte nullroutine ;0
+               S01:00002532:  FF 22
+F00:0464       	.2byte nullroutine ;0
+               S01:00002534:  FF 22
+F00:0465       	.2byte nullroutine ;0
+               S01:00002536:  FF 22
+F00:0466       	.2byte nullroutine ;0
+               S01:00002538:  FF 22
+F00:0467       	.2byte nullroutine ;0
+               S01:0000253A:  FF 22
+F00:0468       #/* 30 */
+F00:0469       	.2byte nullroutine ;0
+               S01:0000253C:  FF 22
+F00:0470       	.2byte nullroutine ;0
+               S01:0000253E:  FF 22
+F00:0471       	.2byte nullroutine ;0
+               S01:00002540:  FF 22
+F00:0472       	.2byte nullroutine ;0
+               S01:00002542:  FF 22
+F00:0473       	.2byte nullroutine ;0
+               S01:00002544:  FF 22
+F00:0474       	.2byte nullroutine ;0
+               S01:00002546:  FF 22
+F00:0475       	.2byte nullroutine ;0
+               S01:00002548:  FF 22
+F00:0476       	.2byte nullroutine ;0
+               S01:0000254A:  FF 22
+F00:0477       	.2byte nullroutine ;0
+               S01:0000254C:  FF 22
+F00:0478       	.2byte nullroutine ;0
+               S01:0000254E:  FF 22
+F00:0479       #/* 40 */
+F00:0480       	.2byte nullroutine ;0
+               S01:00002550:  FF 22
+F00:0481       	.2byte nullroutine ;0
+               S01:00002552:  FF 22
+F00:0482       	.2byte nullroutine ;0
+               S01:00002554:  FF 22
+F00:0483       	.2byte nullroutine ;0
+               S01:00002556:  FF 22
+F00:0484       	.2byte nullroutine ;0
+               S01:00002558:  FF 22
+F00:0485       	.2byte nullroutine ;0
+               S01:0000255A:  FF 22
+F00:0486       	.2byte nullroutine ;0
+               S01:0000255C:  FF 22
+F00:0487       	.2byte nullroutine ;0
+               S01:0000255E:  FF 22
+F00:0488       	.2byte nullroutine ;0
+               S01:00002560:  FF 22
+F00:0489       	.2byte nullroutine ;0
+               S01:00002562:  FF 22
+F00:0490       #/* 50 */
+F00:0491       	.2byte nullroutine ;0
+               S01:00002564:  FF 22
+F00:0492       	.2byte nullroutine ;0
+               S01:00002566:  FF 22
+F00:0493       	.2byte nullroutine ;0
+               S01:00002568:  FF 22
+F00:0494       	.2byte nullroutine ;0
+               S01:0000256A:  FF 22
+F00:0495       	.2byte nullroutine ;0
+               S01:0000256C:  FF 22
+F00:0496       	.2byte nullroutine ;0
+               S01:0000256E:  FF 22
+F00:0497       	.2byte nullroutine ;0
+               S01:00002570:  FF 22
+F00:0498       	.2byte nullroutine ;0
+               S01:00002572:  FF 22
+F00:0499       	.2byte nullroutine ;0
+               S01:00002574:  FF 22
+F00:0500       	.2byte nullroutine ;0
+               S01:00002576:  FF 22
+F00:0501       #/* 60 */
+F00:0502       	.2byte nullroutine ;0
+               S01:00002578:  FF 22
+F00:0503       	.2byte nullroutine ;0
+               S01:0000257A:  FF 22
+F00:0504       	.2byte nullroutine ;0
+               S01:0000257C:  FF 22
+F00:0505       	.2byte nullroutine ;0
+               S01:0000257E:  FF 22
+F00:0506       	.2byte nullroutine ;0
+               S01:00002580:  FF 22
+F00:0507       	.2byte nullroutine ;0
+               S01:00002582:  FF 22
+F00:0508       	.2byte nullroutine ;0
+               S01:00002584:  FF 22
+F00:0509       	.2byte nullroutine ;0
+               S01:00002586:  FF 22
+F00:0510       	.2byte nullroutine ;0
+               S01:00002588:  FF 22
+F00:0511       	.2byte nullroutine ;0
+               S01:0000258A:  FF 22
+F00:0512       #/* 70 */
+F00:0513       	.2byte nullroutine ;0
+               S01:0000258C:  FF 22
+F00:0514       	.2byte nullroutine ;0
+               S01:0000258E:  FF 22
+F00:0515       	.2byte nullroutine ;0
+               S01:00002590:  FF 22
+F00:0516       	.2byte nullroutine ;0
+               S01:00002592:  FF 22
+F00:0517       	.2byte nullroutine ;0
+               S01:00002594:  FF 22
+F00:0518       	.2byte nullroutine ;0
+               S01:00002596:  FF 22
+F00:0519       	.2byte nullroutine ;0
+               S01:00002598:  FF 22
+F00:0520       	.2byte nullroutine ;0
+               S01:0000259A:  FF 22
+F00:0521       	.2byte nullroutine ;0
+               S01:0000259C:  FF 22
+F00:0522       	.2byte nullroutine ;0
+               S01:0000259E:  FF 22
+F00:0523       #/* 80 */
+F00:0524       	.2byte nullroutine ;0
+               S01:000025A0:  FF 22
+F00:0525       	.2byte nullroutine ;0
+               S01:000025A2:  FF 22
+F00:0526       	.2byte nullroutine ;0
+               S01:000025A4:  FF 22
+F00:0527       	.2byte nullroutine ;0
+               S01:000025A6:  FF 22
+F00:0528       	.2byte nullroutine ;0
+               S01:000025A8:  FF 22
+F00:0529       	.2byte nullroutine ;0
+               S01:000025AA:  FF 22
+F00:0530       	.2byte nullroutine ;0
+               S01:000025AC:  FF 22
+F00:0531       	.2byte nullroutine ;0
+               S01:000025AE:  FF 22
+F00:0532       	.2byte nullroutine ;0
+               S01:000025B0:  FF 22
+F00:0533       	.2byte nullroutine ;0
+               S01:000025B2:  FF 22
+F00:0534       #/* 90 */
+F00:0535       	.2byte nullroutine ;0
+               S01:000025B4:  FF 22
+F00:0536       	.2byte nullroutine ;0
+               S01:000025B6:  FF 22
+F00:0537       	.2byte nullroutine ;0
+               S01:000025B8:  FF 22
+F00:0538       	.2byte nullroutine ;0
+               S01:000025BA:  FF 22
+F00:0539       	.2byte nullroutine ;0
+               S01:000025BC:  FF 22
+F00:0540       	.2byte nullroutine ;0
+               S01:000025BE:  FF 22
+F00:0541       	.2byte nullroutine ;0
+               S01:000025C0:  FF 22
+F00:0542       	.2byte nullroutine ;0
+               S01:000025C2:  FF 22
+F00:0543       	.2byte nullroutine ;0
+               S01:000025C4:  FF 22
+F00:0544       	.2byte nullroutine ;0
+               S01:000025C6:  FF 22
+F00:0545       #/* 100 */
+F00:0546       	.2byte nullroutine ;0
+               S01:000025C8:  FF 22
+F00:0547       	.2byte nullroutine ;0
+               S01:000025CA:  FF 22
+F00:0548       	.2byte nullroutine ;0
+               S01:000025CC:  FF 22
+F00:0549       	.2byte nullroutine ;0
+               S01:000025CE:  FF 22
+F00:0550       	.2byte nullroutine ;0
+               S01:000025D0:  FF 22
+F00:0551       	.2byte nullroutine ;0
+               S01:000025D2:  FF 22
+F00:0552       	.2byte nullroutine ;0
+               S01:000025D4:  FF 22
+F00:0553       	.2byte nullroutine ;0
+               S01:000025D6:  FF 22
+F00:0554       	.2byte nullroutine ;0
+               S01:000025D8:  FF 22
+F00:0555       	.2byte nullroutine ;0
+               S01:000025DA:  FF 22
+F00:0556       #/* 110 */
+F00:0557       	.2byte nullroutine ;0
+               S01:000025DC:  FF 22
+F00:0558       	.2byte nullroutine ;0
+               S01:000025DE:  FF 22
+F00:0559       	.2byte nullroutine ;0
+               S01:000025E0:  FF 22
+F00:0560       	.2byte nullroutine ;0
+               S01:000025E2:  FF 22
+F00:0561       	.2byte nullroutine ;0
+               S01:000025E4:  FF 22
+F00:0562       	.2byte nullroutine ;0
+               S01:000025E6:  FF 22
+F00:0563       	.2byte nullroutine ;0
+               S01:000025E8:  FF 22
+F00:0564       	.2byte nullroutine ;0
+               S01:000025EA:  FF 22
+F00:0565       	.2byte nullroutine ;0
+               S01:000025EC:  FF 22
+F00:0566       	.2byte nullroutine ;0
+               S01:000025EE:  FF 22
+F00:0567       #/* 120 */
+F00:0568       	.2byte nullroutine ;0
+               S01:000025F0:  FF 22
+F00:0569       	.2byte nullroutine ;0
+               S01:000025F2:  FF 22
+F00:0570       	.2byte nullroutine ;0
+               S01:000025F4:  FF 22
+F00:0571       	.2byte nullroutine ;0
+               S01:000025F6:  FF 22
+F00:0572       	.2byte nullroutine ;0
+               S01:000025F8:  FF 22
+F00:0573       	.2byte nullroutine ;0
+               S01:000025FA:  FF 22
+F00:0574       	.2byte nullroutine ;0
+               S01:000025FC:  FF 22
+F00:0575       	.2byte nullroutine ;0
+               S01:000025FE:  FF 22
+F00:0576       
+F00:0577       
 
 
 Sections:
-S01  seg800
+S01  seg2000
 
 
 Sources:
 F00  keyboardtest.s
+F01  Routines.inc
+F02  SERIAL.inc
+F03  SDCARD.inc
+F04  libs.inc
+F05  ansicodes.inc
 
 
 Symbols:
-crlf EXPR(2126=0x84e) UNUSED ABS 
- serialport _1$ EXPR(2121=0x849) ABS 
-serialport EXPR(2112=0x840) ABS 
-nullroutine EXPR(2103=0x837) ABS 
-_$2 EXPR(2100=0x834) ABS 
-_$1 EXPR(2089=0x829) ABS 
-loop EXPR(2071=0x817) ABS 
-loadedmsg EXPR(2129=0x851) ABS 
-jumptable EXPR(2304=0x900) ABS 
-print EXPR(2075=0x81b) ABS 
-readymsg EXPR(2145=0x861) ABS 
+editormsg EXPR(9102=0x238e) UNUSED ABS 
+crlf EXPR(9068=0x236c) UNUSED ABS 
+buffersize EXPR(9254=0x2426) ABS 
+incbuffer EXPR(9043=0x2353) ABS 
+ storeinbuffer _1$ EXPR(9032=0x2348) ABS 
+bufferpos EXPR(9253=0x2425) ABS 
+storeinbuffer EXPR(9002=0x232a) ABS 
+ serialport _2$ EXPR(8995=0x2323) ABS 
+ serialport _1$ EXPR(8981=0x2315) ABS 
+serialport EXPR(8968=0x2308) ABS 
+nullroutine EXPR(8959=0x22ff) ABS 
+Div8NextBit EXPR(8956=0x22fc) ABS 
+Div8Loop EXPR(8948=0x22f4) ABS 
+Div8 EXPR(8945=0x22f1) UNUSED ABS 
+ appendchar 1$ EXPR(8941=0x22ed) ABS 
+ appendchar 2$ EXPR(8927=0x22df) ABS 
+appendchar EXPR(8925=0x22dd) UNUSED ABS 
+asciibuffer EXPR(8915=0x22d3) UNUSED ABS 
+colorfgcyan EXPR(8875=0x22ab) UNUSED ABS 
+_move1_0 EXPR(8803=0x2263) ABS 
+_resetscreenmsg EXPR(8760=0x2238) ABS 
+colorbgwhite EXPR(8911=0x22cf) ABS 
+ ansicode 98$ EXPR(8752=0x2230) ABS 
+colorbgcyan EXPR(8907=0x22cb) ABS 
+ ansicode 26$ EXPR(8741=0x2225) ABS 
+colorbgmagenta EXPR(8903=0x22c7) ABS 
+ ansicode 25$ EXPR(8730=0x221a) ABS 
+colorbgblue EXPR(8899=0x22c3) ABS 
+ ansicode 24$ EXPR(8719=0x220f) ABS 
+colorbgyellow EXPR(8895=0x22bf) ABS 
+ ansicode 23$ EXPR(8708=0x2204) ABS 
+colorbggreen EXPR(8891=0x22bb) ABS 
+ ansicode 22$ EXPR(8697=0x21f9) ABS 
+colorbgred EXPR(8887=0x22b7) ABS 
+ ansicode 21$ EXPR(8686=0x21ee) ABS 
+colorbgblack EXPR(8883=0x22b3) ABS 
+ ansicode 20$ EXPR(8675=0x21e3) ABS 
+colorfgwhite EXPR(8879=0x22af) ABS 
+ ansicode 19$ EXPR(8664=0x21d8) ABS 
+ ansicode 18$ EXPR(8653=0x21cd) ABS 
+colorfgmagenta EXPR(8871=0x22a7) ABS 
+ ansicode 17$ EXPR(8642=0x21c2) ABS 
+colorfgblue EXPR(8867=0x22a3) ABS 
+ ansicode 16$ EXPR(8631=0x21b7) ABS 
+colorfgyellow EXPR(8863=0x229f) ABS 
+ ansicode 15$ EXPR(8620=0x21ac) ABS 
+colorfggreen EXPR(8859=0x229b) ABS 
+ ansicode 14$ EXPR(8609=0x21a1) ABS 
+colorfgred EXPR(8855=0x2297) ABS 
+ ansicode 13$ EXPR(8598=0x2196) ABS 
+colorfgblack EXPR(8851=0x2293) ABS 
+ ansicode 12$ EXPR(8587=0x218b) ABS 
+colordim EXPR(8848=0x2290) ABS 
+ ansicode 11$ EXPR(8576=0x2180) ABS 
+colorbold EXPR(8845=0x228d) ABS 
+ ansicode 10$ EXPR(8565=0x2175) ABS 
+colorreset EXPR(8842=0x228a) ABS 
+ ansicode 9$ EXPR(8554=0x216a) ABS 
+clearline EXPR(8839=0x2287) ABS 
+ ansicode 8$ EXPR(8543=0x215f) ABS 
+clearfromstartofline EXPR(8836=0x2284) ABS 
+ ansicode 7$ EXPR(8532=0x2154) ABS 
+cleartoendofline EXPR(8833=0x2281) ABS 
+ ansicode 6$ EXPR(8521=0x2149) ABS 
+clearcurrentline EXPR(8831=0x227f) ABS 
+ ansicode 5$ EXPR(8510=0x213e) ABS 
+clearwholescreen EXPR(8828=0x227c) ABS 
+ ansicode 4$ EXPR(8499=0x2133) ABS 
+clearbeginofscreen EXPR(8825=0x2279) ABS 
+ ansicode 3$ EXPR(8488=0x2128) ABS 
+clearendofscreen EXPR(8822=0x2276) ABS 
+ ansicode 2$ EXPR(8477=0x211d) ABS 
+ ansicode 99$ EXPR(8755=0x2233) ABS 
+clearscreen EXPR(8813=0x226d) ABS 
+ ansicode 1$ EXPR(8466=0x2112) ABS 
+escapeintro EXPR(8810=0x226a) ABS 
+ansicode EXPR(8448=0x2100) UNUSED ABS 
+decbuffer EXPR(9053=0x235d) ABS 
+ getchar _1$ EXPR(8439=0x20f7) ABS 
+getkeypos EXPR(9255=0x2427) ABS 
+buffer EXPR(9125=0x23a5) ABS 
+getchar EXPR(8413=0x20dd) ABS 
+haskeys EXPR(9063=0x2367) ABS 
+_exit$ EXPR(8407=0x20d7) ABS 
+exit EXPR(9067=0x236b) ABS 
+loop EXPR(8382=0x20be) ABS 
+move1_0 EXPR(8796=0x225c) ABS 
+displaytitle EXPR(8789=0x2255) ABS 
+notboot EXPR(9109=0x2395) ABS 
+loadedmsg EXPR(9071=0x236f) ABS 
+jumptable EXPR(9472=0x2500) ABS 
+readymsg EXPR(9087=0x237f) ABS 
+BUFFERSIZE EXPR(128=0x80) 
+COLORBGWHITE EXPR(27=0x1b) 
+COLORBGCYAN EXPR(26=0x1a) 
+COLORBGMAGENTA EXPR(25=0x19) 
+COLORBGBLUE EXPR(24=0x18) 
+COLORBGYELLOW EXPR(23=0x17) 
+COLORBGGREEN EXPR(22=0x16) 
+COLORBGRED EXPR(21=0x15) 
+COLORBGBLACK EXPR(20=0x14) 
+COLORFGWHITE EXPR(19=0x13) 
+COLORFGCYAN EXPR(18=0x12) 
+COLORFGMAGENTA EXPR(17=0x11) 
+COLORFGBLUE EXPR(16=0x10) 
+COLORFGYELLOW EXPR(15=0xf) 
+COLORFGGREEN EXPR(14=0xe) 
+COLORFGRED EXPR(13=0xd) 
+COLORFGBLACK EXPR(12=0xc) 
+COLORDIM EXPR(11=0xb) 
+COLORBOLD EXPR(10=0xa) 
+COLORRESET EXPR(9=0x9) 
+CLEARLINE EXPR(8=0x8) 
+CLEARFROMSTARTOFLINE EXPR(7=0x7) 
+CLEARTOENDOFLINE EXPR(6=0x6) 
+CLEARCURRENTLINE EXPR(5=0x5) 
+CLEARWHOLESCREEN EXPR(4=0x4) 
+CLEARBEGINOFSCREEN EXPR(3=0x3) 
+CLEARENDOFSCREEN EXPR(2=0x2) 
+CLEARSCREEN EXPR(1=0x1) 
+getcommandparams EXPR(8347=0x209b) UNUSED ABS 
+createProcess EXPR(8344=0x2098) UNUSED ABS 
+getfilename EXPR(8341=0x2095) UNUSED ABS 
+directorynextfile EXPR(8338=0x2092) UNUSED ABS 
+directoryopen EXPR(8335=0x208f) UNUSED ABS 
+hextobyte EXPR(8332=0x208c) UNUSED ABS 
+touppercase EXPR(8329=0x2089) UNUSED ABS 
+putc EXPR(8326=0x2086) ABS 
+strlen EXPR(8323=0x2083) UNUSED ABS 
+memset EXPR(8320=0x2080) UNUSED ABS 
+loadfile EXPR(8317=0x207d) UNUSED ABS 
+printhex EXPR(8314=0x207a) ABS 
+println EXPR(8311=0x2077) UNUSED ABS 
+print EXPR(8308=0x2074) ABS 
+functionlookups EXPR(8307=0x2073) UNUSED ABS 
+_main EXPR(8350=0x209e) ABS 
+getcommandparamsadr EXPR(8348=0x209c) ABS 
+createProcessadr EXPR(8345=0x2099) ABS 
+getfilenameadr EXPR(8342=0x2096) ABS 
+directorynextfileadr EXPR(8339=0x2093) ABS 
+directoryopenadr EXPR(8336=0x2090) ABS 
+printlnadr EXPR(8312=0x2078) ABS 
+hextobyteadr EXPR(8333=0x208d) ABS 
+touppercaseadr EXPR(8330=0x208a) ABS 
+putcadr EXPR(8327=0x2087) ABS 
+strlenadr EXPR(8324=0x2084) ABS 
+memsetadr EXPR(8321=0x2081) ABS 
+loadfileadr EXPR(8318=0x207e) ABS 
+printhexadr EXPR(8315=0x207b) ABS 
+printadr EXPR(8309=0x2075) ABS 
+NEXTNUMBER EXPR(18=0x12) UNUSED 
+GETFILENAME EXPR(15=0xf) 
+DIRECTORYNEXTFILE EXPR(14=0xe) UNUSED 
+DIRECTORYOPEN EXPR(13=0xd) 
+GETCOMMANDPARAMS EXPR(17=0x11) 
+CREATEPROCESS EXPR(16=0x10) 
+STRNCPY EXPR(10=0xa) UNUSED 
+HEXTOBYTE EXPR(8=0x8) 
+TOUPPERCASE EXPR(7=0x7) 
+PUTC EXPR(6=0x6) 
+STRLEN EXPR(5=0x5) 
+MEMSET EXPR(4=0x4) 
+LOADFILE EXPR(3=0x3) 
+PRINTHEX EXPR(2=0x2) 
+PRINTLN EXPR(9=0x9) 
+PRINT EXPR(1=0x1) 
+GetAddress EXPR(2052=0x804) 
+FALSE EXPR(0=0x0) UNUSED 
+TRUE EXPR(1=0x1) UNUSED 
+dllMemory EXPR(61440=0xf000) UNUSED 
+userMemory EXPR(8192=0x2000) 
+commandMemory EXPR(4096=0x1000) UNUSED 
+NEXTFILE EXPR(50=0x32) 
+OPENDIRECTORY EXPR(49=0x31) UNUSED 
+NAMEAVAILABLE EXPR(33=0x21) UNUSED 
+GETNAME EXPR(32=0x20) UNUSED 
+WRITEBYTE EXPR(8=0x8) UNUSED 
+OPENWRITE EXPR(7=0x7) UNUSED 
+AVAILABLE EXPR(6=0x6) UNUSED 
+READNEXTBYTE EXPR(5=0x5) UNUSED 
+FILENAMEAPPEND EXPR(4=0x4) UNUSED 
+CLOSE EXPR(3=0x3) UNUSED 
+OPEN EXPR(2=0x2) UNUSED 
+FILENAMECLEAR EXPR(1=0x1) UNUSED 
+SDCARD EXPR(5=0x5) UNUSED 
 SERIALPORT2 EXPR(2=0x2) UNUSED 
 SERIALPORT EXPR(1=0x1) 
 __VASM EXPR(0=0x0) INTERNAL 
