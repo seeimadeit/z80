@@ -38,36 +38,6 @@
 call displaytitle
 call move1_0
 
-ld hl,loadfilename
-ld de,0
-call loadFILE2
-call printhex
-cp a,0 ;# if A = 0 then the file loaded successfully
-jp nz,_4$:
-ld (_screengetaddress),hl
-ld a,0 ;# initialize the dll
-call fnScreenGetAddress
-ld a,ANSICODE
-call fnScreenGetAddress
-ld (_test),hl
-ld a,CLEARSCREEN
-call fnTest
-ld hl,donemsg
-call print
-
-_4$:
-ld a,0
-ret
-donemsg: .string "done"
-loadfilename: .string "screen.lib"	
-	.align 2
-
-	fnScreenGetAddress: .byte 0xc3
-		_screengetaddress: .2byte 0
-	fnDiv8: .byte 0xc3
-		_Div8: .2byte 0
-	fnTest: .byte 0xc3
-		_test: .2byte 0
 
 loop:
 	ld a,(exit)
@@ -186,175 +156,6 @@ putc: ret
 
 .endif
 
-# === loadFILE === #
-; ld hl, filename (zero terminated)
-; ld de, memory address to load file into
-; call loadFILE
-; returns 
-;	HL
-;		baseaddress of the dll
-;	A register 
-;			2 = failed to open the file
-;			0 = if file loaded into memory
-;	DE register pair
-;			count of bytes loaded
-loadFILE2:
-	push af
-	push de ; save de for later
-	call sizereset
-	ld a,0
-	ld (startaddress),a
-	ld (startaddress+1),a
-		; try to open the SD card and read some data
-		ld a,FILENAMECLEAR ; // filenameclear
-		out (SDCARD),a
-
-
-;
-_$getnextchar:
-		ld a,(hl)
-		cp 0
-		jp z, _$openfile #; if filename character is null we have finished
-		ld a,FILENAMEAPPEND
-		out (SDCARD),a ; // filenameappend
-		ld a,(hl)
-		out (SDCARD),a
-		;#out (SERIALPORT),a
-		inc hl
-		jp _$getnextchar
-
-_$openfile:
-#openfile will return 1 if the file was opened, 0 if it failed to open
-		ld a,OPEN	;// Open
-		out (SDCARD),a
-		in a,(SDCARD)
-		pop hl ; get load address - must pop the stack before returning
-		cp 0
-		jp nz,testloadaddress
-		pop af ;# a flag not needed now
-		call sizeloaded
-		ld a,2 ;we have an error trying to open the file.
-		ret
-testloadaddress:
-	# if loadaddress (hl) = 0, then the file will have load address information in the 1st 2 bytes
-	ld a,0
-	cp h
-	jp nz,available ;# h is not zero so it must have an address to load into already
-	cp l
-	jp nz,available ;# l is not zero so it must have an address to load intop already
-
-	ld hl,startaddress ;# this is the place to store the 2 bytes we need to get at the load address
-	call loadheader
-	cp 1
-	jp nz,_4$
-
-	ld hl,(startaddress)
-	inc hl
-	inc hl
-	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
-	jp available
-_4$:
-	ld a,3 ;#new error code
-	ret
-	#if we reach here then the first 2 bytes have the address information so let read them now
-loadheader:
-	ld b,2
-	ld c,0
-_2$:
-	ld a, AVAILABLE
-	out (SDCARD),a
-	in a,(SDCARD) ;# is data available?
-	cp 0
-	jp nz,_1$
-	pop af ;#restore af
-	ld hl,0
-		call println
-		call sizeloaded
-		ld a,0 ;# use 0 in A to indicate a fail
-		ret ;#- exit loadheader because the file read had a problem
-_1$:
-		;// if we get here then there is data to read
-		ld a,READNEXTBYTE
-		out (SDCARD),a ;// read nextbyte
-		in a,(SDCARD)
-		ld (hl),a ; // store byte in RAM (OSLOAD)
-		inc hl 
-		djnz _2$
-		ld a,1 ;# use 1 in A to indicate a success
-		ret ;# exit loadheader because we have loaded 2 bytes
-available:
-	#available will return 1 if there is data to read, 0 if no data to read
-		ld a, AVAILABLE ; // available
-		out (SDCARD),a
-		in a,(SDCARD) ;// read the value from the device
-	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
-	;	add a,'0' ;// make it printable
-	;	out (SERIALPORT),a ;// print response
-	;	ld a,b
-		cp 0 ;// compare the A reg returned by the device
-		jp nz,_$nextbyte
-		pop af ;# restore the af registers because it will tell me if I need to zero terminate the loaded file
-		cp 1
-		jp nz,_1$
-		;# the hl register pair contains the last address we need to write a zero here because the user wants it
-		ld a,0
-		ld (hl),a ;# zero terminated
-
-_1$:
-		ld hl,0
-		call println
-		call sizeloaded
-		ld hl,(startaddress) ;# return the startaddress
-		ld a,0
-		ret
-_$nextbyte:
-		;// if we get here then there is data to read
-		ld a,READNEXTBYTE
-		out (SDCARD),a ;// read nextbyte
-		in a,(SDCARD)
-		ld (hl),a ; // store byte in RAM (OSLOAD)
-		inc hl 
-		ld a,'#'
-		out (SERIALPORT),a ;// just echo it back for now
-		call sizeincrement
-		jr available ;
-
-sizeloaded:
-	push ix
-	ld ix,losize
-	ld e,(ix)
-	ld d,(ix+1)
-	pop ix
-	ret
-sizereset:
-	push ix
-	push af
-	ld a,0
-	ld ix,losize
-	ld (ix),a
-	ld (ix+1),a
-	pop af
-	pop ix
-	ret
-sizeincrement:
-	push ix
-	push hl
-
-	ld ix,losize
-	ld l,(ix)
-	ld h,(ix+1)
-	inc HL
-	ld (ix),l
-	ld (ix+1),h
-
-	pop hl
-	pop ix
-	ret
-
-losize: .byte 0
-hisize: .byte 0
-
-startaddress: .2byte 0
 
 # ======================== end subroutines ========== #
 	
@@ -439,6 +240,43 @@ decbuffer:
 haskeys:
 	ld a,(buffersize)
 	ret
+
+
+# ============================================== load shared librarys ============================
+loadsharedlibs:
+ld hl,screenlibname
+ld de,0
+call loadfile
+cp a,0 ;# if A = 0 then the file loaded successfully
+jp nz,_4$:
+ld (_screenbase),hl
+ld a,0 ;# initialize the dll
+call fnScreenGetAddress
+ld a,ANSICODE
+call fnScreenGetAddress
+ld (_ansicode),hl
+
+# example useage : ld a,CLEARSCREEN
+#					call fmANSIcode
+
+
+_4$:
+ld a,0
+ret
+donemsg: .string "done"
+screenlibname: .string "screen.lib"	
+	.align 2
+
+	fnScreenGetAddress: .byte 0xc3
+		_screenbase: .2byte 0
+	fnDiv8: .byte 0xc3
+		_Div8: .2byte 0
+	fnANSIcode: .byte 0xc3
+		_ansicode: .2byte 0
+
+
+
+
 
 		exit: .byte 0 ;#if true time to exit program, escape key sets to true
 	crlf: .string "\r\n"

@@ -206,6 +206,14 @@ _$2:
 		pop hl
 		ret
 
+printhexL:
+	push af
+	ld a,h
+	call printhex
+	ld a,l
+	call printhex
+	pop af
+	ret
 # === PRINTHEX === #
 		;Display 8-bit number in hex.
 		; 	ld a,0xaa
@@ -252,7 +260,7 @@ putc:
 ; call loadFILE
 ; returns 
 ;	HL
-;		not preserved
+;		baseaddress of the dll
 ;	A register 
 ;			2 = failed to open the file
 ;			0 = if file loaded into memory
@@ -262,6 +270,9 @@ loadFILE:
 	push af
 	push de ; save de for later
 	call sizereset
+	ld a,0
+	ld (startaddress),a
+	ld (startaddress+1),a
 		; try to open the SD card and read some data
 		ld a,FILENAMECLEAR ; // filenameclear
 		out (SDCARD),a
@@ -287,12 +298,58 @@ _$openfile:
 		in a,(SDCARD)
 		pop hl ; get load address - must pop the stack before returning
 		cp 0
-		jp nz,available
+		jp nz,testloadaddress
 		pop af ;# a flag not needed now
 		call sizeloaded
 		ld a,2 ;we have an error trying to open the file.
 		ret
-		
+testloadaddress:
+	# if loadaddress (hl) = 0, then the file will have load address information in the 1st 2 bytes
+	ld a,0
+	cp h
+	jp nz,available ;# h is not zero so it must have an address to load into already
+	cp l
+	jp nz,available ;# l is not zero so it must have an address to load intop already
+
+	ld hl,startaddress ;# this is the place to store the 2 bytes we need to get at the load address
+	call loadheader
+	cp 1
+	jp nz,_4$
+
+	ld hl,(startaddress)
+	inc hl
+	inc hl
+	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
+	jp available
+_4$:
+	ld a,3 ;#new error code
+	ret
+	#if we reach here then the first 2 bytes have the address information so let read them now
+loadheader:
+	ld b,2
+	ld c,0
+_2$:
+	ld a, AVAILABLE
+	out (SDCARD),a
+	in a,(SDCARD) ;# is data available?
+	cp 0
+	jp nz,_1$
+	pop af ;#restore af
+	ld hl,0
+		call println
+		call sizeloaded
+		ld a,0 ;# use 0 in A to indicate a fail
+		ret ;#- exit loadheader because the file read had a problem
+_1$:
+		;// if we get here then there is data to read
+		ld a,READNEXTBYTE
+		out (SDCARD),a ;// read nextbyte
+		in a,(SDCARD)
+		ld (hl),a ; // store byte in RAM (OSLOAD)
+		inc hl 
+		djnz _2$
+		ld a,1 ;# use 1 in A to indicate a success
+		ret ;# exit loadheader because we have loaded 2 bytes
 available:
 	#available will return 1 if there is data to read, 0 if no data to read
 		ld a, AVAILABLE ; // available
@@ -315,6 +372,7 @@ _1$:
 		ld hl,0
 		call println
 		call sizeloaded
+		ld hl,(startaddress) ;# return the startaddress
 		ld a,0
 		ret
 _$nextbyte:
@@ -364,6 +422,7 @@ sizeincrement:
 losize: .byte 0
 hisize: .byte 0
 
+startaddress: .2byte 0
 ;# ====== hextobyte ==========
 ;#    load HL registers with the 2 ascii characters of a hexadecimal value
 ;# note routine does not validate the inputs.
@@ -482,17 +541,40 @@ _exitgetfilename:
 		call println
 		pop hl
 		call println ;# print program name
-		ld de,userMemory
+#		ld de,userMemory
+		ld a,0
+		ld d,a ;# use dynamic load address if possible
+		ld e,a
 		ld a,4
 		call printhex
 
 		call loadFILE
 		cp 0
 		jp nz, _createProcesserr$1
+		ld (_progloadaddr),hl ;# save the address the program was loaded into. if null is means use the default userMemory
+		
 		exx ;# restore the other original registers
 		push hl ; # restore the return address
+		# test if we need to use the default address or the program/library supplied address
+		# we can do that by checking if the hl pair is null, null = use fault, not null = custom address
+		ld hl,(_progloadaddr)
+		ld a,h
+		cp 0
+		jp nz, _4$
+		ld a,l
+		cp 0
+		jp nz,_4$
+		# hl was null so call the default address
+		call printhexL
 		call userMemory
 		ret
+_4$:
+	call printhexL
+	call progloadaddress
+	ret
+progloadaddress: .byte 0xc3
+	_progloadaddr: .2byte 0
+
 _createProcesserr$1:
 		push af
 		exx ;# restore the other original registers

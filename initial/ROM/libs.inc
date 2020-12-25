@@ -11,6 +11,7 @@
 initialize:
 	.else
 		.org userMemory
+		.2byte $
 	.endif
 .endif
 	ld a,PRINT

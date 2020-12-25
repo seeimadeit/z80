@@ -53,8 +53,6 @@
     <None Include="ROM.s" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="initialRAMz80.txt" />
-    <Text Include="initialROMz80.txt" />
     <Text Include="CMD.txt" />
     <Text Include="run%405000.s" />
     <Text Include="edit.txt" />
@@ -65,6 +63,8 @@
     <Text Include="asm.txt" />
     <Text Include="keyboardtest.txt" />
     <Text Include="screen.txt" />
+    <Text Include="RAM.txt" />
+    <Text Include="ROM.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="keyboard.s" />

@@ -167,9 +167,9 @@
     <Text Include="edit.txt" />
     <Text Include="hexdump.s" />
     <Text Include="hexdump.txt" />
-    <Text Include="initialRAMz80.txt" />
-    <Text Include="initialROMz80.txt" />
     <Text Include="keyboardtest.txt" />
+    <Text Include="RAM.txt" />
+    <Text Include="ROM.txt" />
     <Text Include="run%405000.s" />
     <Text Include="screen.txt" />
     <Text Include="type.txt" />
