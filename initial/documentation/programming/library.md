@@ -2,7 +2,7 @@
 # Creating a Library
 -- please use a markdown document viewer to read this file --  
 
-A library is a binary executable file, it can load at any location in memory as specified by the library. In the future library's will be code relocatabled.
+A library is a binary executable file, it can load at any location in memory as specified by the library. In the future library's will be code relocatable.
 The LIB will not contain a main() function, and will not execute code when loaded. Instead the code execution will happen only at the request of a calling
 application. Its purpose is to store reusable and sharable code. It can be called by multiple applications. As the code is sharable care should be taken to
 ensure the code doesn't stamp over other applications variables.
@@ -119,7 +119,7 @@ instruction for jump. When you call the function it will jump to the address pro
 
 000 : load the library include file, this will contain the function id values and probably other information to use the library  
 
-001 define a subroutine called loadlibrary  
+001 : define a subroutine called loadlibrary  
 
 002 - 004 : call the loadFILE2 function passing in the filename (see loadFILE2 for details)  
 
