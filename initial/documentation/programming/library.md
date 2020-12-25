@@ -1,5 +1,5 @@
 
-# Creating a LIBrary
+# Creating a Library
 -- please use a markdown document viewer to read this file --  
 
 A library is a binary executable file, it can load at any location in memory as specified by the library. In the future library's will be code relocatabled.
@@ -52,7 +52,7 @@ ensure the code doesn't stamp over other applications variables.
 007 - 011 : your program instructions  
 
 
-The purpose of the libaddress routine is to return the address of a library function. If the function number is not specified (i.e. ld a,0) call the library initalize routine.
+The purpose of the libaddress routine is to return the address of a library function. If the function number is 0 (i.e. ld a,0) call the library initalize routine.
 
 016 :  libaddress: is required, its the extry point for function runtime linking  
 
@@ -80,3 +80,71 @@ where does the value TEST come from?  It's defined in the library include file. 
 ## initialize:
 This routine is auto generated from **libs.inc** file. It will allow your library access to the main OS functions. For example the print, println and printhex routines are linked to your program code from the initalize routine.
 
+
+# Load and Use a Library
+
+To use the library we first need to load it into memory. After the binary has been loaded, the base address of the
+library is returned in the HL register pair. You will need to save that address so you can call the base address to query
+the library for the address of the functions it contains (phew). Librarys need to be initialized before using the library.
+You can do that by calling the base address and pass 0 into the A register. To get the address of a library function
+call the baseaddress with a function number of the routine in the A register. The library will have an include file that will define the
+id's of the functions. Save the returned address in the HL register pair. It's important you save the address information into the
+correct byte structure as defined in the example in lines 017 - 020. The predefined byte value is an assembler
+instruction for jump. When you call the function it will jump to the address provided by the library.
+
+```
+000 .include "screen.inc"
+...
+001 loadlibrary:
+002     ld hl,loadfilename
+003     ld de,0
+004     call loadFILE2
+005     cp a,0 ;# if A = 0 then the file loaded successfully
+006     jp nz,_1$:
+007     ld (_screenbase),hl
+008     ld a,0 ;# initialize the dll
+009     call fnScreenGetAddress
+010     ld a,TEST
+011     call fnScreenGetAddress
+012     ld (_testadr),hl
+013     call fnTest
+014 _1$: ret
+015
+016 loadfilename: .string "screen.lib"	
+017 fnScreenGetAddress: .byte 0xc3
+018        _screenbase: .2byte 0
+019 fnTest:       .byte 0xc3
+020     _testadr: .2byte 0
+```
+
+000 : load the library include file, this will contain the function id values and probably other information to use the library  
+
+001 define a subroutine called loadlibrary  
+
+002 - 004 : call the loadFILE2 function passing in the filename (see loadFILE2 for details)  
+
+005 : validate the load call worked  
+
+006 : if it failed we will just exit  
+
+007 : the load returns the base address into the hl register pair, save that address for later use  
+
+008 - 009 : call the library initialize routine  
+
+010 - 012 : ask for the address of TEST function and store the address for later use  
+
+013 : call the library test function  
+
+014 : exit the subroutine  
+
+016 : define the library filename  
+
+017 - 018 : 0xc3 is the byte code for the z80 jump (JP) instruction, the address is stored in the 2 bytes after this bytecode. This allows our code to call the library function.  
+
+019 - 020 : define our jump instruction and reserve 2 bytes for the library address  
+
+
+
+        
+        
+		
