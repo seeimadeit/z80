@@ -1,8 +1,14 @@
 
 .ifndef __CMD__
-	.ifdef __DLL__
+	.ifdef __LIB__
+		.ifdef __ORG__
+			.org __ORG__
+		.else 
 		.org dllMemory
+		.endif
 		.2byte $
+		jp libaddress
+initialize:
 	.else
 		.org userMemory
 	.endif
@@ -85,3 +91,6 @@
 	getcommandparamsadr: .2byte 0
 
 _main:
+.ifdef __DLL__
+	ret
+.endif

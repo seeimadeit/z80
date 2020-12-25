@@ -147,12 +147,13 @@
     <None Include="edit.s" />
     <None Include="ansicodes.inc" />
     <None Include="hello.s" />
-    <None Include="initialRAMz80.s" />
-    <None Include="initialROMz80.s" />
+    <None Include="RAM.s" />
+    <None Include="ROM.s" />
     <None Include="keyboardtest.s" />
     <None Include="libs.inc" />
     <None Include="makefile" />
     <None Include="Routines.inc" />
+    <None Include="screen.inc" />
     <None Include="screen.s" />
     <None Include="SDCARD.inc" />
     <None Include="SERIAL.inc" />
@@ -172,6 +173,9 @@
     <Text Include="run%405000.s" />
     <Text Include="screen.txt" />
     <Text Include="type.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="keyboard.s" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

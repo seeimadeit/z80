@@ -88,6 +88,20 @@ if exist "keyboardtest" (
 	pause
 	)
 
+if exist "screen.lib" (
+	copy screen.lib f:\ 
+) else (
+	echo "no screen.dll file."
+	pause
+	)
+
+if exist "keyboard.lib" (
+	copy keyboard.lib f:\
+) else (
+	echo no keyboard.lib
+	pause
+	)
+
 
 
 rem if exist "x" (	copy x f:\ ) else (	echo "no x file."	pause	)

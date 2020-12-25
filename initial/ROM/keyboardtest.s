@@ -3,6 +3,8 @@
 	.include "libs.inc"
 .endif
 	.include "ansicodes.inc"
+	.include "SDCARD.inc"
+	.include "screen.inc"
 
 .ifdef BOOT
 	.equ SERIALPORT , 0x01
@@ -36,7 +38,36 @@
 call displaytitle
 call move1_0
 
-	
+ld hl,loadfilename
+ld de,0
+call loadFILE2
+call printhex
+cp a,0 ;# if A = 0 then the file loaded successfully
+jp nz,_4$:
+ld (_screengetaddress),hl
+ld a,0 ;# initialize the dll
+call fnScreenGetAddress
+ld a,ANSICODE
+call fnScreenGetAddress
+ld (_test),hl
+ld a,CLEARSCREEN
+call fnTest
+ld hl,donemsg
+call print
+
+_4$:
+ld a,0
+ret
+donemsg: .string "done"
+loadfilename: .string "screen.lib"	
+	.align 2
+
+	fnScreenGetAddress: .byte 0xc3
+		_screengetaddress: .2byte 0
+	fnDiv8: .byte 0xc3
+		_Div8: .2byte 0
+	fnTest: .byte 0xc3
+		_test: .2byte 0
 
 loop:
 	ld a,(exit)
@@ -86,128 +117,6 @@ _1$:
 	ei
 	ret
 
-#==== print ansi escape codes =======
-
-ansicode:
-	# A - code to call
-	push af
-
-	ld hl,escapeintro
-	call print
-
-	cp CLEARSCREEN
-	jp nz,1$
-	ld hl,clearscreen
-	jp 99$
-1$:	cp CLEARENDOFSCREEN
-	jp nz,2$
-	ld hl,clearendofscreen
-	jp 99$
-2$:	cp CLEARBEGINOFSCREEN
-	jp nz,3$
-	ld hl,clearbeginofscreen
-	jp 99$
-3$:	cp CLEARWHOLESCREEN
-	jp nz,4$
-	ld hl,clearwholescreen
-	jp 99$
-4$:	cp CLEARCURRENTLINE
-	jp nz,5$
-	ld hl,clearcurrentline
-	jp 99$
-5$:	cp CLEARTOENDOFLINE
-	jp nz,6$
-	ld hl,cleartoendofline
-	jp 99$
-6$:	cp CLEARFROMSTARTOFLINE
-	jp nz,7$
-	ld hl,clearfromstartofline
-	jp 99$
-7$:	cp CLEARLINE
-	jp nz,8$
-	ld hl,clearline
-	jp 99$
-8$:	cp COLORRESET
-	jp nz,9$
-	ld hl,colorreset
-	jp 99$
-9$:	cp COLORBOLD
-	jp nz,10$
-	ld hl,colorbold
-	jp 99$
-10$:	cp COLORDIM
-	jp nz,11$
-	ld hl,colordim
-	jp 99$
-11$:	cp COLORFGBLACK
-	jp nz,12$
-	ld hl,colorfgblack
-	jp 99$
-12$:	cp COLORFGRED
-	jp nz,13$
-	ld hl,colorfgred
-	jp 99$
-13$:	cp COLORFGGREEN
-	jp nz,14$
-	ld hl,colorfggreen
-	jp 99$
-14$:	cp COLORFGYELLOW
-	jp nz,15$
-	ld hl,colorfgyellow
-	jp 99$
-15$:	cp COLORFGBLUE
-	jp nz,16$
-	ld hl,colorfgblue
-	jp 99$
-16$:	cp COLORFGMAGENTA
-	jp nz,17$
-	ld hl,colorfgmagenta
-	jp 99$
-17$:	cp COLORFGCYAN
-	jp nz,18$
-	ld hl,colorfgmagenta
-	jp 99$
-18$:	cp COLORFGWHITE
-	jp nz,19$
-	ld hl,colorfgwhite
-	jp 99$
-19$:	cp COLORBGBLACK
-	jp nz,20$
-	ld hl,colorbgblack
-	jp 99$
-20$:	cp COLORBGRED
-	jp nz,21$
-	ld hl,colorbgred
-	jp 99$
-21$:	cp COLORBGGREEN
-	jp nz,22$
-	ld hl,colorbggreen
-	jp 99$
-22$:	cp COLORBGYELLOW
-	jp nz,23$
-	ld hl,colorbgyellow
-	jp 99$
-23$:	cp COLORBGBLUE
-	jp nz,24$
-	ld hl,colorbgblue
-	jp 99$
-24$:	cp COLORBGMAGENTA
-	jp nz,25$
-	ld hl,colorbgmagenta
-	jp 99$
-25$:	cp COLORBGCYAN
-	jp nz,26$
-	ld hl,colorbgcyan
-	jp 99$
-26$:	cp COLORBGWHITE
-	jp nz,98$
-	ld hl,colorbgwhite
-	jp 99$
-98$: ;#default
-	ld hl,colorreset
-99$:call print
-	pop af
-	ret
 
 _resetscreenmsg: .string 0x1b,"[0m",0x1b,"[1;1H]",0x1b,"[2J",0x1b,"[1;30HEDITOR"
 displaytitle:
@@ -220,34 +129,6 @@ move1_0: ld hl,_move1_0
 	ret
 _move1_0: .string 0x1b,"[2;1H"
 
-escapeintro: .string 0x1b,"["
-clearscreen: .string "0;0H",0x1b,"[2J"
-clearendofscreen: .string "0J"
-clearbeginofscreen: .string "1J"
-clearwholescreen: .string "2J"
-clearcurrentline: .string "K"
-cleartoendofline: .string "0K"
-clearfromstartofline: .string "1K"
-clearline: .string "2K"
-colorreset: .string "0m"
-colorbold: .string "1m"
-colordim: .string "2m"
-colorfgblack: .string "30m"
-colorfgred: .string "31m"
-colorfggreen: .string "32m"
-colorfgyellow: .string "33m"
-colorfgblue: .string "34m"
-colorfgmagenta: .string "35m"
-colorfgcyan: .string "36m"
-colorfgwhite: .string "37m"
-colorbgblack: .string "40m"
-colorbgred: .string "41m"
-colorbggreen: .string "42m"
-colorbgyellow: .string "43m"
-colorbgblue: .string "44m"
-colorbgmagenta: .string "45m"
-colorbgcyan: .string "46m"
-colorbgwhite: .string "47m"
 asciibuffer: .space 10 ;# working buffer to build characters positions. really bad idea but I can't get my head around itoa()
 
 #=========== useful routines =====
@@ -274,25 +155,6 @@ appendchar:
 	jp 2$
 	
 
-
-;# http://tutorials.eeems.ca/Z80ASM/part4.htm#div8
-;# result stored in HL
-;# ld hl,4
-;# ld d,2
-;# call Div8
-Div8:                            ; this routine performs the operation HL=HL/D
-  xor a                          ; clearing the upper 8 bits of AHL
-  ld b,16                        ; the length of the dividend (16 bits)
-Div8Loop:
-  add hl,hl                      ; advancing a bit
-  rla
-  cp d                           ; checking if the divisor divides the digits chosen (in A)
-  jp c,Div8NextBit               ; if not, advancing without subtraction
-  sub d                          ; subtracting the divisor
-  inc l                          ; and setting the next digit of the quotient
-Div8NextBit:
-  djnz Div8Loop
-  ret
 
 
 	.ifdef BOOT
@@ -324,6 +186,175 @@ putc: ret
 
 .endif
 
+# === loadFILE === #
+; ld hl, filename (zero terminated)
+; ld de, memory address to load file into
+; call loadFILE
+; returns 
+;	HL
+;		baseaddress of the dll
+;	A register 
+;			2 = failed to open the file
+;			0 = if file loaded into memory
+;	DE register pair
+;			count of bytes loaded
+loadFILE2:
+	push af
+	push de ; save de for later
+	call sizereset
+	ld a,0
+	ld (startaddress),a
+	ld (startaddress+1),a
+		; try to open the SD card and read some data
+		ld a,FILENAMECLEAR ; // filenameclear
+		out (SDCARD),a
+
+
+;
+_$getnextchar:
+		ld a,(hl)
+		cp 0
+		jp z, _$openfile #; if filename character is null we have finished
+		ld a,FILENAMEAPPEND
+		out (SDCARD),a ; // filenameappend
+		ld a,(hl)
+		out (SDCARD),a
+		;#out (SERIALPORT),a
+		inc hl
+		jp _$getnextchar
+
+_$openfile:
+#openfile will return 1 if the file was opened, 0 if it failed to open
+		ld a,OPEN	;// Open
+		out (SDCARD),a
+		in a,(SDCARD)
+		pop hl ; get load address - must pop the stack before returning
+		cp 0
+		jp nz,testloadaddress
+		pop af ;# a flag not needed now
+		call sizeloaded
+		ld a,2 ;we have an error trying to open the file.
+		ret
+testloadaddress:
+	# if loadaddress (hl) = 0, then the file will have load address information in the 1st 2 bytes
+	ld a,0
+	cp h
+	jp nz,available ;# h is not zero so it must have an address to load into already
+	cp l
+	jp nz,available ;# l is not zero so it must have an address to load intop already
+
+	ld hl,startaddress ;# this is the place to store the 2 bytes we need to get at the load address
+	call loadheader
+	cp 1
+	jp nz,_4$
+
+	ld hl,(startaddress)
+	inc hl
+	inc hl
+	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
+	jp available
+_4$:
+	ld a,3 ;#new error code
+	ret
+	#if we reach here then the first 2 bytes have the address information so let read them now
+loadheader:
+	ld b,2
+	ld c,0
+_2$:
+	ld a, AVAILABLE
+	out (SDCARD),a
+	in a,(SDCARD) ;# is data available?
+	cp 0
+	jp nz,_1$
+	pop af ;#restore af
+	ld hl,0
+		call println
+		call sizeloaded
+		ld a,0 ;# use 0 in A to indicate a fail
+		ret ;#- exit loadheader because the file read had a problem
+_1$:
+		;// if we get here then there is data to read
+		ld a,READNEXTBYTE
+		out (SDCARD),a ;// read nextbyte
+		in a,(SDCARD)
+		ld (hl),a ; // store byte in RAM (OSLOAD)
+		inc hl 
+		djnz _2$
+		ld a,1 ;# use 1 in A to indicate a success
+		ret ;# exit loadheader because we have loaded 2 bytes
+available:
+	#available will return 1 if there is data to read, 0 if no data to read
+		ld a, AVAILABLE ; // available
+		out (SDCARD),a
+		in a,(SDCARD) ;// read the value from the device
+	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
+	;	add a,'0' ;// make it printable
+	;	out (SERIALPORT),a ;// print response
+	;	ld a,b
+		cp 0 ;// compare the A reg returned by the device
+		jp nz,_$nextbyte
+		pop af ;# restore the af registers because it will tell me if I need to zero terminate the loaded file
+		cp 1
+		jp nz,_1$
+		;# the hl register pair contains the last address we need to write a zero here because the user wants it
+		ld a,0
+		ld (hl),a ;# zero terminated
+
+_1$:
+		ld hl,0
+		call println
+		call sizeloaded
+		ld hl,(startaddress) ;# return the startaddress
+		ld a,0
+		ret
+_$nextbyte:
+		;// if we get here then there is data to read
+		ld a,READNEXTBYTE
+		out (SDCARD),a ;// read nextbyte
+		in a,(SDCARD)
+		ld (hl),a ; // store byte in RAM (OSLOAD)
+		inc hl 
+		ld a,'#'
+		out (SERIALPORT),a ;// just echo it back for now
+		call sizeincrement
+		jr available ;
+
+sizeloaded:
+	push ix
+	ld ix,losize
+	ld e,(ix)
+	ld d,(ix+1)
+	pop ix
+	ret
+sizereset:
+	push ix
+	push af
+	ld a,0
+	ld ix,losize
+	ld (ix),a
+	ld (ix+1),a
+	pop af
+	pop ix
+	ret
+sizeincrement:
+	push ix
+	push hl
+
+	ld ix,losize
+	ld l,(ix)
+	ld h,(ix+1)
+	inc HL
+	ld (ix),l
+	ld (ix+1),h
+
+	pop hl
+	pop ix
+	ret
+
+losize: .byte 0
+hisize: .byte 0
+
+startaddress: .2byte 0
 
 # ======================== end subroutines ========== #
 	

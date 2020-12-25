@@ -16,8 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="makefile" />
-    <None Include="initialRAMz80.s" />
-    <None Include="initialROMz80.s" />
     <None Include="SDCARD.inc">
       <Filter>Header Files</Filter>
     </None>
@@ -48,6 +46,11 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="screen.s" />
+    <None Include="screen.inc">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="RAM.s" />
+    <None Include="ROM.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="initialRAMz80.txt" />
@@ -62,5 +65,8 @@
     <Text Include="asm.txt" />
     <Text Include="keyboardtest.txt" />
     <Text Include="screen.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="keyboard.s" />
   </ItemGroup>
 </Project>
