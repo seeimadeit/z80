@@ -171,6 +171,7 @@
     <Text Include="RAM.txt" />
     <Text Include="ROM.txt" />
     <Text Include="run%405000.s" />
+    <Text Include="run%405000.txt" />
     <Text Include="screen.txt" />
     <Text Include="type.txt" />
   </ItemGroup>

@@ -36,13 +36,16 @@ boot:
 		#== ******* Command processor Loop ******** ==#
 	commandprocessloop:	
 		ld hl,commandprocessor
-		ld de,commandMemory
+#		ld de,commandMemory
+		ld de,0
 		call loadFILE
 		cp 0
 		jp nz,errorloading
+		ld (_cmdlne),hl ;# save the load address
 		ld hl,0
 		call println
-		call commandMemory # run the file just loaded.
+#		call commandMemory # run the file just loaded.
+		call commandline
 		jp commandprocessloop
 
 	errorloading:
@@ -50,6 +53,10 @@ boot:
 		ld hl,errorloadingmsg
 		call println
 		jp commandprocessloop
+
+commandline: .byte 0xc3
+	_cmdlne: .2byte 0
+
 		#======================suboutines===============================================#
 	# === memset === #
 		# ld hl, address to start
@@ -270,9 +277,11 @@ loadFILE:
 	push af
 	push de ; save de for later
 	call sizereset
-	ld a,0
+	ld a,0 ;# erase the executable header information
 	ld (startaddress),a
 	ld (startaddress+1),a
+	ld (startaddress+2),a
+	ld (startaddress+3),a
 		; try to open the SD card and read some data
 		ld a,FILENAMECLEAR ; // filenameclear
 		out (SDCARD),a
@@ -317,16 +326,22 @@ testloadaddress:
 	jp nz,_4$
 
 	ld hl,(startaddress)
+	inc hl ;#start address
 	inc hl
-	inc hl
+	inc hl ;# program size in pages
+	inc hl ;# stack size in pages
 	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
 	jp available
 _4$:
 	ld a,3 ;#new error code
 	ret
 	#if we reach here then the first 2 bytes have the address information so let read them now
+	;# header information
+	;# 2bytes program load address
+	;# 1byte memory required in pages
+	;# 1byte stack required in pages
 loadheader:
-	ld b,2
+	ld b,4
 	ld c,0
 _2$:
 	ld a, AVAILABLE
@@ -422,7 +437,10 @@ sizeincrement:
 losize: .byte 0
 hisize: .byte 0
 
+;# executable header information
 startaddress: .2byte 0
+memorypages: .byte 0
+stackpages: .byte 0
 ;# ====== hextobyte ==========
 ;#    load HL registers with the 2 ascii characters of a hexadecimal value
 ;# note routine does not validate the inputs.
@@ -725,5 +743,8 @@ _1$:
 	.2byte serialport ;4
 	.2byte serialport ;6
 
-	
+	ENDOFLINE:
+	.if (ENDOFLINE > 0x0fff)
+		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x1000"
+	.endif
 	

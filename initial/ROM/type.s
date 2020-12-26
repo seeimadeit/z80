@@ -28,4 +28,7 @@ _exit:
 msg: .string "the params are:"
 error: .string "failed to load the file."
 params: .space 50
+
+;# this program does not work correctly with the memory management - this will need to be fixed in the near future
+ENDADDRESS:
 dumparea: .space 1 ;# this is not correct the loadfile will expand passed this

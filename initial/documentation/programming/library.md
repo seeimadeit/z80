@@ -98,7 +98,7 @@ instruction for jump. When you call the function it will jump to the address pro
 001 loadlibrary:
 002     ld hl,loadfilename
 003     ld de,0
-004     call loadFILE2
+004     call loadfile
 005     cp a,0 ;# if A = 0 then the file loaded successfully
 006     jp nz,_1$:
 007     ld (_screenbase),hl
@@ -121,7 +121,7 @@ instruction for jump. When you call the function it will jump to the address pro
 
 001 : define a subroutine called loadlibrary  
 
-002 - 004 : call the loadFILE2 function passing in the filename (see loadFILE2 for details)  
+002 - 004 : call the loadfile function passing in the filename (see loadfile for details)  
 
 005 : validate the load call worked  
 

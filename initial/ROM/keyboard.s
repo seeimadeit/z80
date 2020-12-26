@@ -20,3 +20,5 @@ _end$:
 #----- not defined ---
     ld hl,0
     ret
+
+ENDADDRESS:

@@ -65,6 +65,7 @@
     <Text Include="screen.txt" />
     <Text Include="RAM.txt" />
     <Text Include="ROM.txt" />
+    <Text Include="run%405000.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="keyboard.s" />

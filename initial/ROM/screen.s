@@ -225,3 +225,4 @@ _loadaddress5$:
 	ld hl,0
 	ret
 
+ENDADDRESS:

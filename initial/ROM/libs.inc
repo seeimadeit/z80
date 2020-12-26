@@ -1,19 +1,35 @@
 
-.ifndef __CMD__
+
 	.ifdef __LIB__
 		.ifdef __ORG__
 			.org __ORG__
 		.else 
-		.org dllMemory
+			.org dllMemory
 		.endif
-		.2byte $
+		.2byte $ ;# load address
+		.byte ((ENDADDRESS-$)/255) ;# memory required to load (in pages)
+		.ifdef __STACK__
+			.byte __STACK__
+		.else 
+			.byte 1 ;# stack size (in pages)
+		.endif
 		jp libaddress
 initialize:
 	.else
-		.org userMemory
-		.2byte $
+		.ifdef __ORG__
+			.org __ORG__
+		.else
+			.org userMemory
+		.endif
+		.2byte $ ;# load address
+		.byte ((ENDADDRESS-$)/255) ;# memory required to load (in pages)
+		.ifdef __STACK__
+			.byte __STACK__
+		.else 
+			.byte 1 ;# stack size (in pages)
+		.endif
 	.endif
-.endif
+
 	ld a,PRINT
 	call GetAddress
 	ld (printadr),hl

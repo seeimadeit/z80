@@ -311,3 +311,5 @@ interruptvectors:
 	.2byte nullroutine ;0
 	.2byte nullroutine ;0
 	.2byte nullroutine ;0
+
+	ENDADDRESS:

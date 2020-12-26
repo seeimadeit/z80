@@ -443,3 +443,4 @@ getkeypos: .byte 0;# index into the next byte to read
 	.2byte nullroutine ;0
 	.2byte nullroutine ;0
 
+	ENDADDRESS:

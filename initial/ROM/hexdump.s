@@ -290,4 +290,9 @@ hexdumpprefix: .string "0x"
 msg: .string "the params are:"
 error: .string "failed to load the file."
 params: .space 50
+
+;# this work will not work correctly without the memory management code
+ENDADDRESS:
+
 dumparea: .space 1 ;# this is not correct the loadfile will expand passed this
+

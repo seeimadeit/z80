@@ -1,7 +1,7 @@
 
+.set __ORG__,commandMemory
+
 .include "Routines.inc"
-.set __CMD__,0
-.org commandMemory
 .include "libs.inc"
 	
 
@@ -869,3 +869,6 @@ data:
 	.2byte nullroutine ;0
 	.2byte nullroutine ;0
 	.2byte nullroutine ;0
+
+
+	ENDADDRESS:
