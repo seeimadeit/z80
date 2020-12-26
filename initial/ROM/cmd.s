@@ -328,7 +328,8 @@ _findbuiltinSuccess:
 		call println
 
 	;# hidump has the address to dump so let dump it out
-		call hexdumpprint
+		call hexdumpheader
+		call _hexdumprint
 		jp hexdumpexit
 
 hexdumperror:
@@ -339,8 +340,10 @@ hexdumpexit:
 		ret
 
 
-hexdumpprint:
-
+hexdumpheader:
+	push af
+	push bc
+	push hl
 	;# print the heading
 
 	ld b,7
@@ -364,26 +367,43 @@ _col$1:
 
 	ld hl,0 ;# newline
 	call println
+	pop hl
+	pop bc
+	pop af
+	ret
+hexdumplinetitle:
+	# hl contain the address to print output format is "0x0000"
+	push af
+	push hl
+	ld hl,hexdumpprefix
+	call print
+	pop hl
+
+	ld a,(_highlow)
+	cp 0
+	jp z,_1$
+	ld a,h
+	call printhex
+_1$:ld a,l
+	call printhex
+	ld a,' '
+	call putc
+	pop af
+	ret
+_highlow: .byte 0 ;# allows code reuse
+
+_hexdumprint:
+	ld a,1
+	ld (_highlow),a
 
 	ld hl,(hidump)
 	ld l,0 ;# alway start at page boundry
 	ld b,16 ;# outer loop
 _hexdp0:
 	push bc
-
 	ld b,16 ;# inner loop
 		;# print the address
-	push hl
-	ld hl,hexdumpprefix
-	call print
-	pop hl
-
-	ld a,h
-	call printhex
-	ld a,l
-	call printhex
-	ld a,' '
-	call putc
+	call hexdumplinetitle
 _hexdp$1:
 
 	;# print the byte values
@@ -660,6 +680,83 @@ runfrom: .byte 0xc3 ;# jump instruction - must be next to hidump
 hidump: .byte 0 ;# used but hexdump and load
 lodump: .byte 0 ;# used by hexdump and load
 
+#=== malloc table builtin ==#
+
+malloctablecmd: .string "m*"
+malloctable:
+	ld hl, malloctablemsg
+	call println
+
+	call hexdumpheader
+
+	ld a,0 ;# function hexdumplinetitle uses this varible to determine if both h and l should be output
+	ld (_highlow),a ;# 0 = output low, 1 = output high and low
+
+	ld a,0
+	ld h,0
+	ld l,0
+	ld (pagecount),hl
+	call getmalloctable
+
+	ld b,16 ;# level 3
+
+_6$:push bc
+push hl
+push bc
+	ld hl,(pagecount)
+	call hexdumplinetitle
+	ld c,0x10
+	ld b,0
+	add hl,bc
+	ld (pagecount),hl
+pop bc
+pop hl
+	ld a,' '
+	call putc
+	call putc	
+	call putc
+
+	ld b,2 ;# level 2
+	
+_5$:push bc
+	ld a,(hl) ;# memory map
+	ld b,8 ;# level 1
+_1$:	 
+	rl a
+	push af
+	jp nc,_2$:
+	ld a,'1'
+	jp _3$:
+_2$:
+	ld a,'0'
+_3$:
+	call putc
+	ld a,' '
+	call putc
+	call putc
+	pop af
+	djnz _1$
+
+	pop bc ;# level 2
+	inc hl ;# advance memory map point
+	djnz _5$
+
+	push hl
+
+	ld hl,0
+	call println
+	pop hl
+#	inc hl ;# advance memory map point
+	pop bc
+	djnz _6$
+
+	ld hl,malloctableusemsg
+	call println
+	ld a,TRUE
+	ret
+
+pagecount: .byte 0
+
 		;#======================= builtin functions end ================
 		;# --- dev note : builtin function must return TRUE in a register
 messages:
@@ -684,6 +781,8 @@ messages:
 	outerrormsg: .string " out error."
 	createprocessmsg: .string "hell no"
 	reloadmsg: .string "reloading."
+	malloctableusemsg: .string "table is showing memory pages\r\n take the left value and the heading value to create the page address\r\ni.e. 0x10 + 03 = page 0x13xx"
+	malloctablemsg: .string "Memory Allocation Table"
 
 
 
@@ -696,6 +795,7 @@ messages:
 			 .byte "r,0xXXXX - run from address 0xXXXX\r\n"
 			 .byte "in,0xYY - receive from peripheral at address 0xYY\r\n"
 			 .byte "out,0xXX,0xYY - send to peripheral at address 0xYY then value 0xXX\r\n"
+			 .byte "m* - show malloc table\r\n"
 			 .byte "exit - exit and reload the MCP\r\n"
 			 .string 0
 builtin:
@@ -710,6 +810,7 @@ builtin:
 		.2byte incmd,din
 		.2byte createprocesscmd,createprocess
 		.2byte reloadcmd,reload
+		.2byte malloctablecmd,malloctable
 
 	endoflist: .2byte 0,0
 

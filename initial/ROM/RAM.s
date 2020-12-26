@@ -700,6 +700,11 @@ _loadaddress$15:
 	ld hl,getcommandparams
 	ret
 _loadaddress$16:
+	cp GETMALLOCTABLE
+	jp nz,_loadaddress$17
+	ld hl,getmalloctable
+	ret
+_loadaddress$17:
 	#----- not defined ---
 	ld hl,addressfailedmsg
 	call print 
@@ -707,6 +712,11 @@ _loadaddress$16:
 
 	ld hl,0
 	ret
+
+	getmalloctable:
+		ld hl,malloctable
+		ret
+
 	# ======================== end subroutines ========== #
 	
 	nullroutine: 
@@ -733,15 +743,154 @@ _1$:
 	errorloadingmsg: .string "error loading program.\r\n\"
 	addressfailedmsg: .string "GetAddress failed for code:"
 
+	.align 8
+malloctable: .space 255
 
 	; I could set the org address but I'm going to let that move as needed	.org 0x????
 	;#.org 0x0A00-start
+
 	.align 8
 	jumptable:
 	.2byte nullroutine ;0
 	.2byte serialport ;2
-	.2byte serialport ;4
-	.2byte serialport ;6
+	.2byte nullroutine ;4
+	.2byte nullroutine ;6
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 10 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 20 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 30 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 40 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 50 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 60 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 70 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 80 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 90 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 100 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 110 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+#/* 120 */
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
+	.2byte nullroutine ;0
 
 	ENDOFLINE:
 	.if (ENDOFLINE > 0x0fff)

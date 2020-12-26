@@ -72,6 +72,9 @@ initialize:
 	ld a,GETCOMMANDPARAMS
 	call GetAddress
 	ld (getcommandparamsadr),hl
+	ld a,GETMALLOCTABLE
+	call GetAddress
+	ld (getmalloctableadr),hl
 
 
 	jp _main
@@ -106,6 +109,8 @@ initialize:
 	createProcessadr: .2byte 0
 	getcommandparams: .byte 0xc3
 	getcommandparamsadr: .2byte 0
+	getmalloctable: .byte 0xc3
+	getmalloctableadr: .2byte 0
 
 _main:
 .ifdef __DLL__

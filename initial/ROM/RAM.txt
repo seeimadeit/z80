@@ -115,12 +115,13 @@ F02:0031       # filesystem - primitive functions, probably going to change
 F02:0032       .equ DIRECTORYOPEN,13
 F02:0033       .equ DIRECTORYNEXTFILE,14
 F02:0034       .equ GETFILENAME,15
-F02:0035       
+F02:0035       .equ GETMALLOCTABLE,18
 F02:0036       
 F02:0037       
-F02:0038       .equ NEXTNUMBER,18
-F02:0039       
+F02:0038       
+F02:0039       .equ NEXTNUMBER,19
 F02:0040       
+F02:0041       
 F00:0011       
 F00:0012       
 F00:0013       	.org 0x800
@@ -138,7 +139,7 @@ F00:0021
 F00:0022       	di
                S01:0000080A:  F3
 F00:0023       	ld hl,readymsg
-               S01:0000080B:  21 64 0B
+               S01:0000080B:  21 71 0B
 F00:0024       	call print
                S01:0000080E:  CD A1 08
 F00:0025       		;ld b, endlabel2-label2
@@ -148,20 +149,20 @@ F00:0028
 F00:0029       		im 2 ;/* interrupt mode 2*/
                S01:00000811:  ED 5E
 F00:0030       		ld a, jumptable/256 ;// hibyte
-               S01:00000813:  3E 0C
+               S01:00000813:  3E 0D
 F00:0031       		ld i,a
                S01:00000815:  ED 47
 F00:0032       		ei   ;#/* enable interrupts*/
                S01:00000817:  FB
 F00:0033       
 F00:0034       		ld hl,loadedmsg
-               S01:00000818:  21 5B 0B
+               S01:00000818:  21 68 0B
 F00:0035       		call print
                S01:0000081B:  CD A1 08
 F00:0036       		#== ******* Command processor Loop ******** ==#
 F00:0037       	commandprocessloop:	
 F00:0038       		ld hl,commandprocessor
-               S01:0000081E:  21 73 0B
+               S01:0000081E:  21 80 0B
 F00:0039       #		ld de,commandMemory
 F00:0040       		ld de,0
                S01:00000821:  11 00 00
@@ -187,7 +188,7 @@ F00:0051       	errorloading:
 F00:0052       		call printhex
                S01:0000083B:  CD C8 08
 F00:0053       		ld hl,errorloadingmsg
-               S01:0000083E:  21 77 0B
+               S01:0000083E:  21 84 0B
 F00:0054       		call println
                S01:00000841:  CD 93 08
 F00:0055       		jp commandprocessloop
@@ -380,7 +381,7 @@ F00:0185       	push hl
 F00:0186       	push af
                S01:00000897:  F5
 F00:0187       	ld hl,crlf
-               S01:00000898:  21 58 0B
+               S01:00000898:  21 65 0B
 F00:0188       	call print
                S01:0000089B:  CD A1 08
 F00:0189       	pop af
@@ -1240,80 +1241,359 @@ F00:0700       	ld hl,getcommandparams
 F00:0701       	ret
                S01:00000B39:  C9
 F00:0702       _loadaddress$16:
-F00:0703       	#----- not defined ---
-F00:0704       	ld hl,addressfailedmsg
-               S01:00000B3A:  21 91 0B
-F00:0705       	call print 
-               S01:00000B3D:  CD A1 08
-F00:0706       	call printhex
-               S01:00000B40:  CD C8 08
-F00:0707       
-F00:0708       	ld hl,0
-               S01:00000B43:  21 00 00
-F00:0709       	ret
-               S01:00000B46:  C9
-F00:0710       	# ======================== end subroutines ========== #
-F00:0711       	
-F00:0712       	nullroutine: 
-F00:0713       		ei
-               S01:00000B47:  FB
-F00:0714       		reti
-               S01:00000B48:  ED 4D
+F00:0703       	cp GETMALLOCTABLE
+               S01:00000B3A:  FE 12
+F00:0704       	jp nz,_loadaddress$17
+               S01:00000B3C:  C2 43 0B
+F00:0705       	ld hl,getmalloctable
+               S01:00000B3F:  21 50 0B
+F00:0706       	ret
+               S01:00000B42:  C9
+F00:0707       _loadaddress$17:
+F00:0708       	#----- not defined ---
+F00:0709       	ld hl,addressfailedmsg
+               S01:00000B43:  21 9E 0B
+F00:0710       	call print 
+               S01:00000B46:  CD A1 08
+F00:0711       	call printhex
+               S01:00000B49:  CD C8 08
+F00:0712       
+F00:0713       	ld hl,0
+               S01:00000B4C:  21 00 00
+F00:0714       	ret
+               S01:00000B4F:  C9
 F00:0715       
-F00:0716       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0717       	#	di
-F00:0718       		#ld a,'*'
-F00:0719       		#out (SERIALPORT),a
-F00:0720       
-F00:0721       		in a,(SERIALPORT)
-               S01:00000B4A:  DB 01
-F00:0722       		cp 0
-               S01:00000B4C:  FE 00
-F00:0723       		jp nz,_1$
-               S01:00000B4E:  C2 53 0B
-F00:0724       		ld a,'`'
-               S01:00000B51:  3E 60
-F00:0725       _1$:
-F00:0726       		out (SERIALPORT),a
-               S01:00000B53:  D3 01
-F00:0727       		ei
-               S01:00000B55:  FB
-F00:0728       		reti
-               S01:00000B56:  ED 4D
-F00:0729       	crlf: .string "\r\n"
-               S01:00000B58:  0D 0A
-F00:0730       	loadedmsg: .string "JOSHUA\r\n"
-               S01:00000B5B:  4A 4F 53 48 55 41 0D 0A
-F00:0731       	readymsg: .string "\r\nReady v0.0\r\n"
-               S01:00000B64:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
-F00:0732       	commandprocessor: .string "cmd"
-               S01:00000B73:  63 6D 64
-F00:0733       	errorloadingmsg: .string "error loading program.\r\n\"
-               S01:00000B77:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
-               S01:00000B87:  6F 67 72 61 6D 2E 0D 0A 22
-F00:0734       	addressfailedmsg: .string "GetAddress failed for code:"
-               S01:00000B91:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
-               S01:00000BA1:  64 20 66 6F 72 20 63 6F 64 65 3A
-F00:0735       
-F00:0736       
-F00:0737       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0738       	;#.org 0x0A00-start
-F00:0739       	.align 8
-F00:0740       	jumptable:
-F00:0741       	.2byte nullroutine ;0
-               S01:00000C00:  47 0B
-F00:0742       	.2byte serialport ;2
-               S01:00000C02:  4A 0B
-F00:0743       	.2byte serialport ;4
-               S01:00000C04:  4A 0B
-F00:0744       	.2byte serialport ;6
-               S01:00000C06:  4A 0B
+F00:0716       	getmalloctable:
+F00:0717       		ld hl,malloctable
+               S01:00000B50:  21 00 0C
+F00:0718       		ret
+               S01:00000B53:  C9
+F00:0719       
+F00:0720       	# ======================== end subroutines ========== #
+F00:0721       	
+F00:0722       	nullroutine: 
+F00:0723       		ei
+               S01:00000B54:  FB
+F00:0724       		reti
+               S01:00000B55:  ED 4D
+F00:0725       
+F00:0726       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:0727       	#	di
+F00:0728       		#ld a,'*'
+F00:0729       		#out (SERIALPORT),a
+F00:0730       
+F00:0731       		in a,(SERIALPORT)
+               S01:00000B57:  DB 01
+F00:0732       		cp 0
+               S01:00000B59:  FE 00
+F00:0733       		jp nz,_1$
+               S01:00000B5B:  C2 60 0B
+F00:0734       		ld a,'`'
+               S01:00000B5E:  3E 60
+F00:0735       _1$:
+F00:0736       		out (SERIALPORT),a
+               S01:00000B60:  D3 01
+F00:0737       		ei
+               S01:00000B62:  FB
+F00:0738       		reti
+               S01:00000B63:  ED 4D
+F00:0739       	crlf: .string "\r\n"
+               S01:00000B65:  0D 0A
+F00:0740       	loadedmsg: .string "JOSHUA\r\n"
+               S01:00000B68:  4A 4F 53 48 55 41 0D 0A
+F00:0741       	readymsg: .string "\r\nReady v0.0\r\n"
+               S01:00000B71:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+F00:0742       	commandprocessor: .string "cmd"
+               S01:00000B80:  63 6D 64
+F00:0743       	errorloadingmsg: .string "error loading program.\r\n\"
+               S01:00000B84:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
+               S01:00000B94:  6F 67 72 61 6D 2E 0D 0A 22
+F00:0744       	addressfailedmsg: .string "GetAddress failed for code:"
+               S01:00000B9E:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
+               S01:00000BAE:  64 20 66 6F 72 20 63 6F 64 65 3A
 F00:0745       
-F00:0746       	ENDOFLINE:
-F00:0747       	.if (ENDOFLINE > 0x0fff)
-F00:0748       		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x1000"
-F00:0749       	.endif
-F00:0750       	
+F00:0746       	.align 8
+F00:0747       malloctable: .space 255
+F00:0748       
+F00:0749       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:0750       	;#.org 0x0A00-start
+F00:0751       
+F00:0752       	.align 8
+F00:0753       	jumptable:
+F00:0754       	.2byte nullroutine ;0
+               S01:00000D00:  54 0B
+F00:0755       	.2byte serialport ;2
+               S01:00000D02:  57 0B
+F00:0756       	.2byte nullroutine ;4
+               S01:00000D04:  54 0B
+F00:0757       	.2byte nullroutine ;6
+               S01:00000D06:  54 0B
+F00:0758       	.2byte nullroutine ;0
+               S01:00000D08:  54 0B
+F00:0759       	.2byte nullroutine ;0
+               S01:00000D0A:  54 0B
+F00:0760       	.2byte nullroutine ;0
+               S01:00000D0C:  54 0B
+F00:0761       	.2byte nullroutine ;0
+               S01:00000D0E:  54 0B
+F00:0762       	.2byte nullroutine ;0
+               S01:00000D10:  54 0B
+F00:0763       	.2byte nullroutine ;0
+               S01:00000D12:  54 0B
+F00:0764       #/* 10 */
+F00:0765       	.2byte nullroutine ;0
+               S01:00000D14:  54 0B
+F00:0766       	.2byte nullroutine ;0
+               S01:00000D16:  54 0B
+F00:0767       	.2byte nullroutine ;0
+               S01:00000D18:  54 0B
+F00:0768       	.2byte nullroutine ;0
+               S01:00000D1A:  54 0B
+F00:0769       	.2byte nullroutine ;0
+               S01:00000D1C:  54 0B
+F00:0770       	.2byte nullroutine ;0
+               S01:00000D1E:  54 0B
+F00:0771       	.2byte nullroutine ;0
+               S01:00000D20:  54 0B
+F00:0772       	.2byte nullroutine ;0
+               S01:00000D22:  54 0B
+F00:0773       	.2byte nullroutine ;0
+               S01:00000D24:  54 0B
+F00:0774       	.2byte nullroutine ;0
+               S01:00000D26:  54 0B
+F00:0775       #/* 20 */
+F00:0776       	.2byte nullroutine ;0
+               S01:00000D28:  54 0B
+F00:0777       	.2byte nullroutine ;0
+               S01:00000D2A:  54 0B
+F00:0778       	.2byte nullroutine ;0
+               S01:00000D2C:  54 0B
+F00:0779       	.2byte nullroutine ;0
+               S01:00000D2E:  54 0B
+F00:0780       	.2byte nullroutine ;0
+               S01:00000D30:  54 0B
+F00:0781       	.2byte nullroutine ;0
+               S01:00000D32:  54 0B
+F00:0782       	.2byte nullroutine ;0
+               S01:00000D34:  54 0B
+F00:0783       	.2byte nullroutine ;0
+               S01:00000D36:  54 0B
+F00:0784       	.2byte nullroutine ;0
+               S01:00000D38:  54 0B
+F00:0785       	.2byte nullroutine ;0
+               S01:00000D3A:  54 0B
+F00:0786       #/* 30 */
+F00:0787       	.2byte nullroutine ;0
+               S01:00000D3C:  54 0B
+F00:0788       	.2byte nullroutine ;0
+               S01:00000D3E:  54 0B
+F00:0789       	.2byte nullroutine ;0
+               S01:00000D40:  54 0B
+F00:0790       	.2byte nullroutine ;0
+               S01:00000D42:  54 0B
+F00:0791       	.2byte nullroutine ;0
+               S01:00000D44:  54 0B
+F00:0792       	.2byte nullroutine ;0
+               S01:00000D46:  54 0B
+F00:0793       	.2byte nullroutine ;0
+               S01:00000D48:  54 0B
+F00:0794       	.2byte nullroutine ;0
+               S01:00000D4A:  54 0B
+F00:0795       	.2byte nullroutine ;0
+               S01:00000D4C:  54 0B
+F00:0796       	.2byte nullroutine ;0
+               S01:00000D4E:  54 0B
+F00:0797       #/* 40 */
+F00:0798       	.2byte nullroutine ;0
+               S01:00000D50:  54 0B
+F00:0799       	.2byte nullroutine ;0
+               S01:00000D52:  54 0B
+F00:0800       	.2byte nullroutine ;0
+               S01:00000D54:  54 0B
+F00:0801       	.2byte nullroutine ;0
+               S01:00000D56:  54 0B
+F00:0802       	.2byte nullroutine ;0
+               S01:00000D58:  54 0B
+F00:0803       	.2byte nullroutine ;0
+               S01:00000D5A:  54 0B
+F00:0804       	.2byte nullroutine ;0
+               S01:00000D5C:  54 0B
+F00:0805       	.2byte nullroutine ;0
+               S01:00000D5E:  54 0B
+F00:0806       	.2byte nullroutine ;0
+               S01:00000D60:  54 0B
+F00:0807       	.2byte nullroutine ;0
+               S01:00000D62:  54 0B
+F00:0808       #/* 50 */
+F00:0809       	.2byte nullroutine ;0
+               S01:00000D64:  54 0B
+F00:0810       	.2byte nullroutine ;0
+               S01:00000D66:  54 0B
+F00:0811       	.2byte nullroutine ;0
+               S01:00000D68:  54 0B
+F00:0812       	.2byte nullroutine ;0
+               S01:00000D6A:  54 0B
+F00:0813       	.2byte nullroutine ;0
+               S01:00000D6C:  54 0B
+F00:0814       	.2byte nullroutine ;0
+               S01:00000D6E:  54 0B
+F00:0815       	.2byte nullroutine ;0
+               S01:00000D70:  54 0B
+F00:0816       	.2byte nullroutine ;0
+               S01:00000D72:  54 0B
+F00:0817       	.2byte nullroutine ;0
+               S01:00000D74:  54 0B
+F00:0818       	.2byte nullroutine ;0
+               S01:00000D76:  54 0B
+F00:0819       #/* 60 */
+F00:0820       	.2byte nullroutine ;0
+               S01:00000D78:  54 0B
+F00:0821       	.2byte nullroutine ;0
+               S01:00000D7A:  54 0B
+F00:0822       	.2byte nullroutine ;0
+               S01:00000D7C:  54 0B
+F00:0823       	.2byte nullroutine ;0
+               S01:00000D7E:  54 0B
+F00:0824       	.2byte nullroutine ;0
+               S01:00000D80:  54 0B
+F00:0825       	.2byte nullroutine ;0
+               S01:00000D82:  54 0B
+F00:0826       	.2byte nullroutine ;0
+               S01:00000D84:  54 0B
+F00:0827       	.2byte nullroutine ;0
+               S01:00000D86:  54 0B
+F00:0828       	.2byte nullroutine ;0
+               S01:00000D88:  54 0B
+F00:0829       	.2byte nullroutine ;0
+               S01:00000D8A:  54 0B
+F00:0830       #/* 70 */
+F00:0831       	.2byte nullroutine ;0
+               S01:00000D8C:  54 0B
+F00:0832       	.2byte nullroutine ;0
+               S01:00000D8E:  54 0B
+F00:0833       	.2byte nullroutine ;0
+               S01:00000D90:  54 0B
+F00:0834       	.2byte nullroutine ;0
+               S01:00000D92:  54 0B
+F00:0835       	.2byte nullroutine ;0
+               S01:00000D94:  54 0B
+F00:0836       	.2byte nullroutine ;0
+               S01:00000D96:  54 0B
+F00:0837       	.2byte nullroutine ;0
+               S01:00000D98:  54 0B
+F00:0838       	.2byte nullroutine ;0
+               S01:00000D9A:  54 0B
+F00:0839       	.2byte nullroutine ;0
+               S01:00000D9C:  54 0B
+F00:0840       	.2byte nullroutine ;0
+               S01:00000D9E:  54 0B
+F00:0841       #/* 80 */
+F00:0842       	.2byte nullroutine ;0
+               S01:00000DA0:  54 0B
+F00:0843       	.2byte nullroutine ;0
+               S01:00000DA2:  54 0B
+F00:0844       	.2byte nullroutine ;0
+               S01:00000DA4:  54 0B
+F00:0845       	.2byte nullroutine ;0
+               S01:00000DA6:  54 0B
+F00:0846       	.2byte nullroutine ;0
+               S01:00000DA8:  54 0B
+F00:0847       	.2byte nullroutine ;0
+               S01:00000DAA:  54 0B
+F00:0848       	.2byte nullroutine ;0
+               S01:00000DAC:  54 0B
+F00:0849       	.2byte nullroutine ;0
+               S01:00000DAE:  54 0B
+F00:0850       	.2byte nullroutine ;0
+               S01:00000DB0:  54 0B
+F00:0851       	.2byte nullroutine ;0
+               S01:00000DB2:  54 0B
+F00:0852       #/* 90 */
+F00:0853       	.2byte nullroutine ;0
+               S01:00000DB4:  54 0B
+F00:0854       	.2byte nullroutine ;0
+               S01:00000DB6:  54 0B
+F00:0855       	.2byte nullroutine ;0
+               S01:00000DB8:  54 0B
+F00:0856       	.2byte nullroutine ;0
+               S01:00000DBA:  54 0B
+F00:0857       	.2byte nullroutine ;0
+               S01:00000DBC:  54 0B
+F00:0858       	.2byte nullroutine ;0
+               S01:00000DBE:  54 0B
+F00:0859       	.2byte nullroutine ;0
+               S01:00000DC0:  54 0B
+F00:0860       	.2byte nullroutine ;0
+               S01:00000DC2:  54 0B
+F00:0861       	.2byte nullroutine ;0
+               S01:00000DC4:  54 0B
+F00:0862       	.2byte nullroutine ;0
+               S01:00000DC6:  54 0B
+F00:0863       #/* 100 */
+F00:0864       	.2byte nullroutine ;0
+               S01:00000DC8:  54 0B
+F00:0865       	.2byte nullroutine ;0
+               S01:00000DCA:  54 0B
+F00:0866       	.2byte nullroutine ;0
+               S01:00000DCC:  54 0B
+F00:0867       	.2byte nullroutine ;0
+               S01:00000DCE:  54 0B
+F00:0868       	.2byte nullroutine ;0
+               S01:00000DD0:  54 0B
+F00:0869       	.2byte nullroutine ;0
+               S01:00000DD2:  54 0B
+F00:0870       	.2byte nullroutine ;0
+               S01:00000DD4:  54 0B
+F00:0871       	.2byte nullroutine ;0
+               S01:00000DD6:  54 0B
+F00:0872       	.2byte nullroutine ;0
+               S01:00000DD8:  54 0B
+F00:0873       	.2byte nullroutine ;0
+               S01:00000DDA:  54 0B
+F00:0874       #/* 110 */
+F00:0875       	.2byte nullroutine ;0
+               S01:00000DDC:  54 0B
+F00:0876       	.2byte nullroutine ;0
+               S01:00000DDE:  54 0B
+F00:0877       	.2byte nullroutine ;0
+               S01:00000DE0:  54 0B
+F00:0878       	.2byte nullroutine ;0
+               S01:00000DE2:  54 0B
+F00:0879       	.2byte nullroutine ;0
+               S01:00000DE4:  54 0B
+F00:0880       	.2byte nullroutine ;0
+               S01:00000DE6:  54 0B
+F00:0881       	.2byte nullroutine ;0
+               S01:00000DE8:  54 0B
+F00:0882       	.2byte nullroutine ;0
+               S01:00000DEA:  54 0B
+F00:0883       	.2byte nullroutine ;0
+               S01:00000DEC:  54 0B
+F00:0884       	.2byte nullroutine ;0
+               S01:00000DEE:  54 0B
+F00:0885       #/* 120 */
+F00:0886       	.2byte nullroutine ;0
+               S01:00000DF0:  54 0B
+F00:0887       	.2byte nullroutine ;0
+               S01:00000DF2:  54 0B
+F00:0888       	.2byte nullroutine ;0
+               S01:00000DF4:  54 0B
+F00:0889       	.2byte nullroutine ;0
+               S01:00000DF6:  54 0B
+F00:0890       	.2byte nullroutine ;0
+               S01:00000DF8:  54 0B
+F00:0891       	.2byte nullroutine ;0
+               S01:00000DFA:  54 0B
+F00:0892       	.2byte nullroutine ;0
+               S01:00000DFC:  54 0B
+F00:0893       	.2byte nullroutine ;0
+               S01:00000DFE:  54 0B
+F00:0894       
+F00:0895       	ENDOFLINE:
+F00:0896       	.if (ENDOFLINE > 0x0fff)
+F00:0897       		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x1000"
+F00:0898       	.endif
+F00:0899       	
 
 
 Sections:
@@ -1329,11 +1609,14 @@ F04  SDCARD.inc
 
 
 Symbols:
-ENDOFLINE EXPR(3080=0xc08) ABS 
- serialport _1$ EXPR(2899=0xb53) ABS 
-serialport EXPR(2890=0xb4a) ABS 
-nullroutine EXPR(2887=0xb47) ABS 
-addressfailedmsg EXPR(2961=0xb91) ABS 
+ENDOFLINE EXPR(3584=0xe00) ABS 
+ serialport _1$ EXPR(2912=0xb60) ABS 
+serialport EXPR(2903=0xb57) ABS 
+nullroutine EXPR(2900=0xb54) ABS 
+malloctable EXPR(3072=0xc00) ABS 
+addressfailedmsg EXPR(2974=0xb9e) ABS 
+getmalloctable EXPR(2896=0xb50) ABS 
+_loadaddress$17 EXPR(2883=0xb43) ABS 
 _loadaddress$16 EXPR(2874=0xb3a) ABS 
 _loadaddress$15 EXPR(2865=0xb31) ABS 
 _loadaddress$14 EXPR(2856=0xb28) ABS 
@@ -1388,7 +1671,7 @@ _$ EXPR(2257=0x8d1) ABS
 printhexL EXPR(2237=0x8bd) ABS 
 _$2 EXPR(2234=0x8ba) ABS 
 _$1 EXPR(2223=0x8af) ABS 
-crlf EXPR(2904=0xb58) ABS 
+crlf EXPR(2917=0xb65) ABS 
 nextcharacter EXPR(2185=0x889) ABS 
 converttouppercaseletter EXPR(2182=0x886) ABS 
 goagain EXPR(2173=0x87d) ABS 
@@ -1402,23 +1685,24 @@ _strlen$ EXPR(2135=0x857) ABS
 strlen EXPR(2131=0x853) ABS 
 _metset$1 EXPR(2124=0x84c) ABS 
 memset EXPR(2122=0x84a) ABS 
-errorloadingmsg EXPR(2935=0xb77) ABS 
+errorloadingmsg EXPR(2948=0xb84) ABS 
 printhex EXPR(2248=0x8c8) ABS 
 commandline EXPR(2119=0x847) ABS 
 println EXPR(2195=0x893) ABS 
 _cmdlne EXPR(2120=0x848) ABS 
 errorloading EXPR(2107=0x83b) ABS 
 loadFILE EXPR(2273=0x8e1) ABS 
-commandprocessor EXPR(2931=0xb73) ABS 
+commandprocessor EXPR(2944=0xb80) ABS 
 commandprocessloop EXPR(2078=0x81e) ABS 
-loadedmsg EXPR(2907=0xb5b) ABS 
-jumptable EXPR(3072=0xc00) ABS 
+loadedmsg EXPR(2920=0xb68) ABS 
+jumptable EXPR(3328=0xd00) ABS 
 print EXPR(2209=0x8a1) ABS 
-readymsg EXPR(2916=0xb64) ABS 
+readymsg EXPR(2929=0xb71) ABS 
 loadaddress EXPR(2739=0xab3) ABS 
 start EXPR(2052=0x804) UNUSED ABS 
 boot EXPR(2055=0x807) ABS 
-NEXTNUMBER EXPR(18=0x12) UNUSED 
+NEXTNUMBER EXPR(19=0x13) UNUSED 
+GETMALLOCTABLE EXPR(18=0x12) 
 GETFILENAME EXPR(15=0xf) 
 DIRECTORYNEXTFILE EXPR(14=0xe) UNUSED 
 DIRECTORYOPEN EXPR(13=0xd) 
