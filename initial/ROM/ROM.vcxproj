@@ -159,6 +159,7 @@
     <None Include="SERIAL.inc" />
     <None Include="small.s" />
     <None Include="type.s" />
+    <None Include="setmat.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="asm.txt" />

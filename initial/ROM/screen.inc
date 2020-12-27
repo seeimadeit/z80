@@ -1,6 +1,6 @@
 
 
-.equ DIVIDE8,1
+
 .equ TEST,2
 .equ ANSICODE,3
 

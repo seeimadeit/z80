@@ -7,24 +7,6 @@
 
 
 
-;# http://tutorials.eeems.ca/Z80ASM/part4.htm#div8
-;# result stored in HL
-;# ld hl,4
-;# ld d,2
-;# call Div8
-Div8:                            ; this routine performs the operation HL=HL/D
-  xor a                          ; clearing the upper 8 bits of AHL
-  ld b,16                        ; the length of the dividend (16 bits)
-Div8Loop:
-  add hl,hl                      ; advancing a bit
-  rla
-  cp d                           ; checking if the divisor divides the digits chosen (in A)
-  jp c,Div8NextBit               ; if not, advancing without subtraction
-  sub d                          ; subtracting the divisor
-  inc l                          ; and setting the next digit of the quotient
-Div8NextBit:
-  djnz Div8Loop
-  ret
 
   test:
 	ld hl,msg
@@ -197,14 +179,9 @@ colorbgwhite: .string "47m"
 ;					3,loadFILE
 libaddress:
 	cp 0
-	jp nz,_loadaddress2$:
+	jp nz,_loadaddress3$:
 	jp initialize
 
-_loadaddress2$:
-	cp DIVIDE8
-	jp nz,_loadaddress3$
-	ld hl,Div8
-	ret
 
 
 _loadaddress3$:

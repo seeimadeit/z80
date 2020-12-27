@@ -103,6 +103,12 @@ if exist "keyboard.lib" (
 	)
 
 
+if exist "setmat" (
+	copy setmat f:\
+) else (
+	echo no setmat
+	pause
+	)
 
 rem if exist "x" (	copy x f:\ ) else (	echo "no x file."	pause	)
 

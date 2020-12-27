@@ -51,6 +51,7 @@
     </None>
     <None Include="RAM.s" />
     <None Include="ROM.s" />
+    <None Include="setmat.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMD.txt" />

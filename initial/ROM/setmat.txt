@@ -319,21 +319,62 @@ F04:0133       .ifdef __DLL__
 F04:0134       	ret
 F04:0135       .endif
 F00:0003       
-F00:0004       	ld hl,hello
-               S01:000020CE:  21 D7 20
-F00:0005       	call print
-               S01:000020D1:  CD 98 20
-F00:0006       	ld a,0
-               S01:000020D4:  3E 00
-F00:0007       	ret ;# return to calling program
-               S01:000020D6:  C9
-F00:0008       
-F00:0009       
-F00:0010       hello: .string "Hello World!\r\nAre you having a nice day?\r\nWould you like to play a game"
-               S01:000020D7:  48 65 6C 6C 6F 20 57 6F 72 6C 64 21 0D 0A 41 72
-               S01:000020E7:  65 20 79 6F 75 20 68 61 76 69 6E 67 20 61 20 6E
-F00:0011       
-F00:0012       ENDADDRESS:
+F00:0004       	ld hl,params
+               S01:000020CE:  21 47 21
+F00:0005       	call getcommandparams
+               S01:000020D1:  CD BF 20
+F00:0006       	call touppercase
+               S01:000020D4:  CD AD 20
+F00:0007       		call strlen
+               S01:000020D7:  CD A7 20
+F00:0008       		ld a,b
+               S01:000020DA:  78
+F00:0009       	
+F00:0010       		cp 3
+               S01:000020DB:  FE 03
+F00:0011       		jp nz, error
+               S01:000020DD:  C2 F9 20
+F00:0012       
+F00:0013       		ld ix,params ;# get the 1st and 2nd characters into the lobyte
+               S01:000020E0:  DD 21 47 21
+F00:0014       		ld a,(ix)
+               S01:000020E4:  DD 7E 00
+F00:0015       		sub '0'
+               S01:000020E7:  D6 30
+F00:0016       	
+F00:0017       		ld b,a ;# flag 0 = reset, 1 = set
+               S01:000020E9:  47
+F00:0018       		ld h,(ix+1)
+               S01:000020EA:  DD 66 01
+F00:0019       		ld l,(ix+2)
+               S01:000020ED:  DD 6E 02
+F00:0020       		call hextobyte
+               S01:000020F0:  CD B0 20
+F00:0021       
+F00:0022       		call setresetpage
+               S01:000020F3:  CD C8 20
+F00:0023       		ld a,0
+               S01:000020F6:  3E 00
+F00:0024       		ret
+               S01:000020F8:  C9
+F00:0025       error:
+F00:0026       	ld hl,errormsg
+               S01:000020F9:  21 02 21
+F00:0027       	call println
+               S01:000020FC:  CD 9B 20
+F00:0028       	ld a,0
+               S01:000020FF:  3E 00
+F00:0029       	ret
+               S01:00002101:  C9
+F00:0030       
+F00:0031       
+F00:0032       
+F00:0033         errormsg: .string "syntax: setmat aXX where a = set or reset (1 or 0), XX page (see m*)"
+               S01:00002102:  73 79 6E 74 61 78 3A 20 73 65 74 6D 61 74 20 61
+               S01:00002112:  58 58 20 77 68 65 72 65 20 61 20 3D 20 73 65 74
+F00:0034         
+F00:0035       	params: .space 50
+F00:0036       ENDADDRESS:
 
 
 Sections:
@@ -341,7 +382,7 @@ S01  seg2000
 
 
 Sources:
-F00  hello.s
+F00  setmat.s
 F01  Routines.inc
 F02  SERIAL.inc
 F03  SDCARD.inc
@@ -349,25 +390,27 @@ F04  libs.inc
 
 
 Symbols:
-hello EXPR(8407=0x20d7) ABS 
+errormsg EXPR(8450=0x2102) ABS 
+error EXPR(8441=0x20f9) ABS 
+params EXPR(8519=0x2147) ABS 
 printhexL EXPR(8395=0x20cb) UNUSED ABS 
-setresetpage EXPR(8392=0x20c8) UNUSED ABS 
+setresetpage EXPR(8392=0x20c8) ABS 
 Div8 EXPR(8389=0x20c5) UNUSED ABS 
 getmalloctable EXPR(8386=0x20c2) UNUSED ABS 
-getcommandparams EXPR(8383=0x20bf) UNUSED ABS 
+getcommandparams EXPR(8383=0x20bf) ABS 
 createProcess EXPR(8380=0x20bc) UNUSED ABS 
 getfilename EXPR(8377=0x20b9) UNUSED ABS 
 directorynextfile EXPR(8374=0x20b6) UNUSED ABS 
 directoryopen EXPR(8371=0x20b3) UNUSED ABS 
-hextobyte EXPR(8368=0x20b0) UNUSED ABS 
-touppercase EXPR(8365=0x20ad) UNUSED ABS 
+hextobyte EXPR(8368=0x20b0) ABS 
+touppercase EXPR(8365=0x20ad) ABS 
 putc EXPR(8362=0x20aa) UNUSED ABS 
-strlen EXPR(8359=0x20a7) UNUSED ABS 
+strlen EXPR(8359=0x20a7) ABS 
 memset EXPR(8356=0x20a4) UNUSED ABS 
 loadfile EXPR(8353=0x20a1) UNUSED ABS 
 printhex EXPR(8350=0x209e) UNUSED ABS 
-println EXPR(8347=0x209b) UNUSED ABS 
-print EXPR(8344=0x2098) ABS 
+println EXPR(8347=0x209b) ABS 
+print EXPR(8344=0x2098) UNUSED ABS 
 functionlookups EXPR(8343=0x2097) UNUSED ABS 
 _main EXPR(8398=0x20ce) ABS 
 printhexLadr EXPR(8396=0x20cc) ABS 
@@ -388,7 +431,7 @@ memsetadr EXPR(8357=0x20a5) ABS
 loadfileadr EXPR(8354=0x20a2) ABS 
 printhexadr EXPR(8351=0x209f) ABS 
 printadr EXPR(8345=0x2099) ABS 
-ENDADDRESS EXPR(8479=0x211f) ABS 
+ENDADDRESS EXPR(8569=0x2179) ABS 
  *current pc dummy* EXPR(8194=0x2002) INTERNAL PROT ABS 
 NEXTNUMBER EXPR(22=0x16) UNUSED 
 SETRESETPAGE EXPR(20=0x14) 

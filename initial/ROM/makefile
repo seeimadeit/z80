@@ -5,7 +5,7 @@ CCOUT = -Fbin
 COPTS = $(CCOUT) -z80asm
 INC   = -I.
 
-progs = ROM RAM cmd hello run@5000 dir type edit keyboardtest asm hexdump
+progs = ROM RAM cmd hello run@5000 dir type edit keyboardtest asm hexdump setmat
 librarys = screen keyboard
 cleanlibs = screen.lib keyboard.lib
 

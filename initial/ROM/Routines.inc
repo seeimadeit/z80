@@ -1,4 +1,23 @@
 
+.macro DEBUG CHARACTER='!'
+# example : DEBUG '!'
+#      or : DEBUG h
+		push af
+		ld a,\CHARACTER
+		call putc
+		pop af
+.endm
+
+.macro DEBUGHEX CHARACTER='!'
+# example : DEBUGHEX '!'
+#      or : DEBUGHEX h
+		push af
+		ld a,\CHARACTER
+		call printhex
+		pop af
+.endm
+
+
 # address where user programs load
 .include "SERIAL.inc"
 .include "SDCARD.inc"
@@ -19,6 +38,7 @@
 .equ PRINT,		1
 .equ PRINTLN,	9
 .equ PRINTHEX,	2
+.equ PRINTHEXL,21
 .equ LOADFILE,	3
 .equ MEMSET,	4
 .equ STRLEN,	5
@@ -33,8 +53,10 @@
 .equ DIRECTORYNEXTFILE,14
 .equ GETFILENAME,15
 .equ GETMALLOCTABLE,18
+.equ DIV8,19
+.equ SETRESETPAGE,20
 
 
 
-.equ NEXTNUMBER,19
+.equ NEXTNUMBER,22
 

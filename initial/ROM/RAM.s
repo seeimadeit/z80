@@ -6,6 +6,7 @@
 #define LOBYTE(w) ((BYTE)(w))
 #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
 
+
 .include "SDCARD.inc"
 .include "Routines.inc"
 
@@ -212,6 +213,9 @@ _$2:
 		pop af
 		pop hl
 		ret
+;#=== printhexL ===#
+;# ld hl,passwords
+;# call printhexL
 
 printhexL:
 	push af
@@ -331,6 +335,18 @@ testloadaddress:
 	inc hl ;# program size in pages
 	inc hl ;# stack size in pages
 	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
+
+	ld a,(memorypages)
+	ld b,a
+	ld a,h
+
+45$:	DEBUGHEX a
+	DEBUG '\n'
+
+	call reservemalloc
+	inc a
+	djnz 45$
+
 	jp available
 _4$:
 	ld a,3 ;#new error code
@@ -364,7 +380,7 @@ _1$:
 		inc hl 
 		djnz _2$
 		ld a,1 ;# use 1 in A to indicate a success
-		ret ;# exit loadheader because we have loaded 2 bytes
+		ret ;# exit loadheader because we have loaded 4 bytes
 available:
 	#available will return 1 if there is data to read, 0 if no data to read
 		ld a, AVAILABLE ; // available
@@ -523,7 +539,8 @@ _exitgetfilename:
 
 	# === createProcess == #
 	;# stack - note the example below is using the registers as an example, it really don't matter
-	;# which register pair put that data on the stack
+	;# which register pair put that data on the stack, the sequence in which the parameters are put on the stack
+	;# does matter.
 	;# push hl,program - zero terminated
 	;# push de,commandline - zero terminated
 	;# call createProcess
@@ -603,20 +620,130 @@ _createProcesserr$1:
 theprocessmsg: .string "process:"
 thecommandlinemsg: .string "params:"
 
-	# === getcomandline == #
+	# === getcommandparams == #
 	;# ld hl,buffer - address of where to copy the data
-	;# call getcommandline
+	;# call getcommandparams
 	;# returns zero termined string at buffer 
 getcommandparams:
 	push de
 	push hl
 	push hl ;# save hl to move into de
 	pop de ;# load hl into de
-	ld hl,userMemory-50
+	ld hl,userMemory-50   ;# ********* I dont remember why I did this, it needs investigating
 	call strcpy
 	pop hl
 	pop de
 	ret
+
+;# ================ getmalloctable ======#
+	getmalloctable:
+		ld hl,malloctable
+		ret
+
+;# ====== reserve memory alloc table entry ===#
+
+	reservemalloc:
+		push bc
+		push af
+		ld b,1
+		call setresetpage
+		pop af
+		pop bc
+	ret
+;# ======= setresetpage - memory alloc table management ===#
+setresetpage:
+;# ld a, page
+;# ld b, setorreset , 0 = reset, 1 = set
+		push hl
+		push bc
+		push af
+	
+		
+		DEBUG '@'
+
+		call getmallocrelativebase
+
+		DEBUG '%'
+		pop af
+		and 0x0f
+		cp 8
+		jp m,1$
+		inc hl
+		sub 8
+1$:
+	
+		ld b,a
+		inc b
+		scf
+		ld a,0
+
+2$:		rra 	
+		djnz 2$
+		pop bc
+
+		push af
+		ld a,b
+		cp 0
+		jp z,6$
+;# set
+		pop af
+		or (hl)
+		jp 4$
+
+;# reset
+6$:		pop af
+		cpl
+		and (hl)
+
+4$:
+		ld (hl),a
+		pop hl
+		ret
+
+getmallocrelativebase:
+;# ld a,page
+;# call getmallocrelativebase
+;# return in hl = malloctable address adjusted for page
+	push de
+		and 0xf0
+
+		ld l,a
+		ld h,0
+		ld d,8
+		call Div8
+
+		ex de,hl
+		#.byte 0xeb
+
+		DEBUG '!'
+
+		call getmalloctable
+		DEBUG '^'
+		add hl,de
+		pop de
+		ret
+
+
+
+;# ========== Div8 8bit division =======#
+;# http://tutorials.eeems.ca/Z80ASM/part4.htm#div8
+;# result stored in HL
+;# ld hl,4
+;# ld d,2
+;# call Div8
+Div8:                            ; this routine performs the operation HL=HL/D
+  xor a                          ; clearing the upper 8 bits of AHL
+  ld b,16                        ; the length of the dividend (16 bits)
+Div8Loop:
+  add hl,hl                      ; advancing a bit
+  rla
+  cp d                           ; checking if the divisor divides the digits chosen (in A)
+  jp c,Div8NextBit               ; if not, advancing without subtraction
+  sub d                          ; subtracting the divisor
+  inc l                          ; and setting the next digit of the quotient
+Div8NextBit:
+  djnz Div8Loop
+  ret
 
 ;================================
 ; # === loadaddress == #
@@ -705,6 +832,21 @@ _loadaddress$16:
 	ld hl,getmalloctable
 	ret
 _loadaddress$17:
+	cp DIV8
+	jp nz,_loadaddress18$
+	ld hl,Div8
+	ret
+_loadaddress18$:
+	cp SETRESETPAGE
+	jp nz,_loadaddress19$
+	ld hl,setresetpage
+	ret
+_loadaddress19$:
+	cp PRINTHEXL
+	jp nz,_loadaddress20$
+	ld hl,printhexL
+	ret
+_loadaddress20$:
 	#----- not defined ---
 	ld hl,addressfailedmsg
 	call print 
@@ -713,9 +855,6 @@ _loadaddress$17:
 	ld hl,0
 	ret
 
-	getmalloctable:
-		ld hl,malloctable
-		ret
 
 	# ======================== end subroutines ========== #
 	

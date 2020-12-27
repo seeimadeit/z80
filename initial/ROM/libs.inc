@@ -7,7 +7,7 @@
 			.org dllMemory
 		.endif
 		.2byte $ ;# load address
-		.byte ((ENDADDRESS-$)/255) ;# memory required to load (in pages)
+		.byte ((ENDADDRESS-$)/255)+1 ;# memory required to load (in pages)
 		.ifdef __STACK__
 			.byte __STACK__
 		.else 
@@ -22,7 +22,7 @@ initialize:
 			.org userMemory
 		.endif
 		.2byte $ ;# load address
-		.byte ((ENDADDRESS-$)/255) ;# memory required to load (in pages)
+		.byte ((ENDADDRESS-$)/255)+1 ;# memory required to load (in pages)
 		.ifdef __STACK__
 			.byte __STACK__
 		.else 
@@ -75,6 +75,17 @@ initialize:
 	ld a,GETMALLOCTABLE
 	call GetAddress
 	ld (getmalloctableadr),hl
+	ld a,DIV8
+	call GetAddress
+	ld (div8adr),hl
+	ld a,SETRESETPAGE
+	call GetAddress
+	ld (setresetpageadr),hl
+	ld a,PRINTHEXL
+	call GetAddress
+	ld (printhexLadr),hl
+
+
 
 
 	jp _main
@@ -111,6 +122,12 @@ initialize:
 	getcommandparamsadr: .2byte 0
 	getmalloctable: .byte 0xc3
 	getmalloctableadr: .2byte 0
+	Div8: .byte 0xc3
+	div8adr: .2byte 0
+	setresetpage: .byte 0xc3
+	setresetpageadr: .2byte 0
+	printhexL: .byte 0xc3
+	printhexLadr: .2byte 0
 
 _main:
 .ifdef __DLL__
