@@ -3,10 +3,10 @@
 
 [some ideas](ideas.md)
 
-[library.md](library.md)
+[library](library.md)
 
 
-
+[commandline](commandline.md)
 
 A
 
@@ -14,16 +14,20 @@ B
 
 C  
 
-.equ CREATEPROCESS,16  
+
+[createprocess](createprocess.md)  
 
 
 D  
 
 filesystem - primitive functions, probably going to change  
 
-.equ DIRECTORYOPEN,13  
 
-.equ DIRECTORYNEXTFILE,14 
+[directoryopen](directory.md) 
+
+[directorynextfile](directory.md) 
+
+ 
 
 
 
@@ -34,14 +38,17 @@ F
 
 G  
 
-.equ GETCOMMANDPARAMS,17  
+[getcommandparams](getcommandparams.md)
 
-.equ GETFILENAME,15  
+[getfilename](directory.md) 
+
+[getmalloctable.md](getmalloctable.md)
 
 
 H  
 
-.equ HEXTOBYTE,	8  
+
+[hextobyte.md](hextobyte.md) 
 
 
 I
@@ -52,11 +59,13 @@ K
 
 L  
 
-.equ LOADFILE,	3  
+
+[loadfile](loadfile.md)  
 
 M  
 
-.equ MEMSET,	4  
+
+[memset](memset.md)  
 
 
 N
@@ -65,13 +74,18 @@ O
 
 P
 
-.equ PRINT,		1  
 
-.equ PRINTLN,	9  
+[print](print.md) 
 
-.equ PRINTHEX,	2  
+[println](print.md)
 
-.equ PUTC,		6  
+
+[printhex](printhex.md)  
+
+[printhexL](printhex.md)  
+
+
+[putc](putc.md) 
 
 
 
@@ -80,15 +94,19 @@ Q
 R
 
 S  
+[strcpy](strcpy.md)
 
-.equ STRNCPY,10  
+[strncpy](strncpy.md)  
 
-.equ STRLEN,	5  
+[strlen](strlen.md)
+ 
 
+
+[setresetpage](setresetpage.md) - memory alloc table management
 
 T  
 
-.equ TOUPPERCASE,7  
+[touppercase](touppercase.md)
 
 
 U
