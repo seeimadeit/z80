@@ -552,7 +552,8 @@ _exitgetfilename:
 		pop hl ;# get the return address
 		exx ;# exchange with other registers
 
-		ld de,userMemory-50 ;# whooa
+#		ld de,userMemory-50 ;# whooa
+		ld de,theparams
 		;# copy the command params
 		pop hl ;# get the command params
 		ld a,1
@@ -619,6 +620,7 @@ _createProcesserr$1:
 
 theprocessmsg: .string "process:"
 thecommandlinemsg: .string "params:"
+theparams: .space 50
 
 	# === getcommandparams == #
 	;# ld hl,buffer - address of where to copy the data
@@ -629,7 +631,8 @@ getcommandparams:
 	push hl
 	push hl ;# save hl to move into de
 	pop de ;# load hl into de
-	ld hl,userMemory-50   ;# ********* I dont remember why I did this, it needs investigating
+#	ld hl,userMemory-50   ;# ********* I dont remember why I did this, it needs investigating
+	ld hl,theparams
 	call strcpy
 	pop hl
 	pop de
