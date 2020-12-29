@@ -36,7 +36,7 @@ boot:
 
 		ld hl,loadedmsg
 		call print
-		#== ******* Command processor Loop ******** ==#
+		#== ******* Command processor Loop ******** ==# I THINK THIS NEEDS A REVIEW IT SHOULD BE USING CREATEPROCESS
 	commandprocessloop:	
 		ld hl,commandprocessor
 #		ld de,commandMemory
@@ -103,6 +103,7 @@ commandline: .byte 0xc3
 	;# ld hl, source
 	;# ld de, destination
 	;# ld bc, size
+	;# this will copy binary strings??? so this needs fixing to stop on a null byte
 
 	strncpy:
 		ldir
@@ -556,7 +557,7 @@ _exitgetfilename:
 		pop hl ;# get the return address
 		exx ;# exchange with other registers
 
-#		ld de,userMemory-50 ;# whooa
+
 		ld de,theparams
 		;# copy the command params
 		pop hl ;# get the command params
@@ -587,7 +588,8 @@ _exitgetfilename:
 		ld e,a
 		ld a,4
 		call printhex
-
+#pih 12/29/2020
+		call copyprogramname
 		call loadFILE
 		cp 0
 		jp nz, _createProcesserr$1
@@ -607,12 +609,14 @@ _exitgetfilename:
 		# hl was null so call the default address
 		call printhexL
 				### CREATENEWPROCESSINFO
+		call createnewprocessinfo
 		call userMemory
 		
 		ret
 _4$:
 	call printhexL
 		### CREATENEWPROCESSINFO
+		call createnewprocessinfo
 	call progloadaddress
 	ret
 progloadaddress: .byte 0xc3
@@ -627,17 +631,41 @@ _createProcesserr$1:
 		push hl ; # restore the return address
 		ret
 
+# helper function to copy the program name into procname , which is used to update the processinfo
+copyprogramname:
+	push de
+	push hl
+	ld de,procname
+	call strcpy
+	pop hl
+	pop de
+ret
+
 theprocessmsg: .string "process:"
 thecommandlinemsg: .string "params:"
 theparams: .space 50
 
-#== updateprocessinfo ===#
-# ld hl,processname - zero terminated
-# call newprocessinfo
-# return 
-#	processid in A register
-#	processinfo pointer in HL
+;# === specialfunction this is called by the just lauched program, it allows the program to get it's processid
+setprocid:
+	ld a,(lastprogramid)
+	ret
 
+#== createnewprocessinfo ===#
+# variable procname is expected to be populated
+# return 
+
+createnewprocessinfo:
+	push af
+	push hl
+	push bc
+	push de  'just do everything for now - need to look and fix this
+	call getnewprocessid
+	call writeprocessinfo
+	pop de
+	pop bc
+	pop hl
+	pop af
+ret
 
 
 #== startprocessinfo ==#
@@ -653,7 +681,7 @@ startprocessinfo:
 #== nextprocessinfo ===#
 # return in hl the next processinfo entry
 # also updates currentprocessinfo
-
+# if carry flag set, we have reach the end of the process table
 nextprocessinfo:
 	push af
 	ld a,(currentprocessinfo)
@@ -669,7 +697,7 @@ nextprocessinfo:
 	ld (currentprocessinfo),a
 	pop af
 	scf ;# set cf
-	ccf ;# invert cf
+	ccf ;# invert cf  - more process info's available so return with carry flag not set
 	ret
 1$: ;# if reach maxprocesses, return 0 in a & hl
 	ld a,0
@@ -677,9 +705,151 @@ nextprocessinfo:
 	ld h,a
 	ld l,a
 	pop af
-	scf
+	scf ;# set carry flag  - if no more process return with carry flag set
 	ret
 
+#=== getprocessslot ===#
+;# return the first available slot in hl
+;# a slot is occuppied if the processid is not zero. this routine will locate the first unoccuppied slot
+;# A register returns status where 0=no slots , 1=slot available
+;# if carry flag set, a slot was found
+;# if carry flag not set, it did not find an empty slot
+getprocessslot:
+	call startprocessinfo
+2$:
+#	DEBUG '*'
+#	PRINTLN
+	call nextprocessinfo ;
+	jp c,1$ ;# if carry flag set, we reached the end
+	ld a,(hl)
+#	call printhex
+#	call printhexL
+	cp 0 ;# compare processids
+	jp nz, 2$   ;# we are looking for a zero processid, which means it's an empty slot
+	#ld hl,didfind
+	#call println
+#	ld a,1
+	scf ;#did find return set carry flag
+	ret ;# found
+
+1$: ;# not found
+	#ld hl,notfound
+	#call println
+#	ld a,0
+	scf ;# did not find return unset carry flag
+	ccf
+ret
+
+;#=== getnewprocessid ===#
+;# return set the next available processsid in lastprogramid variable
+;# this processid is unique, it cannot be 0
+
+getnewprocessid:
+	push af
+	push hl
+	push bc
+
+1$: ;#; increment the number thats already there (lastprogramid),  repeat if zero
+	DEBUG '!'
+	ld hl,lastprogramid
+	inc (hl)
+	ld a,(lastprogramid) ;
+	ld c,0
+	cp c
+	jp z,1$:
+	ld c,a ;# move new id into c register,# keep if in C register we will use it later
+	call startprocessinfo
+2$: DEBUG '@'
+	call nextprocessinfo
+	jp c,3$ ;# if carry flag set, we reach the end
+	inc hl ;# advance to the process id
+	ld a,(hl)
+	cp c
+	jp nz,2$ ;# repeat after incrementing the number again
+	jp 1$ ;# get the next processinfo item
+3$:
+	DEBUG '#'
+	pop bc
+	pop hl
+	pop af
+ret
+
+writeprocessinfo:
+# prerequisties : lastprogramid has the programid set 
+#               variable   procname: contains the name of the program 
+	call getprocessslot
+	jp nc, failed
+#call printhexL
+#PRINTLN
+	ld a,'R' ;# process is running
+	ld (hl),a
+	inc hl
+	ld a,(lastprogramid) ;# it is required this variable is set to the correct id before running this routine
+	ld (hl),a
+	inc hl
+#call printhexL
+#PRINTLN
+
+	ld de,procname
+	ex de,hl
+#call printhexL
+#call println
+	ld c,4
+	ld b,0
+	call strncpy ;# problem needs addressing: if the program name is < 4 bytes the copy will more than needed.
+					;# we need a strncpy that stops on a null byte
+	ld a, 0
+	ret
+
+failed:
+	ld hl,errormsg
+	call println
+	ld a,0
+	ret 
+
+errormsg: .string "could not find an empty slot, maximum number of processes running\r\n"
+
+#==== getprocessbyid ==#
+# ld a,id
+# call getprocessbyid
+# cp 1             - returns in A : 0 = not found, 1 = found
+# jp z,we succeeded
+getprocessbyid:
+
+	call startprocessinfo
+2$:
+
+	call nextprocessinfo ;
+	jp c,1$ ;# if carry flag set, we reached the end
+	push hl
+	pop ix
+	ld b,(ix+1)
+	cp b ;# compare processids
+	jp nz, 2$
+	ld a,1
+	ret ;# found
+
+1$: ;# not found
+	ld a,0
+ret
+
+;# A = processid to delete
+deleteprocessbyid:
+push af
+	call getprocessbyid
+	cp 1 ;# 1 = we found the process
+	jp nz,1$
+	ld b,PROCINFOSIZE
+	ld a,0
+0$: ld (hl),a
+	inc hl
+	djnz 0$
+
+1$:
+pop af
+ret 
+
+procname: .space 10 ;# space for the processname, but we really only need 4 or 4+1
 lastprogramid: .byte 0
 maxprocesses: .byte MAXPROCESSES
 currentprocessinfo: .byte 0; # index to a process table entry
@@ -949,6 +1119,21 @@ _loadaddress22$:
 	ld hl, strcpy
 	ret
 _loadaddress23$:
+	cp GETPROCESSBYID
+	jp nz,_loadaddress24$
+	ld hl,getprocessbyid
+	ret
+_loadaddress24$:
+	cp MULTIPLY8
+	jp nz,_loadaddress25$
+	ld hl,Mul8b
+	ret
+_loadaddress25$:
+	cp SETPROCID
+	jp nz, _loadaddress26$
+	ld hl,setprocid
+	ret
+_loadaddress26$:
 	#----- not defined ---
 	ld hl,addressfailedmsg
 	call print 

@@ -112,36 +112,39 @@ F02:0041       # address for print loaded into hl
 F02:0042       # the value in hl can change between os versions so do not hard code the values
 F02:0043       
 F02:0044       .equ GetAddress, 0x0804
-F02:0045       .equ PRINT,		1
-F02:0046       .equ PRINTLN,	9
-F02:0047       .equ PRINTHEX,	2
-F02:0048       .equ PRINTHEXL,21
-F02:0049       .equ LOADFILE,	3
-F02:0050       .equ MEMSET,	4
-F02:0051       .equ STRLEN,	5
-F02:0052       .equ STRCPY,24
-F02:0053       .equ STRNCPY,10
-F02:0054       .equ PUTC,		6
-F02:0055       .equ TOUPPERCASE,7
-F02:0056       .equ HEXTOBYTE,	8
-F02:0057       .equ CREATEPROCESS,16
-F02:0058       .equ GETCOMMANDPARAMS,17
-F02:0059       # filesystem - primitive functions, probably going to change 
-F02:0060       .equ DIRECTORYOPEN,13
-F02:0061       .equ DIRECTORYNEXTFILE,14
-F02:0062       .equ GETFILENAME,15
-F02:0063       .equ GETMALLOCTABLE,18
-F02:0064       .equ DIV8,19
-F02:0065       .equ SETRESETPAGE,20
-F02:0066       .equ STARTPROCESSINFO,22
-F02:0067       .equ NEXTPROCESSINFO,23
-F02:0068       
-F02:0069       
-F02:0070       
+F02:0045       .equ SETPROCID,28
+F02:0046       .equ PRINT,		1
+F02:0047       .equ PRINTLN,	9
+F02:0048       .equ PRINTHEX,	2
+F02:0049       .equ PRINTHEXL,21
+F02:0050       .equ LOADFILE,	3
+F02:0051       .equ MEMSET,	4
+F02:0052       .equ STRLEN,	5
+F02:0053       .equ STRCPY,24
+F02:0054       .equ STRNCPY,10
+F02:0055       .equ PUTC,		6
+F02:0056       .equ TOUPPERCASE,7
+F02:0057       .equ HEXTOBYTE,	8
+F02:0058       .equ CREATEPROCESS,16
+F02:0059       .equ GETCOMMANDPARAMS,17
+F02:0060       # filesystem - primitive functions, probably going to change 
+F02:0061       .equ DIRECTORYOPEN,13
+F02:0062       .equ DIRECTORYNEXTFILE,14
+F02:0063       .equ GETFILENAME,15
+F02:0064       .equ GETMALLOCTABLE,18
+F02:0065       .equ DIV8,19
+F02:0066       .equ SETRESETPAGE,20
+F02:0067       .equ STARTPROCESSINFO,22
+F02:0068       .equ NEXTPROCESSINFO,23
+F02:0069       .equ GETPROCESSBYID,26
+F02:0070       .equ MULTIPLY8,27
 F02:0071       
-F02:0072       .equ NEXTNUMBER,26
+F02:0072       
 F02:0073       
 F02:0074       
+F02:0075       .equ NEXTNUMBER,29
+F02:0076       
+F02:0077       
 F00:0014       
 F00:0015       
 F00:0016       	.org 0x800
@@ -150,7 +153,7 @@ F00:0017       	jp boot
 F00:0018       	.align 2
 F00:0019       	start:
 F00:0020       	jp loadaddress
-               S01:00000804:  C3 CB 0B
+               S01:00000804:  C3 E2 0C
 F00:0021       	
 F00:0022       boot:
 F00:0023       	ld sp,0xffff
@@ -159,7 +162,7 @@ F00:0024
 F00:0025       	di
                S01:0000080A:  F3
 F00:0026       	ld hl,readymsg
-               S01:0000080B:  21 BB 0C
+               S01:0000080B:  21 ED 0D
 F00:0027       	call print
                S01:0000080E:  CD A1 08
 F00:0028       		;ld b, endlabel2-label2
@@ -169,20 +172,20 @@ F00:0031
 F00:0032       		im 2 ;/* interrupt mode 2*/
                S01:00000811:  ED 5E
 F00:0033       		ld a, jumptable/256 ;// hibyte
-               S01:00000813:  3E 0F
+               S01:00000813:  3E 10
 F00:0034       		ld i,a
                S01:00000815:  ED 47
 F00:0035       		ei   ;#/* enable interrupts*/
                S01:00000817:  FB
 F00:0036       
 F00:0037       		ld hl,loadedmsg
-               S01:00000818:  21 B2 0C
+               S01:00000818:  21 E4 0D
 F00:0038       		call print
                S01:0000081B:  CD A1 08
-F00:0039       		#== ******* Command processor Loop ******** ==#
+F00:0039       		#== ******* Command processor Loop ******** ==# I THINK THIS NEEDS A REVIEW IT SHOULD BE USING CREATEPROCESS
 F00:0040       	commandprocessloop:	
 F00:0041       		ld hl,commandprocessor
-               S01:0000081E:  21 CA 0C
+               S01:0000081E:  21 FC 0D
 F00:0042       #		ld de,commandMemory
 F00:0043       		ld de,0
                S01:00000821:  11 00 00
@@ -208,7 +211,7 @@ F00:0054       	errorloading:
 F00:0055       		call printhex
                S01:0000083B:  CD CA 08
 F00:0056       		ld hl,errorloadingmsg
-               S01:0000083E:  21 CE 0C
+               S01:0000083E:  21 00 0E
 F00:0057       		call println
                S01:00000841:  CD 93 08
 F00:0058       		jp commandprocessloop
@@ -282,378 +285,379 @@ F00:0102       	;# copy from source into destination size bytes. no validation i
 F00:0103       	;# ld hl, source
 F00:0104       	;# ld de, destination
 F00:0105       	;# ld bc, size
-F00:0106       
-F00:0107       	strncpy:
-F00:0108       		ldir
+F00:0106       	;# this will copy binary strings??? so this needs fixing to stop on a null byte
+F00:0107       
+F00:0108       	strncpy:
+F00:0109       		ldir
                S01:00000865:  ED B0
-F00:0109       		ret
+F00:0110       		ret
                S01:00000867:  C9
-F00:0110       
-F00:0111       	# === strcpy == #
-F00:0112       	;# copy from source into destination string is zero terminated, no validation is done
-F00:0113       	;# ld hl,source
-F00:0114       	;# ld de,destination
-F00:0115       	;# call strcpy
-F00:0116       	strcpy:
-F00:0117       		push af
+F00:0111       
+F00:0112       	# === strcpy == #
+F00:0113       	;# copy from source into destination string is zero terminated, no validation is done
+F00:0114       	;# ld hl,source
+F00:0115       	;# ld de,destination
+F00:0116       	;# call strcpy
+F00:0117       	strcpy:
+F00:0118       		push af
                S01:00000868:  F5
-F00:0118       		push hl
+F00:0119       		push hl
                S01:00000869:  E5
-F00:0119       		push de
+F00:0120       		push de
                S01:0000086A:  D5
-F00:0120       	_1$:
-F00:0121       		ld a,(hl)
+F00:0121       	_1$:
+F00:0122       		ld a,(hl)
                S01:0000086B:  7E
-F00:0122       		ld (de),a ;# copy the potential zero before we test because we will need it
+F00:0123       		ld (de),a ;# copy the potential zero before we test because we will need it
                S01:0000086C:  12
-F00:0123       		cp 0
+F00:0124       		cp 0
                S01:0000086D:  FE 00
-F00:0124       		jp z, _strcpyexit$1
+F00:0125       		jp z, _strcpyexit$1
                S01:0000086F:  CA 77 08
-F00:0125       
-F00:0126       		inc de
+F00:0126       
+F00:0127       		inc de
                S01:00000872:  13
-F00:0127       		inc hl
+F00:0128       		inc hl
                S01:00000873:  23
-F00:0128       		jp _1$
+F00:0129       		jp _1$
                S01:00000874:  C3 6B 08
-F00:0129       	
-F00:0130       	_strcpyexit$1:
-F00:0131       		pop de
+F00:0130       	
+F00:0131       	_strcpyexit$1:
+F00:0132       		pop de
                S01:00000877:  D1
-F00:0132       		pop hl
+F00:0133       		pop hl
                S01:00000878:  E1
-F00:0133       		pop af
+F00:0134       		pop af
                S01:00000879:  F1
-F00:0134       		ret
+F00:0135       		ret
                S01:0000087A:  C9
-F00:0135       		# === touppercase ==#
-F00:0136       	;#		ld hl,cmd  - zero terminated string
-F00:0137       	;#		call touppercase
-F00:0138       	;#		ret
-F00:0139       	;# the P flag means the comparison was Positive
-F00:0140       	;# the M flags means the comparision was Negative
-F00:0141       	;# the Z flag means the comparison was equal
-F00:0142       	;# the NZ flag means the comparison was not equal.
-F00:0143       	;# where:
-F00:0144       	;#    A = x  P Positive
-F00:0145       	;#			 Z Zero
-F00:0146       	;#
-F00:0147       	;#    A < x	 M Negative
-F00:0148       	;#			 NZ Not zero
-F00:0149       	;#
-F00:0150       	;#	  A > x  P Positive
-F00:0151       	;#			 NZ Not zero
-F00:0152       	;#
-F00:0153       	;# so a test for JP P,meansSameOrGreater
-F00:0154       
+F00:0136       		# === touppercase ==#
+F00:0137       	;#		ld hl,cmd  - zero terminated string
+F00:0138       	;#		call touppercase
+F00:0139       	;#		ret
+F00:0140       	;# the P flag means the comparison was Positive
+F00:0141       	;# the M flags means the comparision was Negative
+F00:0142       	;# the Z flag means the comparison was equal
+F00:0143       	;# the NZ flag means the comparison was not equal.
+F00:0144       	;# where:
+F00:0145       	;#    A = x  P Positive
+F00:0146       	;#			 Z Zero
+F00:0147       	;#
+F00:0148       	;#    A < x	 M Negative
+F00:0149       	;#			 NZ Not zero
+F00:0150       	;#
+F00:0151       	;#	  A > x  P Positive
+F00:0152       	;#			 NZ Not zero
+F00:0153       	;#
+F00:0154       	;# so a test for JP P,meansSameOrGreater
 F00:0155       
-F00:0156       touppercase:
-F00:0157       	push af
+F00:0156       
+F00:0157       touppercase:
+F00:0158       	push af
                S01:0000087B:  F5
-F00:0158       	push hl
+F00:0159       	push hl
                S01:0000087C:  E5
-F00:0159       	
-F00:0160       goagain:
-F00:0161       	ld a,(hl)
+F00:0160       	
+F00:0161       goagain:
+F00:0162       	ld a,(hl)
                S01:0000087D:  7E
-F00:0162       	cp 'a'
+F00:0163       	cp 'a'
                S01:0000087E:  FE 61
-F00:0163       	jp p, converttouppercaseletter ;# is same or greater then 'a'
+F00:0164       	jp p, converttouppercaseletter ;# is same or greater then 'a'
                S01:00000880:  F2 86 08
-F00:0164       ;# the instructions commented out are implied
-F00:0165       	;#cp 'A'
-F00:0166       	;#jp p, nextcharacter ;# is same or greater
-F00:0167       	;#cp '0'
-F00:0168       	;#jp p, nextcharacter
-F00:0169       	;# jp nextcharacter replaces the above 4 lines
-F00:0170       	jp nextcharacter
+F00:0165       ;# the instructions commented out are implied
+F00:0166       	;#cp 'A'
+F00:0167       	;#jp p, nextcharacter ;# is same or greater
+F00:0168       	;#cp '0'
+F00:0169       	;#jp p, nextcharacter
+F00:0170       	;# jp nextcharacter replaces the above 4 lines
+F00:0171       	jp nextcharacter
                S01:00000883:  C3 89 08
-F00:0171       
-F00:0172       converttouppercaseletter:
-F00:0173       	sub 32
+F00:0172       
+F00:0173       converttouppercaseletter:
+F00:0174       	sub 32
                S01:00000886:  D6 20
-F00:0174       	ld (hl),a
+F00:0175       	ld (hl),a
                S01:00000888:  77
-F00:0175       nextcharacter:
-F00:0176       	inc hl
+F00:0176       nextcharacter:
+F00:0177       	inc hl
                S01:00000889:  23
-F00:0177       	ld a,(hl)
+F00:0178       	ld a,(hl)
                S01:0000088A:  7E
-F00:0178       	cp 0
+F00:0179       	cp 0
                S01:0000088B:  FE 00
-F00:0179       	jp nz,goagain	
+F00:0180       	jp nz,goagain	
                S01:0000088D:  C2 7D 08
-F00:0180       
-F00:0181       	pop hl
+F00:0181       
+F00:0182       	pop hl
                S01:00000890:  E1
-F00:0182       	pop af
+F00:0183       	pop af
                S01:00000891:  F1
-F00:0183       
-F00:0184       	ret
+F00:0184       
+F00:0185       	ret
                S01:00000892:  C9
-F00:0185       	# === PRINTLN == #
-F00:0186       	println: ;// same as print but appends CRLF
-F00:0187       	call print
+F00:0186       	# === PRINTLN == #
+F00:0187       	println: ;// same as print but appends CRLF
+F00:0188       	call print
                S01:00000893:  CD A1 08
-F00:0188       	push hl
+F00:0189       	push hl
                S01:00000896:  E5
-F00:0189       	push af
+F00:0190       	push af
                S01:00000897:  F5
-F00:0190       	ld hl,crlf
-               S01:00000898:  21 AF 0C
-F00:0191       	call print
+F00:0191       	ld hl,crlf
+               S01:00000898:  21 E1 0D
+F00:0192       	call print
                S01:0000089B:  CD A1 08
-F00:0192       	pop af
+F00:0193       	pop af
                S01:0000089E:  F1
-F00:0193       	pop hl
+F00:0194       	pop hl
                S01:0000089F:  E1
-F00:0194       	ret
+F00:0195       	ret
                S01:000008A0:  C9
-F00:0195       
-F00:0196       	# === PRINT === #
-F00:0197       	print: ;// expecting a zero terminated string
-F00:0198       		push hl
+F00:0196       
+F00:0197       	# === PRINT === #
+F00:0198       	print: ;// expecting a zero terminated string
+F00:0199       		push hl
                S01:000008A1:  E5
-F00:0199       		push af
+F00:0200       		push af
                S01:000008A2:  F5
-F00:0200       		;# hl can be null so check for that first
-F00:0201       		ld a,h
+F00:0201       		;# hl can be null so check for that first
+F00:0202       		ld a,h
                S01:000008A3:  7C
-F00:0202       		cp 0
+F00:0203       		cp 0
                S01:000008A4:  FE 00
-F00:0203       		jp nz,_$1 ;# hibyte not null, no just print it
+F00:0204       		jp nz,_$1 ;# hibyte not null, no just print it
                S01:000008A6:  C2 AF 08
-F00:0204       		ld a,l
+F00:0205       		ld a,l
                S01:000008A9:  7D
-F00:0205       		cp 0
+F00:0206       		cp 0
                S01:000008AA:  FE 00
-F00:0206       		jp z,_$2 ;# lobyte is null and hibyte is null so just exit
+F00:0207       		jp z,_$2 ;# lobyte is null and hibyte is null so just exit
                S01:000008AC:  CA BA 08
-F00:0207       		_$1:
-F00:0208       			ld a,(hl)
+F00:0208       		_$1:
+F00:0209       			ld a,(hl)
                S01:000008AF:  7E
-F00:0209       			cp 0
+F00:0210       			cp 0
                S01:000008B0:  FE 00
-F00:0210       			jr z,_$2
+F00:0211       			jr z,_$2
                S01:000008B2:  28 06
-F00:0211       			out (SERIALPORT),a
+F00:0212       			out (SERIALPORT),a
                S01:000008B4:  D3 01
-F00:0212       			inc hl
+F00:0213       			inc hl
                S01:000008B6:  23
-F00:0213       			jp _$1
+F00:0214       			jp _$1
                S01:000008B7:  C3 AF 08
-F00:0214       _$2:			
-F00:0215       		pop af
+F00:0215       _$2:			
+F00:0216       		pop af
                S01:000008BA:  F1
-F00:0216       		pop hl
+F00:0217       		pop hl
                S01:000008BB:  E1
-F00:0217       		ret
+F00:0218       		ret
                S01:000008BC:  C9
-F00:0218       ;#=== printhexL ===#
-F00:0219       ;# ld hl,passwords
-F00:0220       ;# call printhexL
-F00:0221       
-F00:0222       printhexL:
-F00:0223       	push af
+F00:0219       ;#=== printhexL ===#
+F00:0220       ;# ld hl,passwords
+F00:0221       ;# call printhexL
+F00:0222       
+F00:0223       printhexL:
+F00:0224       	push af
                S01:000008BD:  F5
-F00:0224       	push hl
+F00:0225       	push hl
                S01:000008BE:  E5
-F00:0225       	ld a,h
+F00:0226       	ld a,h
                S01:000008BF:  7C
-F00:0226       	call printhex
+F00:0227       	call printhex
                S01:000008C0:  CD CA 08
-F00:0227       	ld a,l
+F00:0228       	ld a,l
                S01:000008C3:  7D
-F00:0228       	call printhex
+F00:0229       	call printhex
                S01:000008C4:  CD CA 08
-F00:0229       	pop hl
+F00:0230       	pop hl
                S01:000008C7:  E1
-F00:0230       	pop af
+F00:0231       	pop af
                S01:000008C8:  F1
-F00:0231       	ret
+F00:0232       	ret
                S01:000008C9:  C9
-F00:0232       # === PRINTHEX === #
-F00:0233       		;Display 8-bit number in hex.
-F00:0234       		; 	ld a,0xaa
-F00:0235       	;       call printhex
-F00:0236       printhex:
-F00:0237       
-F00:0238       ; Input: a
-F00:0239       
-F00:0240         push af
+F00:0233       # === PRINTHEX === #
+F00:0234       		;Display 8-bit number in hex.
+F00:0235       		; 	ld a,0xaa
+F00:0236       	;       call printhex
+F00:0237       printhex:
+F00:0238       
+F00:0239       ; Input: a
+F00:0240       
+F00:0241         push af
                S01:000008CA:  F5
-F00:0241         ;// remove low nibble
-F00:0242          rra
-               S01:000008CB:  1F
+F00:0242         ;// remove low nibble
 F00:0243          rra
-               S01:000008CC:  1F
+               S01:000008CB:  1F
 F00:0244          rra
-               S01:000008CD:  1F
+               S01:000008CC:  1F
 F00:0245          rra
+               S01:000008CD:  1F
+F00:0246          rra
                S01:000008CE:  1F
-F00:0246          call  _$
+F00:0247          call  _$
                S01:000008CF:  CD D3 08
-F00:0247          ;// restore low nibble
-F00:0248          pop af
+F00:0248          ;// restore low nibble
+F00:0249          pop af
                S01:000008D2:  F1
-F00:0249          
-F00:0250       _$:
-F00:0251       	push af
+F00:0250          
+F00:0251       _$:
+F00:0252       	push af
                S01:000008D3:  F5
-F00:0252       	;// remove high nibble
-F00:0253          and  0x0F
+F00:0253       	;// remove high nibble
+F00:0254          and  0x0F
                S01:000008D4:  E6 0F
-F00:0254          add  a,0x90
+F00:0255          add  a,0x90
                S01:000008D6:  C6 90
-F00:0255          ;; bcd adjust
-F00:0256          daa
+F00:0256          ;; bcd adjust
+F00:0257          daa
                S01:000008D8:  27
-F00:0257          adc  a,0x40
+F00:0258          adc  a,0x40
                S01:000008D9:  CE 40
-F00:0258          daa
+F00:0259          daa
                S01:000008DB:  27
-F00:0259          out (SERIALPORT),a 
+F00:0260          out (SERIALPORT),a 
                S01:000008DC:  D3 01
-F00:0260          pop af
+F00:0261          pop af
                S01:000008DE:  F1
-F00:0261          ret
+F00:0262          ret
                S01:000008DF:  C9
-F00:0262       
-F00:0263       # === putc ===== #
-F00:0264       ;# ld a,'*'
-F00:0265       ;# call putc
-F00:0266       ;# no return value
-F00:0267       putc:
-F00:0268       		out (SERIALPORT),a
+F00:0263       
+F00:0264       # === putc ===== #
+F00:0265       ;# ld a,'*'
+F00:0266       ;# call putc
+F00:0267       ;# no return value
+F00:0268       putc:
+F00:0269       		out (SERIALPORT),a
                S01:000008E0:  D3 01
-F00:0269       		ret
+F00:0270       		ret
                S01:000008E2:  C9
-F00:0270       
-F00:0271       		;// end subroutines
-F00:0272       # === loadFILE === #
-F00:0273       ; ld hl, filename (zero terminated)
-F00:0274       ; ld de, memory address to load file into
-F00:0275       ; call loadFILE
-F00:0276       ; returns 
-F00:0277       ;	HL
-F00:0278       ;		baseaddress of the dll
-F00:0279       ;	A register 
-F00:0280       ;			2 = failed to open the file
-F00:0281       ;			0 = if file loaded into memory
-F00:0282       ;	DE register pair
-F00:0283       ;			count of bytes loaded
-F00:0284       loadFILE:
-F00:0285       	push af
+F00:0271       
+F00:0272       		;// end subroutines
+F00:0273       # === loadFILE === #
+F00:0274       ; ld hl, filename (zero terminated)
+F00:0275       ; ld de, memory address to load file into
+F00:0276       ; call loadFILE
+F00:0277       ; returns 
+F00:0278       ;	HL
+F00:0279       ;		baseaddress of the dll
+F00:0280       ;	A register 
+F00:0281       ;			2 = failed to open the file
+F00:0282       ;			0 = if file loaded into memory
+F00:0283       ;	DE register pair
+F00:0284       ;			count of bytes loaded
+F00:0285       loadFILE:
+F00:0286       	push af
                S01:000008E3:  F5
-F00:0286       	push de ; save de for later
+F00:0287       	push de ; save de for later
                S01:000008E4:  D5
-F00:0287       	call sizereset
+F00:0288       	call sizereset
                S01:000008E5:  CD C7 09
-F00:0288       	ld a,0 ;# erase the executable header information
+F00:0289       	ld a,0 ;# erase the executable header information
                S01:000008E8:  3E 00
-F00:0289       	ld (startaddress),a
+F00:0290       	ld (startaddress),a
                S01:000008EA:  32 F4 09
-F00:0290       	ld (startaddress+1),a
+F00:0291       	ld (startaddress+1),a
                S01:000008ED:  32 F5 09
-F00:0291       	ld (startaddress+2),a
+F00:0292       	ld (startaddress+2),a
                S01:000008F0:  32 F6 09
-F00:0292       	ld (startaddress+3),a
+F00:0293       	ld (startaddress+3),a
                S01:000008F3:  32 F7 09
-F00:0293       		; try to open the SD card and read some data
-F00:0294       		ld a,FILENAMECLEAR ; // filenameclear
+F00:0294       		; try to open the SD card and read some data
+F00:0295       		ld a,FILENAMECLEAR ; // filenameclear
                S01:000008F6:  3E 01
-F00:0295       		out (SDCARD),a
+F00:0296       		out (SDCARD),a
                S01:000008F8:  D3 05
-F00:0296       
 F00:0297       
-F00:0298       ;
-F00:0299       _$getnextchar:
-F00:0300       		ld a,(hl)
+F00:0298       
+F00:0299       ;
+F00:0300       _$getnextchar:
+F00:0301       		ld a,(hl)
                S01:000008FA:  7E
-F00:0301       		cp 0
+F00:0302       		cp 0
                S01:000008FB:  FE 00
-F00:0302       		jp z, _$openfile #; if filename character is null we have finished
+F00:0303       		jp z, _$openfile #; if filename character is null we have finished
                S01:000008FD:  CA 0B 09
-F00:0303       		ld a,FILENAMEAPPEND
+F00:0304       		ld a,FILENAMEAPPEND
                S01:00000900:  3E 04
-F00:0304       		out (SDCARD),a ; // filenameappend
+F00:0305       		out (SDCARD),a ; // filenameappend
                S01:00000902:  D3 05
-F00:0305       		ld a,(hl)
+F00:0306       		ld a,(hl)
                S01:00000904:  7E
-F00:0306       		out (SDCARD),a
+F00:0307       		out (SDCARD),a
                S01:00000905:  D3 05
-F00:0307       		;#out (SERIALPORT),a
-F00:0308       		inc hl
+F00:0308       		;#out (SERIALPORT),a
+F00:0309       		inc hl
                S01:00000907:  23
-F00:0309       		jp _$getnextchar
+F00:0310       		jp _$getnextchar
                S01:00000908:  C3 FA 08
-F00:0310       
-F00:0311       _$openfile:
-F00:0312       #openfile will return 1 if the file was opened, 0 if it failed to open
-F00:0313       		ld a,OPEN	;// Open
+F00:0311       
+F00:0312       _$openfile:
+F00:0313       #openfile will return 1 if the file was opened, 0 if it failed to open
+F00:0314       		ld a,OPEN	;// Open
                S01:0000090B:  3E 02
-F00:0314       		out (SDCARD),a
+F00:0315       		out (SDCARD),a
                S01:0000090D:  D3 05
-F00:0315       		in a,(SDCARD)
+F00:0316       		in a,(SDCARD)
                S01:0000090F:  DB 05
-F00:0316       		pop hl ; get load address - must pop the stack before returning
+F00:0317       		pop hl ; get load address - must pop the stack before returning
                S01:00000911:  E1
-F00:0317       		cp 0
+F00:0318       		cp 0
                S01:00000912:  FE 00
-F00:0318       		jp nz,testloadaddress
+F00:0319       		jp nz,testloadaddress
                S01:00000914:  C2 1E 09
-F00:0319       		pop af ;# a flag not needed now
+F00:0320       		pop af ;# a flag not needed now
                S01:00000917:  F1
-F00:0320       		call sizeloaded
+F00:0321       		call sizeloaded
                S01:00000918:  CD B8 09
-F00:0321       		ld a,2 ;we have an error trying to open the file.
+F00:0322       		ld a,2 ;we have an error trying to open the file.
                S01:0000091B:  3E 02
-F00:0322       		ret
+F00:0323       		ret
                S01:0000091D:  C9
-F00:0323       testloadaddress:
-F00:0324       	# if loadaddress (hl) = 0, then the file will have load address information in the 1st 2 bytes
-F00:0325       	ld a,0
+F00:0324       testloadaddress:
+F00:0325       	# if loadaddress (hl) = 0, then the file will have load address information in the 1st 2 bytes
+F00:0326       	ld a,0
                S01:0000091E:  3E 00
-F00:0326       	cp h
+F00:0327       	cp h
                S01:00000920:  BC
-F00:0327       	jp nz,available ;# h is not zero so it must have an address to load into already
+F00:0328       	jp nz,available ;# h is not zero so it must have an address to load into already
                S01:00000921:  C2 84 09
-F00:0328       	cp l
+F00:0329       	cp l
                S01:00000924:  BD
-F00:0329       	jp nz,available ;# l is not zero so it must have an address to load intop already
+F00:0330       	jp nz,available ;# l is not zero so it must have an address to load intop already
                S01:00000925:  C2 84 09
-F00:0330       
-F00:0331       	ld hl,startaddress ;# this is the place to store the 2 bytes we need to get at the load address
+F00:0331       
+F00:0332       	ld hl,startaddress ;# this is the place to store the 2 bytes we need to get at the load address
                S01:00000928:  21 F4 09
-F00:0332       	call loadheader
+F00:0333       	call loadheader
                S01:0000092B:  CD 5B 09
-F00:0333       	cp 1
+F00:0334       	cp 1
                S01:0000092E:  FE 01
-F00:0334       	jp nz,_4$
+F00:0335       	jp nz,_4$
                S01:00000930:  C2 58 09
-F00:0335       
-F00:0336       	ld hl,(startaddress)
+F00:0336       
+F00:0337       	ld hl,(startaddress)
                S01:00000933:  2A F4 09
-F00:0337       	inc hl ;#start address
+F00:0338       	inc hl ;#start address
                S01:00000936:  23
-F00:0338       	inc hl
+F00:0339       	inc hl
                S01:00000937:  23
-F00:0339       	inc hl ;# program size in pages
+F00:0340       	inc hl ;# program size in pages
                S01:00000938:  23
-F00:0340       	inc hl ;# stack size in pages
+F00:0341       	inc hl ;# stack size in pages
                S01:00000939:  23
-F00:0341       	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
+F00:0342       	ld (startaddress),hl ;# this is now the dll entry point address, will need this later to initialize the library
                S01:0000093A:  22 F4 09
-F00:0342       
-F00:0343       	ld a,(memorypages)
+F00:0343       
+F00:0344       	ld a,(memorypages)
                S01:0000093D:  3A F6 09
-F00:0344       	ld b,a
+F00:0345       	ld b,a
                S01:00000940:  47
-F00:0345       	ld a,h
+F00:0346       	ld a,h
                S01:00000941:  7C
-F00:0346       
-F00:0347       45$:	DEBUGHEX a
+F00:0347       
+F00:0348       45$:	DEBUGHEX a
 F05:0001       # example : DEBUGHEX '!'
 F05:0002       #      or : DEBUGHEX h
 F05:0003       		push af
@@ -664,7 +668,7 @@ F05:0005       		call printhex
                S01:00000944:  CD CA 08
 F05:0006       		pop af
                S01:00000947:  F1
-F00:0348       	DEBUG '\n'
+F00:0349       	DEBUG '\n'
 F06:0001       # example : DEBUG '!'
 F06:0002       #      or : DEBUG h
 F06:0003       		push af
@@ -675,1375 +679,1701 @@ F06:0005       		call putc
                S01:0000094B:  CD E0 08
 F06:0006       		pop af
                S01:0000094E:  F1
-F00:0349       
-F00:0350       	call reservemalloc
-               S01:0000094F:  CD 4C 0B
-F00:0351       	inc a
+F00:0350       
+F00:0351       	call reservemalloc
+               S01:0000094F:  CD 63 0C
+F00:0352       	inc a
                S01:00000952:  3C
-F00:0352       	djnz 45$
+F00:0353       	djnz 45$
                S01:00000953:  10 ED
-F00:0353       
-F00:0354       	jp available
+F00:0354       
+F00:0355       	jp available
                S01:00000955:  C3 84 09
-F00:0355       _4$:
-F00:0356       	ld a,3 ;#new error code
+F00:0356       _4$:
+F00:0357       	ld a,3 ;#new error code
                S01:00000958:  3E 03
-F00:0357       	ret
+F00:0358       	ret
                S01:0000095A:  C9
-F00:0358       	#if we reach here then the first 2 bytes have the address information so let read them now
-F00:0359       	;# header information
-F00:0360       	;# 2bytes program load address
-F00:0361       	;# 1byte memory required in pages
-F00:0362       	;# 1byte stack required in pages
-F00:0363       loadheader:
-F00:0364       	ld b,4
+F00:0359       	#if we reach here then the first 2 bytes have the address information so let read them now
+F00:0360       	;# header information
+F00:0361       	;# 2bytes program load address
+F00:0362       	;# 1byte memory required in pages
+F00:0363       	;# 1byte stack required in pages
+F00:0364       loadheader:
+F00:0365       	ld b,4
                S01:0000095B:  06 04
-F00:0365       	ld c,0
+F00:0366       	ld c,0
                S01:0000095D:  0E 00
-F00:0366       _2$:
-F00:0367       	ld a, AVAILABLE
+F00:0367       _2$:
+F00:0368       	ld a, AVAILABLE
                S01:0000095F:  3E 06
-F00:0368       	out (SDCARD),a
+F00:0369       	out (SDCARD),a
                S01:00000961:  D3 05
-F00:0369       	in a,(SDCARD) ;# is data available?
+F00:0370       	in a,(SDCARD) ;# is data available?
                S01:00000963:  DB 05
-F00:0370       	cp 0
+F00:0371       	cp 0
                S01:00000965:  FE 00
-F00:0371       	jp nz,_1$
+F00:0372       	jp nz,_1$
                S01:00000967:  C2 77 09
-F00:0372       	pop af ;#restore af
+F00:0373       	pop af ;#restore af
                S01:0000096A:  F1
-F00:0373       	ld hl,0
+F00:0374       	ld hl,0
                S01:0000096B:  21 00 00
-F00:0374       		call println
+F00:0375       		call println
                S01:0000096E:  CD 93 08
-F00:0375       		call sizeloaded
+F00:0376       		call sizeloaded
                S01:00000971:  CD B8 09
-F00:0376       		ld a,0 ;# use 0 in A to indicate a fail
+F00:0377       		ld a,0 ;# use 0 in A to indicate a fail
                S01:00000974:  3E 00
-F00:0377       		ret ;#- exit loadheader because the file read had a problem
+F00:0378       		ret ;#- exit loadheader because the file read had a problem
                S01:00000976:  C9
-F00:0378       _1$:
-F00:0379       		;// if we get here then there is data to read
-F00:0380       		ld a,READNEXTBYTE
+F00:0379       _1$:
+F00:0380       		;// if we get here then there is data to read
+F00:0381       		ld a,READNEXTBYTE
                S01:00000977:  3E 05
-F00:0381       		out (SDCARD),a ;// read nextbyte
+F00:0382       		out (SDCARD),a ;// read nextbyte
                S01:00000979:  D3 05
-F00:0382       		in a,(SDCARD)
+F00:0383       		in a,(SDCARD)
                S01:0000097B:  DB 05
-F00:0383       		ld (hl),a ; // store byte in RAM (OSLOAD)
+F00:0384       		ld (hl),a ; // store byte in RAM (OSLOAD)
                S01:0000097D:  77
-F00:0384       		inc hl 
+F00:0385       		inc hl 
                S01:0000097E:  23
-F00:0385       		djnz _2$
+F00:0386       		djnz _2$
                S01:0000097F:  10 DE
-F00:0386       		ld a,1 ;# use 1 in A to indicate a success
+F00:0387       		ld a,1 ;# use 1 in A to indicate a success
                S01:00000981:  3E 01
-F00:0387       		ret ;# exit loadheader because we have loaded 4 bytes
+F00:0388       		ret ;# exit loadheader because we have loaded 4 bytes
                S01:00000983:  C9
-F00:0388       available:
-F00:0389       	#available will return 1 if there is data to read, 0 if no data to read
-F00:0390       		ld a, AVAILABLE ; // available
+F00:0389       available:
+F00:0390       	#available will return 1 if there is data to read, 0 if no data to read
+F00:0391       		ld a, AVAILABLE ; // available
                S01:00000984:  3E 06
-F00:0391       		out (SDCARD),a
+F00:0392       		out (SDCARD),a
                S01:00000986:  D3 05
-F00:0392       		in a,(SDCARD) ;// read the value from the device
+F00:0393       		in a,(SDCARD) ;// read the value from the device
                S01:00000988:  DB 05
-F00:0393       	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
-F00:0394       	;	add a,'0' ;// make it printable
-F00:0395       	;	out (SERIALPORT),a ;// print response
-F00:0396       	;	ld a,b
-F00:0397       		cp 0 ;// compare the A reg returned by the device
+F00:0394       	;	ld b,a ; // going to malipulate the a register so save it as not to destroy the A result
+F00:0395       	;	add a,'0' ;// make it printable
+F00:0396       	;	out (SERIALPORT),a ;// print response
+F00:0397       	;	ld a,b
+F00:0398       		cp 0 ;// compare the A reg returned by the device
                S01:0000098A:  FE 00
-F00:0398       		jp nz,_$nextbyte
+F00:0399       		jp nz,_$nextbyte
                S01:0000098C:  C2 A7 09
-F00:0399       		pop af ;# restore the af registers because it will tell me if I need to zero terminate the loaded file
+F00:0400       		pop af ;# restore the af registers because it will tell me if I need to zero terminate the loaded file
                S01:0000098F:  F1
-F00:0400       		cp 1
+F00:0401       		cp 1
                S01:00000990:  FE 01
-F00:0401       		jp nz,_1$
+F00:0402       		jp nz,_1$
                S01:00000992:  C2 98 09
-F00:0402       		;# the hl register pair contains the last address we need to write a zero here because the user wants it
-F00:0403       		ld a,0
+F00:0403       		;# the hl register pair contains the last address we need to write a zero here because the user wants it
+F00:0404       		ld a,0
                S01:00000995:  3E 00
-F00:0404       		ld (hl),a ;# zero terminated
+F00:0405       		ld (hl),a ;# zero terminated
                S01:00000997:  77
-F00:0405       
-F00:0406       _1$:
-F00:0407       		ld hl,0
+F00:0406       
+F00:0407       _1$:
+F00:0408       		ld hl,0
                S01:00000998:  21 00 00
-F00:0408       		call println
+F00:0409       		call println
                S01:0000099B:  CD 93 08
-F00:0409       		call sizeloaded
+F00:0410       		call sizeloaded
                S01:0000099E:  CD B8 09
-F00:0410       		ld hl,(startaddress) ;# return the startaddress
+F00:0411       		ld hl,(startaddress) ;# return the startaddress
                S01:000009A1:  2A F4 09
-F00:0411       		ld a,0
+F00:0412       		ld a,0
                S01:000009A4:  3E 00
-F00:0412       		ret
+F00:0413       		ret
                S01:000009A6:  C9
-F00:0413       _$nextbyte:
-F00:0414       		;// if we get here then there is data to read
-F00:0415       		ld a,READNEXTBYTE
+F00:0414       _$nextbyte:
+F00:0415       		;// if we get here then there is data to read
+F00:0416       		ld a,READNEXTBYTE
                S01:000009A7:  3E 05
-F00:0416       		out (SDCARD),a ;// read nextbyte
+F00:0417       		out (SDCARD),a ;// read nextbyte
                S01:000009A9:  D3 05
-F00:0417       		in a,(SDCARD)
+F00:0418       		in a,(SDCARD)
                S01:000009AB:  DB 05
-F00:0418       		ld (hl),a ; // store byte in RAM (OSLOAD)
+F00:0419       		ld (hl),a ; // store byte in RAM (OSLOAD)
                S01:000009AD:  77
-F00:0419       		inc hl 
+F00:0420       		inc hl 
                S01:000009AE:  23
-F00:0420       		ld a,'#'
+F00:0421       		ld a,'#'
                S01:000009AF:  3E 23
-F00:0421       		out (SERIALPORT),a ;// just echo it back for now
+F00:0422       		out (SERIALPORT),a ;// just echo it back for now
                S01:000009B1:  D3 01
-F00:0422       		call sizeincrement
+F00:0423       		call sizeincrement
                S01:000009B3:  CD DA 09
-F00:0423       		jr available ;
+F00:0424       		jr available ;
                S01:000009B6:  18 CC
-F00:0424       
-F00:0425       sizeloaded:
-F00:0426       	push ix
+F00:0425       
+F00:0426       sizeloaded:
+F00:0427       	push ix
                S01:000009B8:  DD E5
-F00:0427       	ld ix,losize
+F00:0428       	ld ix,losize
                S01:000009BA:  DD 21 F2 09
-F00:0428       	ld e,(ix)
+F00:0429       	ld e,(ix)
                S01:000009BE:  DD 5E 00
-F00:0429       	ld d,(ix+1)
+F00:0430       	ld d,(ix+1)
                S01:000009C1:  DD 56 01
-F00:0430       	pop ix
+F00:0431       	pop ix
                S01:000009C4:  DD E1
-F00:0431       	ret
+F00:0432       	ret
                S01:000009C6:  C9
-F00:0432       sizereset:
-F00:0433       	push ix
+F00:0433       sizereset:
+F00:0434       	push ix
                S01:000009C7:  DD E5
-F00:0434       	push af
+F00:0435       	push af
                S01:000009C9:  F5
-F00:0435       	ld a,0
+F00:0436       	ld a,0
                S01:000009CA:  3E 00
-F00:0436       	ld ix,losize
+F00:0437       	ld ix,losize
                S01:000009CC:  DD 21 F2 09
-F00:0437       	ld (ix),a
+F00:0438       	ld (ix),a
                S01:000009D0:  DD 77 00
-F00:0438       	ld (ix+1),a
+F00:0439       	ld (ix+1),a
                S01:000009D3:  DD 77 01
-F00:0439       	pop af
+F00:0440       	pop af
                S01:000009D6:  F1
-F00:0440       	pop ix
+F00:0441       	pop ix
                S01:000009D7:  DD E1
-F00:0441       	ret
+F00:0442       	ret
                S01:000009D9:  C9
-F00:0442       sizeincrement:
-F00:0443       	push ix
+F00:0443       sizeincrement:
+F00:0444       	push ix
                S01:000009DA:  DD E5
-F00:0444       	push hl
+F00:0445       	push hl
                S01:000009DC:  E5
-F00:0445       
-F00:0446       	ld ix,losize
+F00:0446       
+F00:0447       	ld ix,losize
                S01:000009DD:  DD 21 F2 09
-F00:0447       	ld l,(ix)
+F00:0448       	ld l,(ix)
                S01:000009E1:  DD 6E 00
-F00:0448       	ld h,(ix+1)
+F00:0449       	ld h,(ix+1)
                S01:000009E4:  DD 66 01
-F00:0449       	inc HL
+F00:0450       	inc HL
                S01:000009E7:  23
-F00:0450       	ld (ix),l
+F00:0451       	ld (ix),l
                S01:000009E8:  DD 75 00
-F00:0451       	ld (ix+1),h
+F00:0452       	ld (ix+1),h
                S01:000009EB:  DD 74 01
-F00:0452       
-F00:0453       	pop hl
+F00:0453       
+F00:0454       	pop hl
                S01:000009EE:  E1
-F00:0454       	pop ix
+F00:0455       	pop ix
                S01:000009EF:  DD E1
-F00:0455       	ret
+F00:0456       	ret
                S01:000009F1:  C9
-F00:0456       
-F00:0457       losize: .byte 0
+F00:0457       
+F00:0458       losize: .byte 0
                S01:000009F2:  00
-F00:0458       hisize: .byte 0
+F00:0459       hisize: .byte 0
                S01:000009F3:  00
-F00:0459       
-F00:0460       ;# executable header information
-F00:0461       startaddress: .2byte 0
+F00:0460       
+F00:0461       ;# executable header information
+F00:0462       startaddress: .2byte 0
                S01:000009F4:  00 00
-F00:0462       memorypages: .byte 0
+F00:0463       memorypages: .byte 0
                S01:000009F6:  00
-F00:0463       stackpages: .byte 0
+F00:0464       stackpages: .byte 0
                S01:000009F7:  00
-F00:0464       ;# ====== hextobyte ==========
-F00:0465       ;#    load HL registers with the 2 ascii characters of a hexadecimal value
-F00:0466       ;# note routine does not validate the inputs.
-F00:0467       ;# alphabeta expected in uppercase
-F00:0468       ;#	ld h,'c'
-F00:0469       ;#	ld l,'3'
-F00:0470       ;#	call hextobyte
-F00:0471       ;#	value stored in A register
-F00:0472       
+F00:0465       ;# ====== hextobyte ==========
+F00:0466       ;#    load HL registers with the 2 ascii characters of a hexadecimal value
+F00:0467       ;# note routine does not validate the inputs.
+F00:0468       ;# alphabeta expected in uppercase
+F00:0469       ;#	ld h,'c'
+F00:0470       ;#	ld l,'3'
+F00:0471       ;#	call hextobyte
+F00:0472       ;#	value stored in A register
 F00:0473       
-F00:0474       hextobyte:
-F00:0475       	push hl
+F00:0474       
+F00:0475       hextobyte:
+F00:0476       	push hl
                S01:000009F8:  E5
-F00:0476       	push bc
+F00:0477       	push bc
                S01:000009F9:  C5
-F00:0477       	ld a,l ;# prepare the low nibble
+F00:0478       	ld a,l ;# prepare the low nibble
                S01:000009FA:  7D
-F00:0478       	call workhextobyte
+F00:0479       	call workhextobyte
                S01:000009FB:  CD 0B 0A
-F00:0479       	ld b,a ;# save it later
+F00:0480       	ld b,a ;# save it later
                S01:000009FE:  47
-F00:0480       	ld a,h ;# prepare the high nibble
+F00:0481       	ld a,h ;# prepare the high nibble
                S01:000009FF:  7C
-F00:0481       	call workhextobyte
+F00:0482       	call workhextobyte
                S01:00000A00:  CD 0B 0A
-F00:0482       	rla ;# a contains the result from the high nibble
+F00:0483       	rla ;# a contains the result from the high nibble
                S01:00000A03:  17
-F00:0483       	rla ;# so move the nibble to make room for the low nibble
+F00:0484       	rla ;# so move the nibble to make room for the low nibble
                S01:00000A04:  17
-F00:0484       	rla
-               S01:00000A05:  17
 F00:0485       	rla
+               S01:00000A05:  17
+F00:0486       	rla
                S01:00000A06:  17
-F00:0486       	or b ;# add the low nibble
+F00:0487       	or b ;# add the low nibble
                S01:00000A07:  B0
-F00:0487       
-F00:0488       	pop bc
+F00:0488       
+F00:0489       	pop bc
                S01:00000A08:  C1
-F00:0489       	pop hl
+F00:0490       	pop hl
                S01:00000A09:  E1
-F00:0490       	ret
+F00:0491       	ret
                S01:00000A0A:  C9
-F00:0491       workhextobyte:
-F00:0492       	cp 'A' ;# alphabeta sub 55
+F00:0492       workhextobyte:
+F00:0493       	cp 'A' ;# alphabeta sub 55
                S01:00000A0B:  FE 41
-F00:0493       	jp m,hextobytenumber
+F00:0494       	jp m,hextobytenumber
                S01:00000A0D:  FA 13 0A
-F00:0494       	sub 55
+F00:0495       	sub 55
                S01:00000A10:  D6 37
-F00:0495       	ret
+F00:0496       	ret
                S01:00000A12:  C9
-F00:0496       hextobytenumber:
-F00:0497       	sub 48 ;# if number sub 48
+F00:0497       hextobytenumber:
+F00:0498       	sub 48 ;# if number sub 48
                S01:00000A13:  D6 30
-F00:0498       	ret
+F00:0499       	ret
                S01:00000A15:  C9
-F00:0499       
-F00:0500       	;# === directory open === #
-F00:0501       
-F00:0502       directoryopen:
-F00:0503       	push af
+F00:0500       
+F00:0501       	;# === directory open === #
+F00:0502       
+F00:0503       directoryopen:
+F00:0504       	push af
                S01:00000A16:  F5
-F00:0504       	ld a,OPENDIRECTORY
+F00:0505       	ld a,OPENDIRECTORY
                S01:00000A17:  3E 31
-F00:0505       	out (SDCARD),a
+F00:0506       	out (SDCARD),a
                S01:00000A19:  D3 05
-F00:0506       	pop af
+F00:0507       	pop af
                S01:00000A1B:  F1
-F00:0507       	ret
+F00:0508       	ret
                S01:00000A1C:  C9
-F00:0508       	;# === nextfile === #
-F00:0509       nextfile:
-F00:0510       	push af
+F00:0509       	;# === nextfile === #
+F00:0510       nextfile:
+F00:0511       	push af
                S01:00000A1D:  F5
-F00:0511       	ld a,NEXTFILE
+F00:0512       	ld a,NEXTFILE
                S01:00000A1E:  3E 32
-F00:0512       	out (SDCARD),a
+F00:0513       	out (SDCARD),a
                S01:00000A20:  D3 05
-F00:0513       	pop af
+F00:0514       	pop af
                S01:00000A22:  F1
-F00:0514       	ret
+F00:0515       	ret
                S01:00000A23:  C9
-F00:0515       	;# === getfilename or currently open file ===#
-F00:0516       	;# ld hl,storagelocation - for the filename
-F00:0517       	;# call getfilename
-F00:0518       
-F00:0519       getfilename:
-F00:0520       	push af
+F00:0516       	;# === getfilename or currently open file ===#
+F00:0517       	;# ld hl,storagelocation - for the filename
+F00:0518       	;# call getfilename
+F00:0519       
+F00:0520       getfilename:
+F00:0521       	push af
                S01:00000A24:  F5
-F00:0521       	push hl
+F00:0522       	push hl
                S01:00000A25:  E5
-F00:0522       	ld a,GETNAME
+F00:0523       	ld a,GETNAME
                S01:00000A26:  3E 20
-F00:0523       	out (SDCARD),a
+F00:0524       	out (SDCARD),a
                S01:00000A28:  D3 05
-F00:0524       
-F00:0525       _getfilename$1:
-F00:0526       	ld a,NAMEAVAILABLE
+F00:0525       
+F00:0526       _getfilename$1:
+F00:0527       	ld a,NAMEAVAILABLE
                S01:00000A2A:  3E 21
-F00:0527       	out (SDCARD),a
+F00:0528       	out (SDCARD),a
                S01:00000A2C:  D3 05
-F00:0528       	in a,(SDCARD)
+F00:0529       	in a,(SDCARD)
                S01:00000A2E:  DB 05
-F00:0529       	cp 0
+F00:0530       	cp 0
                S01:00000A30:  FE 00
-F00:0530       	jp z, _exitgetfilename
+F00:0531       	jp z, _exitgetfilename
                S01:00000A32:  CA 3A 0A
-F00:0531       
-F00:0532       	ld (hl),a
+F00:0532       
+F00:0533       	ld (hl),a
                S01:00000A35:  77
-F00:0533       	inc hl
+F00:0534       	inc hl
                S01:00000A36:  23
-F00:0534       	
-F00:0535       	jp _getfilename$1
+F00:0535       	
+F00:0536       	jp _getfilename$1
                S01:00000A37:  C3 2A 0A
-F00:0536       
-F00:0537       _exitgetfilename:
-F00:0538       	ld a,0
+F00:0537       
+F00:0538       _exitgetfilename:
+F00:0539       	ld a,0
                S01:00000A3A:  3E 00
-F00:0539       	ld (hl),a
+F00:0540       	ld (hl),a
                S01:00000A3C:  77
-F00:0540       	pop hl
+F00:0541       	pop hl
                S01:00000A3D:  E1
-F00:0541       	pop af
+F00:0542       	pop af
                S01:00000A3E:  F1
-F00:0542       	ret
+F00:0543       	ret
                S01:00000A3F:  C9
-F00:0543       
-F00:0544       	# === createProcess == #
-F00:0545       	;# stack - note the example below is using the registers as an example, it really don't matter
-F00:0546       	;# which register pair put that data on the stack, the sequence in which the parameters are put on the stack
-F00:0547       	;# does matter.
-F00:0548       	;# push hl,program - zero terminated
-F00:0549       	;# push de,commandline - zero terminated
-F00:0550       	;# call createProcess
-F00:0551       	;# that should do for now
-F00:0552       	createProcess: ;# this is messy need to have another go at this
-F00:0553       		ld a,0
+F00:0544       
+F00:0545       	# === createProcess == #
+F00:0546       	;# stack - note the example below is using the registers as an example, it really don't matter
+F00:0547       	;# which register pair put that data on the stack, the sequence in which the parameters are put on the stack
+F00:0548       	;# does matter.
+F00:0549       	;# push hl,program - zero terminated
+F00:0550       	;# push de,commandline - zero terminated
+F00:0551       	;# call createProcess
+F00:0552       	;# that should do for now
+F00:0553       	createProcess: ;# this is messy need to have another go at this
+F00:0554       		ld a,0
                S01:00000A40:  3E 00
-F00:0554       		call printhex
+F00:0555       		call printhex
                S01:00000A42:  CD CA 08
-F00:0555       
-F00:0556       		pop hl ;# get the return address
+F00:0556       
+F00:0557       		pop hl ;# get the return address
                S01:00000A45:  E1
-F00:0557       		exx ;# exchange with other registers
+F00:0558       		exx ;# exchange with other registers
                S01:00000A46:  D9
-F00:0558       
-F00:0559       #		ld de,userMemory-50 ;# whooa
-F00:0560       		ld de,theparams
-               S01:00000A47:  11 C0 0A
-F00:0561       		;# copy the command params
-F00:0562       		pop hl ;# get the command params
+F00:0559       
+F00:0560       
+F00:0561       		ld de,theparams
+               S01:00000A47:  11 D4 0A
+F00:0562       		;# copy the command params
+F00:0563       		pop hl ;# get the command params
                S01:00000A4A:  E1
-F00:0563       		ld a,1
+F00:0564       		ld a,1
                S01:00000A4B:  3E 01
-F00:0564       		call printhex
+F00:0565       		call printhex
                S01:00000A4D:  CD CA 08
-F00:0565       
-F00:0566       		call strcpy
+F00:0566       
+F00:0567       		call strcpy
                S01:00000A50:  CD 68 08
-F00:0567       		ld a,2
+F00:0568       		ld a,2
                S01:00000A53:  3E 02
-F00:0568       		call printhex
+F00:0569       		call printhex
                S01:00000A55:  CD CA 08
-F00:0569       		push hl
+F00:0570       		push hl
                S01:00000A58:  E5
-F00:0570       		ld hl,thecommandlinemsg
-               S01:00000A59:  21 B8 0A
-F00:0571       		call println
+F00:0571       		ld hl,thecommandlinemsg
+               S01:00000A59:  21 CC 0A
+F00:0572       		call println
                S01:00000A5C:  CD 93 08
-F00:0572       		pop hl
+F00:0573       		pop hl
                S01:00000A5F:  E1
-F00:0573       		call println ;# print command params
+F00:0574       		call println ;# print command params
                S01:00000A60:  CD 93 08
-F00:0574       
-F00:0575       		ld a,3
+F00:0575       
+F00:0576       		ld a,3
                S01:00000A63:  3E 03
-F00:0576       		call printhex
+F00:0577       		call printhex
                S01:00000A65:  CD CA 08
-F00:0577       
-F00:0578       		pop hl ;# get the program
+F00:0578       
+F00:0579       		pop hl ;# get the program
                S01:00000A68:  E1
-F00:0579       		push HL
+F00:0580       		push HL
                S01:00000A69:  E5
-F00:0580       		ld hl,theprocessmsg
-               S01:00000A6A:  21 AF 0A
-F00:0581       		call println
+F00:0581       		ld hl,theprocessmsg
+               S01:00000A6A:  21 C3 0A
+F00:0582       		call println
                S01:00000A6D:  CD 93 08
-F00:0582       		pop hl
+F00:0583       		pop hl
                S01:00000A70:  E1
-F00:0583       		call println ;# print program name
+F00:0584       		call println ;# print program name
                S01:00000A71:  CD 93 08
-F00:0584       #		ld de,userMemory
-F00:0585       		ld a,0
+F00:0585       #		ld de,userMemory
+F00:0586       		ld a,0
                S01:00000A74:  3E 00
-F00:0586       		ld d,a ;# use dynamic load address if possible
+F00:0587       		ld d,a ;# use dynamic load address if possible
                S01:00000A76:  57
-F00:0587       		ld e,a
+F00:0588       		ld e,a
                S01:00000A77:  5F
-F00:0588       		ld a,4
+F00:0589       		ld a,4
                S01:00000A78:  3E 04
-F00:0589       		call printhex
+F00:0590       		call printhex
                S01:00000A7A:  CD CA 08
-F00:0590       
-F00:0591       		call loadFILE
-               S01:00000A7D:  CD E3 08
-F00:0592       		cp 0
-               S01:00000A80:  FE 00
-F00:0593       		jp nz, _createProcesserr$1
-               S01:00000A82:  C2 AA 0A
-F00:0594       		ld (_progloadaddr),hl ;# save the address the program was loaded into. if null is means use the default userMemory
-               S01:00000A85:  22 A8 0A
-F00:0595       		
-F00:0596       		exx ;# restore the other original registers
-               S01:00000A88:  D9
-F00:0597       		push hl ; # restore the return address
-               S01:00000A89:  E5
-F00:0598       		# test if we need to use the default address or the program/library supplied address
-F00:0599       		# we can do that by checking if the hl pair is null, null = use fault, not null = custom address
-F00:0600       		ld hl,(_progloadaddr)
-               S01:00000A8A:  2A A8 0A
-F00:0601       		ld a,h
-               S01:00000A8D:  7C
-F00:0602       		cp 0
-               S01:00000A8E:  FE 00
-F00:0603       		jp nz, _4$
-               S01:00000A90:  C2 A0 0A
-F00:0604       		ld a,l
-               S01:00000A93:  7D
-F00:0605       		cp 0
-               S01:00000A94:  FE 00
-F00:0606       		jp nz,_4$
-               S01:00000A96:  C2 A0 0A
-F00:0607       		# hl was null so call the default address
-F00:0608       		call printhexL
-               S01:00000A99:  CD BD 08
-F00:0609       				### CREATENEWPROCESSINFO
-F00:0610       		call userMemory
-               S01:00000A9C:  CD 00 30
-F00:0611       		
-F00:0612       		ret
-               S01:00000A9F:  C9
-F00:0613       _4$:
-F00:0614       	call printhexL
-               S01:00000AA0:  CD BD 08
-F00:0615       		### CREATENEWPROCESSINFO
-F00:0616       	call progloadaddress
-               S01:00000AA3:  CD A7 0A
-F00:0617       	ret
-               S01:00000AA6:  C9
-F00:0618       progloadaddress: .byte 0xc3
-               S01:00000AA7:  C3
-F00:0619       	_progloadaddr: .2byte 0
-               S01:00000AA8:  00 00
-F00:0620       
-F00:0621       
-F00:0622       
-F00:0623       _createProcesserr$1:
-F00:0624       		push af
-               S01:00000AAA:  F5
-F00:0625       		exx ;# restore the other original registers
-               S01:00000AAB:  D9
-F00:0626       		pop af
-               S01:00000AAC:  F1
-F00:0627       		push hl ; # restore the return address
-               S01:00000AAD:  E5
-F00:0628       		ret
-               S01:00000AAE:  C9
-F00:0629       
-F00:0630       theprocessmsg: .string "process:"
-               S01:00000AAF:  70 72 6F 63 65 73 73 3A
-F00:0631       thecommandlinemsg: .string "params:"
-               S01:00000AB8:  70 61 72 61 6D 73 3A
-F00:0632       theparams: .space 50
+F00:0591       #pih 12/29/2020
+F00:0592       		call copyprogramname
+               S01:00000A7D:  CD B8 0A
+F00:0593       		call loadFILE
+               S01:00000A80:  CD E3 08
+F00:0594       		cp 0
+               S01:00000A83:  FE 00
+F00:0595       		jp nz, _createProcesserr$1
+               S01:00000A85:  C2 B3 0A
+F00:0596       		ld (_progloadaddr),hl ;# save the address the program was loaded into. if null is means use the default userMemory
+               S01:00000A88:  22 B1 0A
+F00:0597       		
+F00:0598       		exx ;# restore the other original registers
+               S01:00000A8B:  D9
+F00:0599       		push hl ; # restore the return address
+               S01:00000A8C:  E5
+F00:0600       		# test if we need to use the default address or the program/library supplied address
+F00:0601       		# we can do that by checking if the hl pair is null, null = use fault, not null = custom address
+F00:0602       		ld hl,(_progloadaddr)
+               S01:00000A8D:  2A B1 0A
+F00:0603       		ld a,h
+               S01:00000A90:  7C
+F00:0604       		cp 0
+               S01:00000A91:  FE 00
+F00:0605       		jp nz, _4$
+               S01:00000A93:  C2 A6 0A
+F00:0606       		ld a,l
+               S01:00000A96:  7D
+F00:0607       		cp 0
+               S01:00000A97:  FE 00
+F00:0608       		jp nz,_4$
+               S01:00000A99:  C2 A6 0A
+F00:0609       		# hl was null so call the default address
+F00:0610       		call printhexL
+               S01:00000A9C:  CD BD 08
+F00:0611       				### CREATENEWPROCESSINFO
+F00:0612       		call createnewprocessinfo
+               S01:00000A9F:  CD 0A 0B
+F00:0613       		call userMemory
+               S01:00000AA2:  CD 00 30
+F00:0614       		
+F00:0615       		ret
+               S01:00000AA5:  C9
+F00:0616       _4$:
+F00:0617       	call printhexL
+               S01:00000AA6:  CD BD 08
+F00:0618       		### CREATENEWPROCESSINFO
+F00:0619       		call createnewprocessinfo
+               S01:00000AA9:  CD 0A 0B
+F00:0620       	call progloadaddress
+               S01:00000AAC:  CD B0 0A
+F00:0621       	ret
+               S01:00000AAF:  C9
+F00:0622       progloadaddress: .byte 0xc3
+               S01:00000AB0:  C3
+F00:0623       	_progloadaddr: .2byte 0
+               S01:00000AB1:  00 00
+F00:0624       
+F00:0625       
+F00:0626       
+F00:0627       _createProcesserr$1:
+F00:0628       		push af
+               S01:00000AB3:  F5
+F00:0629       		exx ;# restore the other original registers
+               S01:00000AB4:  D9
+F00:0630       		pop af
+               S01:00000AB5:  F1
+F00:0631       		push hl ; # restore the return address
+               S01:00000AB6:  E5
+F00:0632       		ret
+               S01:00000AB7:  C9
 F00:0633       
-F00:0634       #== updateprocessinfo ===#
-F00:0635       # ld hl,processname - zero terminated
-F00:0636       # call newprocessinfo
-F00:0637       # return 
-F00:0638       #	processid in A register
-F00:0639       #	processinfo pointer in HL
-F00:0640       
-F00:0641       
-F00:0642       
-F00:0643       #== startprocessinfo ==#
-F00:0644       # reset the process info list pointer
-F00:0645       # no inputs, no outputs
-F00:0646       startprocessinfo: 
-F00:0647       	push af
-               S01:00000AF2:  F5
-F00:0648       	ld a,0
-               S01:00000AF3:  3E 00
-F00:0649       	ld (currentprocessinfo),a
-               S01:00000AF5:  32 22 0B
-F00:0650       	pop af
-               S01:00000AF8:  F1
+F00:0634       # helper function to copy the program name into procname , which is used to update the processinfo
+F00:0635       copyprogramname:
+F00:0636       	push de
+               S01:00000AB8:  D5
+F00:0637       	push hl
+               S01:00000AB9:  E5
+F00:0638       	ld de,procname
+               S01:00000ABA:  11 2D 0C
+F00:0639       	call strcpy
+               S01:00000ABD:  CD 68 08
+F00:0640       	pop hl
+               S01:00000AC0:  E1
+F00:0641       	pop de
+               S01:00000AC1:  D1
+F00:0642       ret
+               S01:00000AC2:  C9
+F00:0643       
+F00:0644       theprocessmsg: .string "process:"
+               S01:00000AC3:  70 72 6F 63 65 73 73 3A
+F00:0645       thecommandlinemsg: .string "params:"
+               S01:00000ACC:  70 61 72 61 6D 73 3A
+F00:0646       theparams: .space 50
+F00:0647       
+F00:0648       ;# === specialfunction this is called by the just lauched program, it allows the program to get it's processid
+F00:0649       setprocid:
+F00:0650       	ld a,(lastprogramid)
+               S01:00000B06:  3A 37 0C
 F00:0651       	ret
-               S01:00000AF9:  C9
+               S01:00000B09:  C9
 F00:0652       
-F00:0653       #== nextprocessinfo ===#
-F00:0654       # return in hl the next processinfo entry
-F00:0655       # also updates currentprocessinfo
+F00:0653       #== createnewprocessinfo ===#
+F00:0654       # variable procname is expected to be populated
+F00:0655       # return 
 F00:0656       
-F00:0657       nextprocessinfo:
+F00:0657       createnewprocessinfo:
 F00:0658       	push af
-               S01:00000AFA:  F5
-F00:0659       	ld a,(currentprocessinfo)
-               S01:00000AFB:  3A 22 0B
-F00:0660       	ld h,a
-               S01:00000AFE:  67
-F00:0661       	ld e,PROCINFOSIZE
-               S01:00000AFF:  1E 06
-F00:0662       	call Mul8b
-               S01:00000B01:  CD BE 0B
-F00:0663       	ex de,hl
-               S01:00000B04:  EB
-F00:0664       	ld hl,processtable
-               S01:00000B05:  21 23 0B
-F00:0665       	add hl,DE
-               S01:00000B08:  19
-F00:0666       	inc a
-               S01:00000B09:  3C
-F00:0667       	cp MAXPROCESSES
-               S01:00000B0A:  FE 04
-F00:0668       	jp p, 1$ ;# if we go passed the limit reset back to 0
-               S01:00000B0C:  F2 16 0B
-F00:0669       	ld (currentprocessinfo),a
-               S01:00000B0F:  32 22 0B
-F00:0670       	pop af
-               S01:00000B12:  F1
-F00:0671       	scf ;# set cf
-               S01:00000B13:  37
-F00:0672       	ccf ;# invert cf
-               S01:00000B14:  3F
-F00:0673       	ret
-               S01:00000B15:  C9
-F00:0674       1$: ;# if reach maxprocesses, return 0 in a & hl
-F00:0675       	ld a,0
-               S01:00000B16:  3E 00
-F00:0676       	ld (currentprocessinfo),a
-               S01:00000B18:  32 22 0B
-F00:0677       	ld h,a
-               S01:00000B1B:  67
-F00:0678       	ld l,a
-               S01:00000B1C:  6F
-F00:0679       	pop af
-               S01:00000B1D:  F1
-F00:0680       	scf
-               S01:00000B1E:  37
-F00:0681       	ret
-               S01:00000B1F:  C9
-F00:0682       
-F00:0683       lastprogramid: .byte 0
-               S01:00000B20:  00
-F00:0684       maxprocesses: .byte MAXPROCESSES
-               S01:00000B21:  04
-F00:0685       currentprocessinfo: .byte 0; # index to a process table entry
-               S01:00000B22:  00
-F00:0686       processtable: 
-F00:0687       	;# 1byte process status - 1=running, 0=no process
-F00:0688       	;# 1byte processID
-F00:0689       	;# 4bytes process name
-F00:0690       .rept MAXPROCESSES
-F00:0692       
-F07:0001       	.space PROCINFOSIZE
-F07:0001       	.space PROCINFOSIZE
-F07:0001       	.space PROCINFOSIZE
-F07:0001       	.space PROCINFOSIZE
-F00:0693       endprocesstable: ;# this does nothing and can be deleted. I'm using it to check the listing address
-F00:0694       
-F00:0695       	# === getcommandparams == #
-F00:0696       	;# ld hl,buffer - address of where to copy the data
-F00:0697       	;# call getcommandparams
-F00:0698       	;# returns zero termined string at buffer 
-F00:0699       getcommandparams:
-F00:0700       	push de
-               S01:00000B3B:  D5
-F00:0701       	push hl
-               S01:00000B3C:  E5
-F00:0702       	push hl ;# save hl to move into de
-               S01:00000B3D:  E5
-F00:0703       	pop de ;# load hl into de
-               S01:00000B3E:  D1
-F00:0704       #	ld hl,userMemory-50   ;# ********* I dont remember why I did this, it needs investigating
-F00:0705       	ld hl,theparams
-               S01:00000B3F:  21 C0 0A
-F00:0706       	call strcpy
-               S01:00000B42:  CD 68 08
-F00:0707       	pop hl
-               S01:00000B45:  E1
-F00:0708       	pop de
-               S01:00000B46:  D1
+               S01:00000B0A:  F5
+F00:0659       	push hl
+               S01:00000B0B:  E5
+F00:0660       	push bc
+               S01:00000B0C:  C5
+F00:0661 E0007 	push de  'just do everything for now - need to look and fix this
+               S01:00000B0D:  D5
+F00:0662       	call getnewprocessid
+               S01:00000B0E:  CD 5B 0B
+F00:0663       	call writeprocessinfo
+               S01:00000B11:  CD 97 0B
+F00:0664       	pop de
+               S01:00000B14:  D1
+F00:0665       	pop bc
+               S01:00000B15:  C1
+F00:0666       	pop hl
+               S01:00000B16:  E1
+F00:0667       	pop af
+               S01:00000B17:  F1
+F00:0668       ret
+               S01:00000B18:  C9
+F00:0669       
+F00:0670       
+F00:0671       #== startprocessinfo ==#
+F00:0672       # reset the process info list pointer
+F00:0673       # no inputs, no outputs
+F00:0674       startprocessinfo: 
+F00:0675       	push af
+               S01:00000B19:  F5
+F00:0676       	ld a,0
+               S01:00000B1A:  3E 00
+F00:0677       	ld (currentprocessinfo),a
+               S01:00000B1C:  32 39 0C
+F00:0678       	pop af
+               S01:00000B1F:  F1
+F00:0679       	ret
+               S01:00000B20:  C9
+F00:0680       
+F00:0681       #== nextprocessinfo ===#
+F00:0682       # return in hl the next processinfo entry
+F00:0683       # also updates currentprocessinfo
+F00:0684       # if carry flag set, we have reach the end of the process table
+F00:0685       nextprocessinfo:
+F00:0686       	push af
+               S01:00000B21:  F5
+F00:0687       	ld a,(currentprocessinfo)
+               S01:00000B22:  3A 39 0C
+F00:0688       	ld h,a
+               S01:00000B25:  67
+F00:0689       	ld e,PROCINFOSIZE
+               S01:00000B26:  1E 06
+F00:0690       	call Mul8b
+               S01:00000B28:  CD D5 0C
+F00:0691       	ex de,hl
+               S01:00000B2B:  EB
+F00:0692       	ld hl,processtable
+               S01:00000B2C:  21 3A 0C
+F00:0693       	add hl,DE
+               S01:00000B2F:  19
+F00:0694       	inc a
+               S01:00000B30:  3C
+F00:0695       	cp MAXPROCESSES
+               S01:00000B31:  FE 04
+F00:0696       	jp p, 1$ ;# if we go passed the limit reset back to 0
+               S01:00000B33:  F2 3D 0B
+F00:0697       	ld (currentprocessinfo),a
+               S01:00000B36:  32 39 0C
+F00:0698       	pop af
+               S01:00000B39:  F1
+F00:0699       	scf ;# set cf
+               S01:00000B3A:  37
+F00:0700       	ccf ;# invert cf  - more process info's available so return with carry flag not set
+               S01:00000B3B:  3F
+F00:0701       	ret
+               S01:00000B3C:  C9
+F00:0702       1$: ;# if reach maxprocesses, return 0 in a & hl
+F00:0703       	ld a,0
+               S01:00000B3D:  3E 00
+F00:0704       	ld (currentprocessinfo),a
+               S01:00000B3F:  32 39 0C
+F00:0705       	ld h,a
+               S01:00000B42:  67
+F00:0706       	ld l,a
+               S01:00000B43:  6F
+F00:0707       	pop af
+               S01:00000B44:  F1
+F00:0708       	scf ;# set carry flag  - if no more process return with carry flag set
+               S01:00000B45:  37
 F00:0709       	ret
-               S01:00000B47:  C9
+               S01:00000B46:  C9
 F00:0710       
-F00:0711       ;# ================ getmalloctable ======#
-F00:0712       	getmalloctable:
-F00:0713       		ld hl,malloctable
-               S01:00000B48:  21 00 0E
-F00:0714       		ret
-               S01:00000B4B:  C9
-F00:0715       
-F00:0716       ;# ====== reserve memory alloc table entry ===#
-F00:0717       
-F00:0718       	reservemalloc:
-F00:0719       		push bc
-               S01:00000B4C:  C5
-F00:0720       		push af
-               S01:00000B4D:  F5
-F00:0721       		ld b,1
-               S01:00000B4E:  06 01
-F00:0722       		call setresetpage
-               S01:00000B50:  CD 56 0B
-F00:0723       		pop af
-               S01:00000B53:  F1
-F00:0724       		pop bc
-               S01:00000B54:  C1
-F00:0725       	ret
-               S01:00000B55:  C9
-F00:0726       ;# ======= setresetpage - memory alloc table management ===#
-F00:0727       setresetpage:
-F00:0728       ;# ld a, page
-F00:0729       ;# ld b, setorreset , 0 = reset, 1 = set
-F00:0730       		push hl
-               S01:00000B56:  E5
-F00:0731       		push bc
-               S01:00000B57:  C5
-F00:0732       		push af
-               S01:00000B58:  F5
-F00:0733       	
-F00:0734       		
-F00:0735       		DEBUG '@'
+F00:0711       #=== getprocessslot ===#
+F00:0712       ;# return the first available slot in hl
+F00:0713       ;# a slot is occuppied if the processid is not zero. this routine will locate the first unoccuppied slot
+F00:0714       ;# A register returns status where 0=no slots , 1=slot available
+F00:0715       ;# if carry flag set, a slot was found
+F00:0716       ;# if carry flag not set, it did not find an empty slot
+F00:0717       getprocessslot:
+F00:0718       	call startprocessinfo
+               S01:00000B47:  CD 19 0B
+F00:0719       2$:
+F00:0720       #	DEBUG '*'
+F00:0721       #	PRINTLN
+F00:0722       	call nextprocessinfo ;
+               S01:00000B4A:  CD 21 0B
+F00:0723       	jp c,1$ ;# if carry flag set, we reached the end
+               S01:00000B4D:  DA 58 0B
+F00:0724       	ld a,(hl)
+               S01:00000B50:  7E
+F00:0725       #	call printhex
+F00:0726       #	call printhexL
+F00:0727       	cp 0 ;# compare processids
+               S01:00000B51:  FE 00
+F00:0728       	jp nz, 2$   ;# we are looking for a zero processid, which means it's an empty slot
+               S01:00000B53:  C2 4A 0B
+F00:0729       	#ld hl,didfind
+F00:0730       	#call println
+F00:0731       #	ld a,1
+F00:0732       	scf ;#did find return set carry flag
+               S01:00000B56:  37
+F00:0733       	ret ;# found
+               S01:00000B57:  C9
+F00:0734       
+F00:0735       1$: ;# not found
+F00:0736       	#ld hl,notfound
+F00:0737       	#call println
+F00:0738       #	ld a,0
+F00:0739       	scf ;# did not find return unset carry flag
+               S01:00000B58:  37
+F00:0740       	ccf
+               S01:00000B59:  3F
+F00:0741       ret
+               S01:00000B5A:  C9
+F00:0742       
+F00:0743       ;#=== getnewprocessid ===#
+F00:0744       ;# return set the next available processsid in lastprogramid variable
+F00:0745       ;# this processid is unique, it cannot be 0
+F00:0746       
+F00:0747       getnewprocessid:
+F00:0748       	push af
+               S01:00000B5B:  F5
+F00:0749       	push hl
+               S01:00000B5C:  E5
+F00:0750       	push bc
+               S01:00000B5D:  C5
+F00:0751       
+F00:0752       1$: ;#; increment the number thats already there (lastprogramid),  repeat if zero
+F00:0753       	DEBUG '!'
+F07:0001       # example : DEBUG '!'
+F07:0002       #      or : DEBUG h
+F07:0003       		push af
+               S01:00000B5E:  F5
+F07:0004       		ld a,33
+               S01:00000B5F:  3E 21
+F07:0005       		call putc
+               S01:00000B61:  CD E0 08
+F07:0006       		pop af
+               S01:00000B64:  F1
+F00:0754       	ld hl,lastprogramid
+               S01:00000B65:  21 37 0C
+F00:0755       	inc (hl)
+               S01:00000B68:  34
+F00:0756       	ld a,(lastprogramid) ;
+               S01:00000B69:  3A 37 0C
+F00:0757       	ld c,0
+               S01:00000B6C:  0E 00
+F00:0758       	cp c
+               S01:00000B6E:  B9
+F00:0759       	jp z,1$:
+               S01:00000B6F:  CA 5E 0B
+F00:0760       	ld c,a ;# move new id into c register,# keep if in C register we will use it later
+               S01:00000B72:  4F
+F00:0761       	call startprocessinfo
+               S01:00000B73:  CD 19 0B
+F00:0762       2$: DEBUG '@'
 F08:0001       # example : DEBUG '!'
 F08:0002       #      or : DEBUG h
 F08:0003       		push af
-               S01:00000B59:  F5
+               S01:00000B76:  F5
 F08:0004       		ld a,64
-               S01:00000B5A:  3E 40
+               S01:00000B77:  3E 40
 F08:0005       		call putc
-               S01:00000B5C:  CD E0 08
+               S01:00000B79:  CD E0 08
 F08:0006       		pop af
-               S01:00000B5F:  F1
-F00:0736       
-F00:0737       		call getmallocrelativebase
-               S01:00000B60:  CD 90 0B
-F00:0738       
-F00:0739       		DEBUG '%'
+               S01:00000B7C:  F1
+F00:0763       	call nextprocessinfo
+               S01:00000B7D:  CD 21 0B
+F00:0764       	jp c,3$ ;# if carry flag set, we reach the end
+               S01:00000B80:  DA 8C 0B
+F00:0765       	inc hl ;# advance to the process id
+               S01:00000B83:  23
+F00:0766       	ld a,(hl)
+               S01:00000B84:  7E
+F00:0767       	cp c
+               S01:00000B85:  B9
+F00:0768       	jp nz,2$ ;# repeat after incrementing the number again
+               S01:00000B86:  C2 76 0B
+F00:0769       	jp 1$ ;# get the next processinfo item
+               S01:00000B89:  C3 5E 0B
+F00:0770       3$:
+F00:0771       	DEBUG '#'
 F09:0001       # example : DEBUG '!'
 F09:0002       #      or : DEBUG h
 F09:0003       		push af
-               S01:00000B63:  F5
-F09:0004       		ld a,37
-               S01:00000B64:  3E 25
+               S01:00000B8C:  F5
+F09:0004       		ld a,35
+               S01:00000B8D:  3E 23
 F09:0005       		call putc
-               S01:00000B66:  CD E0 08
+               S01:00000B8F:  CD E0 08
 F09:0006       		pop af
-               S01:00000B69:  F1
-F00:0740       		pop af
-               S01:00000B6A:  F1
-F00:0741       		and 0x0f
-               S01:00000B6B:  E6 0F
-F00:0742       		cp 8
-               S01:00000B6D:  FE 08
-F00:0743       		jp m,1$
-               S01:00000B6F:  FA 75 0B
-F00:0744       		inc hl
-               S01:00000B72:  23
-F00:0745       		sub 8
-               S01:00000B73:  D6 08
-F00:0746       1$:
-F00:0747       	
-F00:0748       		ld b,a
-               S01:00000B75:  47
-F00:0749       		inc b
-               S01:00000B76:  04
-F00:0750       		scf
-               S01:00000B77:  37
-F00:0751       		ld a,0
-               S01:00000B78:  3E 00
-F00:0752       
-F00:0753       2$:		rra 	
-               S01:00000B7A:  1F
-F00:0754       		djnz 2$
-               S01:00000B7B:  10 FD
-F00:0755       		pop bc
-               S01:00000B7D:  C1
-F00:0756       
-F00:0757       		push af
-               S01:00000B7E:  F5
-F00:0758       		ld a,b
-               S01:00000B7F:  78
-F00:0759       		cp 0
-               S01:00000B80:  FE 00
-F00:0760       		jp z,6$
-               S01:00000B82:  CA 8A 0B
-F00:0761       ;# set
-F00:0762       		pop af
-               S01:00000B85:  F1
-F00:0763       		or (hl)
-               S01:00000B86:  B6
-F00:0764       		jp 4$
-               S01:00000B87:  C3 8D 0B
-F00:0765       
-F00:0766       ;# reset
-F00:0767       6$:		pop af
-               S01:00000B8A:  F1
-F00:0768       		cpl
-               S01:00000B8B:  2F
-F00:0769       		and (hl)
-               S01:00000B8C:  A6
-F00:0770       
-F00:0771       4$:
-F00:0772       		ld (hl),a
-               S01:00000B8D:  77
-F00:0773       		pop hl
-               S01:00000B8E:  E1
-F00:0774       		ret
-               S01:00000B8F:  C9
-F00:0775       
-F00:0776       getmallocrelativebase:
-F00:0777       ;# ld a,page
-F00:0778       ;# call getmallocrelativebase
-F00:0779       ;# return in hl = malloctable address adjusted for page
-F00:0780       	push de
-               S01:00000B90:  D5
-F00:0781       		and 0xf0
-               S01:00000B91:  E6 F0
-F00:0782       
-F00:0783       		ld l,a
-               S01:00000B93:  6F
-F00:0784       		ld h,0
-               S01:00000B94:  26 00
-F00:0785       		ld d,8
-               S01:00000B96:  16 08
-F00:0786       		call Div8
-               S01:00000B98:  CD B0 0B
-F00:0787       
-F00:0788       		ex de,hl
-               S01:00000B9B:  EB
-F00:0789       		#.byte 0xeb
-F00:0790       
-F00:0791       		DEBUG '!'
-F10:0001       # example : DEBUG '!'
-F10:0002       #      or : DEBUG h
-F10:0003       		push af
-               S01:00000B9C:  F5
-F10:0004       		ld a,33
-               S01:00000B9D:  3E 21
-F10:0005       		call putc
-               S01:00000B9F:  CD E0 08
-F10:0006       		pop af
-               S01:00000BA2:  F1
+               S01:00000B92:  F1
+F00:0772       	pop bc
+               S01:00000B93:  C1
+F00:0773       	pop hl
+               S01:00000B94:  E1
+F00:0774       	pop af
+               S01:00000B95:  F1
+F00:0775       ret
+               S01:00000B96:  C9
+F00:0776       
+F00:0777       writeprocessinfo:
+F00:0778       # prerequisties : lastprogramid has the programid set 
+F00:0779       #               variable   procname: contains the name of the program 
+F00:0780       	call getprocessslot
+               S01:00000B97:  CD 47 0B
+F00:0781       	jp nc, failed
+               S01:00000B9A:  D2 B4 0B
+F00:0782       #call printhexL
+F00:0783       #PRINTLN
+F00:0784       	ld a,'R' ;# process is running
+               S01:00000B9D:  3E 52
+F00:0785       	ld (hl),a
+               S01:00000B9F:  77
+F00:0786       	inc hl
+               S01:00000BA0:  23
+F00:0787       	ld a,(lastprogramid) ;# it is required this variable is set to the correct id before running this routine
+               S01:00000BA1:  3A 37 0C
+F00:0788       	ld (hl),a
+               S01:00000BA4:  77
+F00:0789       	inc hl
+               S01:00000BA5:  23
+F00:0790       #call printhexL
+F00:0791       #PRINTLN
 F00:0792       
-F00:0793       		call getmalloctable
-               S01:00000BA3:  CD 48 0B
-F00:0794       		DEBUG '^'
+F00:0793       	ld de,procname
+               S01:00000BA6:  11 2D 0C
+F00:0794       	ex de,hl
+               S01:00000BA9:  EB
+F00:0795       #call printhexL
+F00:0796       #call println
+F00:0797       	ld c,4
+               S01:00000BAA:  0E 04
+F00:0798       	ld b,0
+               S01:00000BAC:  06 00
+F00:0799       	call strncpy ;# problem needs addressing: if the program name is < 4 bytes the copy will more than needed.
+               S01:00000BAE:  CD 65 08
+F00:0800       					;# we need a strncpy that stops on a null byte
+F00:0801       	ld a, 0
+               S01:00000BB1:  3E 00
+F00:0802       	ret
+               S01:00000BB3:  C9
+F00:0803       
+F00:0804       failed:
+F00:0805       	ld hl,errormsg
+               S01:00000BB4:  21 BD 0B
+F00:0806       	call println
+               S01:00000BB7:  CD 93 08
+F00:0807       	ld a,0
+               S01:00000BBA:  3E 00
+F00:0808       	ret 
+               S01:00000BBC:  C9
+F00:0809       
+F00:0810       errormsg: .string "could not find an empty slot, maximum number of processes running\r\n"
+               S01:00000BBD:  63 6F 75 6C 64 20 6E 6F 74 20 66 69 6E 64 20 61
+               S01:00000BCD:  6E 20 65 6D 70 74 79 20 73 6C 6F 74 2C 20 6D 61
+F00:0811       
+F00:0812       #==== getprocessbyid ==#
+F00:0813       # ld a,id
+F00:0814       # call getprocessbyid
+F00:0815       # cp 1             - returns in A : 0 = not found, 1 = found
+F00:0816       # jp z,we succeeded
+F00:0817       getprocessbyid:
+F00:0818       
+F00:0819       	call startprocessinfo
+               S01:00000C01:  CD 19 0B
+F00:0820       2$:
+F00:0821       
+F00:0822       	call nextprocessinfo ;
+               S01:00000C04:  CD 21 0B
+F00:0823       	jp c,1$ ;# if carry flag set, we reached the end
+               S01:00000C07:  DA 17 0C
+F00:0824       	push hl
+               S01:00000C0A:  E5
+F00:0825       	pop ix
+               S01:00000C0B:  DD E1
+F00:0826       	ld b,(ix+1)
+               S01:00000C0D:  DD 46 01
+F00:0827       	cp b ;# compare processids
+               S01:00000C10:  B8
+F00:0828       	jp nz, 2$
+               S01:00000C11:  C2 04 0C
+F00:0829       	ld a,1
+               S01:00000C14:  3E 01
+F00:0830       	ret ;# found
+               S01:00000C16:  C9
+F00:0831       
+F00:0832       1$: ;# not found
+F00:0833       	ld a,0
+               S01:00000C17:  3E 00
+F00:0834       ret
+               S01:00000C19:  C9
+F00:0835       
+F00:0836       ;# A = processid to delete
+F00:0837       deleteprocessbyid:
+F00:0838       push af
+               S01:00000C1A:  F5
+F00:0839       	call getprocessbyid
+               S01:00000C1B:  CD 01 0C
+F00:0840       	cp 1 ;# 1 = we found the process
+               S01:00000C1E:  FE 01
+F00:0841       	jp nz,1$
+               S01:00000C20:  C2 2B 0C
+F00:0842       	ld b,PROCINFOSIZE
+               S01:00000C23:  06 06
+F00:0843       	ld a,0
+               S01:00000C25:  3E 00
+F00:0844       0$: ld (hl),a
+               S01:00000C27:  77
+F00:0845       	inc hl
+               S01:00000C28:  23
+F00:0846       	djnz 0$
+               S01:00000C29:  10 FC
+F00:0847       
+F00:0848       1$:
+F00:0849       pop af
+               S01:00000C2B:  F1
+F00:0850       ret 
+               S01:00000C2C:  C9
+F00:0851       
+F00:0852       procname: .space 10 ;# space for the processname, but we really only need 4 or 4+1
+F00:0853       lastprogramid: .byte 0
+               S01:00000C37:  00
+F00:0854       maxprocesses: .byte MAXPROCESSES
+               S01:00000C38:  04
+F00:0855       currentprocessinfo: .byte 0; # index to a process table entry
+               S01:00000C39:  00
+F00:0856       processtable: 
+F00:0857       	;# 1byte process status - 1=running, 0=no process
+F00:0858       	;# 1byte processID
+F00:0859       	;# 4bytes process name
+F00:0860       .rept MAXPROCESSES
+F00:0862       
+F10:0001       	.space PROCINFOSIZE
+F10:0001       	.space PROCINFOSIZE
+F10:0001       	.space PROCINFOSIZE
+F10:0001       	.space PROCINFOSIZE
+F00:0863       endprocesstable: ;# this does nothing and can be deleted. I'm using it to check the listing address
+F00:0864       
+F00:0865       	# === getcommandparams == #
+F00:0866       	;# ld hl,buffer - address of where to copy the data
+F00:0867       	;# call getcommandparams
+F00:0868       	;# returns zero termined string at buffer 
+F00:0869       getcommandparams:
+F00:0870       	push de
+               S01:00000C52:  D5
+F00:0871       	push hl
+               S01:00000C53:  E5
+F00:0872       	push hl ;# save hl to move into de
+               S01:00000C54:  E5
+F00:0873       	pop de ;# load hl into de
+               S01:00000C55:  D1
+F00:0874       #	ld hl,userMemory-50   ;# ********* I dont remember why I did this, it needs investigating
+F00:0875       	ld hl,theparams
+               S01:00000C56:  21 D4 0A
+F00:0876       	call strcpy
+               S01:00000C59:  CD 68 08
+F00:0877       	pop hl
+               S01:00000C5C:  E1
+F00:0878       	pop de
+               S01:00000C5D:  D1
+F00:0879       	ret
+               S01:00000C5E:  C9
+F00:0880       
+F00:0881       ;# ================ getmalloctable ======#
+F00:0882       	getmalloctable:
+F00:0883       		ld hl,malloctable
+               S01:00000C5F:  21 00 0F
+F00:0884       		ret
+               S01:00000C62:  C9
+F00:0885       
+F00:0886       ;# ====== reserve memory alloc table entry ===#
+F00:0887       
+F00:0888       	reservemalloc:
+F00:0889       		push bc
+               S01:00000C63:  C5
+F00:0890       		push af
+               S01:00000C64:  F5
+F00:0891       		ld b,1
+               S01:00000C65:  06 01
+F00:0892       		call setresetpage
+               S01:00000C67:  CD 6D 0C
+F00:0893       		pop af
+               S01:00000C6A:  F1
+F00:0894       		pop bc
+               S01:00000C6B:  C1
+F00:0895       	ret
+               S01:00000C6C:  C9
+F00:0896       ;# ======= setresetpage - memory alloc table management ===#
+F00:0897       setresetpage:
+F00:0898       ;# ld a, page
+F00:0899       ;# ld b, setorreset , 0 = reset, 1 = set
+F00:0900       		push hl
+               S01:00000C6D:  E5
+F00:0901       		push bc
+               S01:00000C6E:  C5
+F00:0902       		push af
+               S01:00000C6F:  F5
+F00:0903       	
+F00:0904       		
+F00:0905       		DEBUG '@'
 F11:0001       # example : DEBUG '!'
 F11:0002       #      or : DEBUG h
 F11:0003       		push af
-               S01:00000BA6:  F5
-F11:0004       		ld a,94
-               S01:00000BA7:  3E 5E
+               S01:00000C70:  F5
+F11:0004       		ld a,64
+               S01:00000C71:  3E 40
 F11:0005       		call putc
-               S01:00000BA9:  CD E0 08
+               S01:00000C73:  CD E0 08
 F11:0006       		pop af
-               S01:00000BAC:  F1
-F00:0795       		add hl,de
-               S01:00000BAD:  19
-F00:0796       		pop de
-               S01:00000BAE:  D1
-F00:0797       		ret
-               S01:00000BAF:  C9
-F00:0798       
-F00:0799       
-F00:0800       
-F00:0801       ;# ========== Div8 8bit division =======#
-F00:0802       ;# http://tutorials.eeems.ca/Z80ASM/part4.htm#div8
-F00:0803       ;# result stored in HL
-F00:0804       ;# ld hl,4
-F00:0805       ;# ld d,2
-F00:0806       ;# call Div8
-F00:0807       Div8:                            ; this routine performs the operation HL=HL/D
-F00:0808         xor a                          ; clearing the upper 8 bits of AHL
-               S01:00000BB0:  AF
-F00:0809         ld b,16                        ; the length of the dividend (16 bits)
-               S01:00000BB1:  06 10
-F00:0810       Div8Loop:
-F00:0811         add hl,hl                      ; advancing a bit
-               S01:00000BB3:  29
-F00:0812         rla
-               S01:00000BB4:  17
-F00:0813         cp d                           ; checking if the divisor divides the digits chosen (in A)
-               S01:00000BB5:  BA
-F00:0814         jp c,Div8NextBit               ; if not, advancing without subtraction
-               S01:00000BB6:  DA BB 0B
-F00:0815         sub d                          ; subtracting the divisor
-               S01:00000BB9:  92
-F00:0816         inc l                          ; and setting the next digit of the quotient
-               S01:00000BBA:  2C
-F00:0817       Div8NextBit:
-F00:0818         djnz Div8Loop
-               S01:00000BBB:  10 F6
-F00:0819         ret
-               S01:00000BBD:  C9
-F00:0820       
-F00:0821         # ===== Mul8b 8bit multily ===#
-F00:0822         # http://tutorials.eeems.ca/Z80ASM/part4.htm
-F00:0823         Mul8b:                           ; this routine performs the operation HL=H*E
-F00:0824         ld d,0                         ; clearing D and L
-               S01:00000BBE:  16 00
-F00:0825         ld l,d
-               S01:00000BC0:  6A
-F00:0826         ld b,8                         ; we have 8 bits
-               S01:00000BC1:  06 08
-F00:0827       Mul8bLoop:
-F00:0828         add hl,hl                      ; advancing a bit
-               S01:00000BC3:  29
-F00:0829         jp nc,Mul8bSkip                ; if zero, we skip the addition (jp is used for speed)
-               S01:00000BC4:  D2 C8 0B
-F00:0830         add hl,de                      ; adding to the product if necessary
-               S01:00000BC7:  19
-F00:0831       Mul8bSkip:
-F00:0832         djnz Mul8bLoop
-               S01:00000BC8:  10 F9
-F00:0833         ret
-               S01:00000BCA:  C9
-F00:0834       
-F00:0835       ;================================
-F00:0836       ; # === loadaddress == #   THIS NEEDS CHANGING INTO A LOOKUP TABLE - not code
-F00:0837       ; ld a,x - where x = instruction id
-F00:0838       ;				id = 1, print
-F00:0839       ;					 2, printhex
-F00:0840       ;					3,loadFILE
-F00:0841       loadaddress:
-F00:0842       	cp PRINT
-               S01:00000BCB:  FE 01
-F00:0843       	jp nz,_loadaddress$2
-               S01:00000BCD:  C2 D4 0B
-F00:0844       	ld hl,print
-               S01:00000BD0:  21 A1 08
-F00:0845       	ret
-               S01:00000BD3:  C9
-F00:0846       _loadaddress$2:
-F00:0847       	cp PRINTHEX
-               S01:00000BD4:  FE 02
-F00:0848       	jp nz,_loadaddress$3
-               S01:00000BD6:  C2 DD 0B
-F00:0849       	ld hl,printhex
-               S01:00000BD9:  21 CA 08
-F00:0850       	ret
-               S01:00000BDC:  C9
-F00:0851       _loadaddress$3:
-F00:0852       	cp LOADFILE
-               S01:00000BDD:  FE 03
-F00:0853       	jp nz,_loadaddress$4
-               S01:00000BDF:  C2 E6 0B
-F00:0854       	ld hl,loadFILE
-               S01:00000BE2:  21 E3 08
-F00:0855       	ret
-               S01:00000BE5:  C9
-F00:0856       _loadaddress$4:
-F00:0857       	cp MEMSET
-               S01:00000BE6:  FE 04
-F00:0858       	jp nz,_loadaddress$5
-               S01:00000BE8:  C2 EF 0B
-F00:0859       	ld hl,memset
-               S01:00000BEB:  21 4A 08
-F00:0860       	ret
-               S01:00000BEE:  C9
-F00:0861       _loadaddress$5:
-F00:0862       	cp STRLEN
-               S01:00000BEF:  FE 05
-F00:0863       	jp nz,_loadaddress$6
-               S01:00000BF1:  C2 F8 0B
-F00:0864       	ld hl,strlen
-               S01:00000BF4:  21 53 08
-F00:0865       	ret
-               S01:00000BF7:  C9
-F00:0866       _loadaddress$6:
-F00:0867       	cp PUTC
-               S01:00000BF8:  FE 06
-F00:0868       	jp nz,_loadaddress$7
-               S01:00000BFA:  C2 01 0C
-F00:0869       	ld hl,putc
-               S01:00000BFD:  21 E0 08
-F00:0870       	ret
-               S01:00000C00:  C9
-F00:0871       _loadaddress$7:
-F00:0872       	cp TOUPPERCASE
-               S01:00000C01:  FE 07
-F00:0873       	jp nz,_loadaddress$8
-               S01:00000C03:  C2 0A 0C
-F00:0874       	ld hl,touppercase
-               S01:00000C06:  21 7B 08
-F00:0875       	ret
-               S01:00000C09:  C9
-F00:0876       _loadaddress$8:
-F00:0877       	cp HEXTOBYTE
-               S01:00000C0A:  FE 08
-F00:0878       	jp nz,_loadaddress$9
-               S01:00000C0C:  C2 13 0C
-F00:0879       	ld hl,hextobyte
-               S01:00000C0F:  21 F8 09
-F00:0880       	ret
-               S01:00000C12:  C9
-F00:0881       _loadaddress$9:
-F00:0882       	cp PRINTLN
-               S01:00000C13:  FE 09
-F00:0883       	jp nz,_loadaddress$10
-               S01:00000C15:  C2 1C 0C
-F00:0884       	ld hl,println
-               S01:00000C18:  21 93 08
-F00:0885       	ret
-               S01:00000C1B:  C9
-F00:0886       _loadaddress$10:
-F00:0887       	cp STRNCPY
-               S01:00000C1C:  FE 0A
-F00:0888       	jp nz,_loadaddress$11
-               S01:00000C1E:  C2 25 0C
-F00:0889       	ld hl,strncpy
-               S01:00000C21:  21 65 08
-F00:0890       	ret
-               S01:00000C24:  C9
-F00:0891       _loadaddress$11:
-F00:0892       	cp DIRECTORYOPEN
-               S01:00000C25:  FE 0D
-F00:0893       	jp nz,_loadaddress$12
-               S01:00000C27:  C2 2E 0C
-F00:0894       	ld hl,directoryopen
-               S01:00000C2A:  21 16 0A
-F00:0895       	ret
-               S01:00000C2D:  C9
-F00:0896       _loadaddress$12:
-F00:0897       	cp GETFILENAME:
-               S01:00000C2E:  FE 0F
-F00:0898       	jp nz,_loadaddress$13
-               S01:00000C30:  C2 37 0C
-F00:0899       	ld hl,getfilename
-               S01:00000C33:  21 24 0A
-F00:0900       	ret
-               S01:00000C36:  C9
-F00:0901       _loadaddress$13:
-F00:0902       	cp NEXTFILE
-               S01:00000C37:  FE 32
-F00:0903       	jp nz,_loadaddress$14
-               S01:00000C39:  C2 40 0C
-F00:0904       	ld hl,nextfile
-               S01:00000C3C:  21 1D 0A
-F00:0905       	ret
-               S01:00000C3F:  C9
-F00:0906       _loadaddress$14:
-F00:0907       	cp CREATEPROCESS
-               S01:00000C40:  FE 10
-F00:0908       	jp nz,_loadaddress$15
-               S01:00000C42:  C2 49 0C
-F00:0909       	ld hl,createProcess
-               S01:00000C45:  21 40 0A
-F00:0910       	ret
-               S01:00000C48:  C9
-F00:0911       _loadaddress$15:
-F00:0912       	cp GETCOMMANDPARAMS
-               S01:00000C49:  FE 11
-F00:0913       	jp nz,_loadaddress$16
-               S01:00000C4B:  C2 52 0C
-F00:0914       	ld hl,getcommandparams
-               S01:00000C4E:  21 3B 0B
-F00:0915       	ret
-               S01:00000C51:  C9
-F00:0916       _loadaddress$16:
-F00:0917       	cp GETMALLOCTABLE
-               S01:00000C52:  FE 12
-F00:0918       	jp nz,_loadaddress$17
-               S01:00000C54:  C2 5B 0C
-F00:0919       	ld hl,getmalloctable
-               S01:00000C57:  21 48 0B
-F00:0920       	ret
-               S01:00000C5A:  C9
-F00:0921       _loadaddress$17:
-F00:0922       	cp DIV8
-               S01:00000C5B:  FE 13
-F00:0923       	jp nz,_loadaddress18$
-               S01:00000C5D:  C2 64 0C
-F00:0924       	ld hl,Div8
-               S01:00000C60:  21 B0 0B
-F00:0925       	ret
-               S01:00000C63:  C9
-F00:0926       _loadaddress18$:
-F00:0927       	cp SETRESETPAGE
-               S01:00000C64:  FE 14
-F00:0928       	jp nz,_loadaddress19$
-               S01:00000C66:  C2 6D 0C
-F00:0929       	ld hl,setresetpage
-               S01:00000C69:  21 56 0B
-F00:0930       	ret
-               S01:00000C6C:  C9
-F00:0931       _loadaddress19$:
-F00:0932       	cp PRINTHEXL
-               S01:00000C6D:  FE 15
-F00:0933       	jp nz,_loadaddress20$
-               S01:00000C6F:  C2 76 0C
-F00:0934       	ld hl,printhexL
-               S01:00000C72:  21 BD 08
-F00:0935       	ret
-               S01:00000C75:  C9
-F00:0936       _loadaddress20$:
-F00:0937       	cp STARTPROCESSINFO
-               S01:00000C76:  FE 16
-F00:0938       	jp nz,_loadaddress21$
-               S01:00000C78:  C2 7F 0C
-F00:0939       	ld hl,startprocessinfo
-               S01:00000C7B:  21 F2 0A
-F00:0940       	ret
-               S01:00000C7E:  C9
-F00:0941       _loadaddress21$:
-F00:0942       	cp NEXTPROCESSINFO
-               S01:00000C7F:  FE 17
-F00:0943       	jp nz, _loadaddress22$
-               S01:00000C81:  C2 88 0C
-F00:0944       	ld hl, nextprocessinfo
-               S01:00000C84:  21 FA 0A
-F00:0945       	ret
-               S01:00000C87:  C9
-F00:0946       _loadaddress22$:
-F00:0947       	cp STRCPY
-               S01:00000C88:  FE 18
-F00:0948       	jp nz, _loadaddress23$
-               S01:00000C8A:  C2 91 0C
-F00:0949       	ld hl, strcpy
-               S01:00000C8D:  21 68 08
-F00:0950       	ret
-               S01:00000C90:  C9
-F00:0951       _loadaddress23$:
-F00:0952       	#----- not defined ---
-F00:0953       	ld hl,addressfailedmsg
-               S01:00000C91:  21 E8 0C
-F00:0954       	call print 
-               S01:00000C94:  CD A1 08
-F00:0955       	call printhex
-               S01:00000C97:  CD CA 08
-F00:0956       
-F00:0957       	ld hl,0
-               S01:00000C9A:  21 00 00
-F00:0958       	ret
-               S01:00000C9D:  C9
-F00:0959       
+               S01:00000C76:  F1
+F00:0906       
+F00:0907       		call getmallocrelativebase
+               S01:00000C77:  CD A7 0C
+F00:0908       
+F00:0909       		DEBUG '%'
+F12:0001       # example : DEBUG '!'
+F12:0002       #      or : DEBUG h
+F12:0003       		push af
+               S01:00000C7A:  F5
+F12:0004       		ld a,37
+               S01:00000C7B:  3E 25
+F12:0005       		call putc
+               S01:00000C7D:  CD E0 08
+F12:0006       		pop af
+               S01:00000C80:  F1
+F00:0910       		pop af
+               S01:00000C81:  F1
+F00:0911       		and 0x0f
+               S01:00000C82:  E6 0F
+F00:0912       		cp 8
+               S01:00000C84:  FE 08
+F00:0913       		jp m,1$
+               S01:00000C86:  FA 8C 0C
+F00:0914       		inc hl
+               S01:00000C89:  23
+F00:0915       		sub 8
+               S01:00000C8A:  D6 08
+F00:0916       1$:
+F00:0917       	
+F00:0918       		ld b,a
+               S01:00000C8C:  47
+F00:0919       		inc b
+               S01:00000C8D:  04
+F00:0920       		scf
+               S01:00000C8E:  37
+F00:0921       		ld a,0
+               S01:00000C8F:  3E 00
+F00:0922       
+F00:0923       2$:		rra 	
+               S01:00000C91:  1F
+F00:0924       		djnz 2$
+               S01:00000C92:  10 FD
+F00:0925       		pop bc
+               S01:00000C94:  C1
+F00:0926       
+F00:0927       		push af
+               S01:00000C95:  F5
+F00:0928       		ld a,b
+               S01:00000C96:  78
+F00:0929       		cp 0
+               S01:00000C97:  FE 00
+F00:0930       		jp z,6$
+               S01:00000C99:  CA A1 0C
+F00:0931       ;# set
+F00:0932       		pop af
+               S01:00000C9C:  F1
+F00:0933       		or (hl)
+               S01:00000C9D:  B6
+F00:0934       		jp 4$
+               S01:00000C9E:  C3 A4 0C
+F00:0935       
+F00:0936       ;# reset
+F00:0937       6$:		pop af
+               S01:00000CA1:  F1
+F00:0938       		cpl
+               S01:00000CA2:  2F
+F00:0939       		and (hl)
+               S01:00000CA3:  A6
+F00:0940       
+F00:0941       4$:
+F00:0942       		ld (hl),a
+               S01:00000CA4:  77
+F00:0943       		pop hl
+               S01:00000CA5:  E1
+F00:0944       		ret
+               S01:00000CA6:  C9
+F00:0945       
+F00:0946       getmallocrelativebase:
+F00:0947       ;# ld a,page
+F00:0948       ;# call getmallocrelativebase
+F00:0949       ;# return in hl = malloctable address adjusted for page
+F00:0950       	push de
+               S01:00000CA7:  D5
+F00:0951       		and 0xf0
+               S01:00000CA8:  E6 F0
+F00:0952       
+F00:0953       		ld l,a
+               S01:00000CAA:  6F
+F00:0954       		ld h,0
+               S01:00000CAB:  26 00
+F00:0955       		ld d,8
+               S01:00000CAD:  16 08
+F00:0956       		call Div8
+               S01:00000CAF:  CD C7 0C
+F00:0957       
+F00:0958       		ex de,hl
+               S01:00000CB2:  EB
+F00:0959       		#.byte 0xeb
 F00:0960       
-F00:0961       	# ======================== end subroutines ========== #
-F00:0962       	
-F00:0963       	nullroutine: 
-F00:0964       		ei
-               S01:00000C9E:  FB
-F00:0965       		reti
-               S01:00000C9F:  ED 4D
-F00:0966       
-F00:0967       	serialport: ;#/* interrupt 2, echo what was sent*/
-F00:0968       	#	di
-F00:0969       		#ld a,'*'
-F00:0970       		#out (SERIALPORT),a
-F00:0971       
-F00:0972       		in a,(SERIALPORT)
-               S01:00000CA1:  DB 01
-F00:0973       		cp 0
-               S01:00000CA3:  FE 00
-F00:0974       		jp nz,_1$
-               S01:00000CA5:  C2 AA 0C
-F00:0975       		ld a,'`'
-               S01:00000CA8:  3E 60
-F00:0976       _1$:
-F00:0977       		out (SERIALPORT),a
-               S01:00000CAA:  D3 01
-F00:0978       		ei
-               S01:00000CAC:  FB
-F00:0979       		reti
-               S01:00000CAD:  ED 4D
-F00:0980       	crlf: .string "\r\n"
-               S01:00000CAF:  0D 0A
-F00:0981       	loadedmsg: .string "JOSHUA\r\n"
-               S01:00000CB2:  4A 4F 53 48 55 41 0D 0A
-F00:0982       	readymsg: .string "\r\nReady v0.0\r\n"
-               S01:00000CBB:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
-F00:0983       	commandprocessor: .string "cmd"
-               S01:00000CCA:  63 6D 64
-F00:0984       	errorloadingmsg: .string "error loading program.\r\n\"
-               S01:00000CCE:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
-               S01:00000CDE:  6F 67 72 61 6D 2E 0D 0A 22
-F00:0985       	addressfailedmsg: .string "GetAddress failed for code:"
-               S01:00000CE8:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
-               S01:00000CF8:  64 20 66 6F 72 20 63 6F 64 65 3A
-F00:0986       
-F00:0987       	.align 8
-F00:0988       malloctable: .space 255
-F00:0989       
-F00:0990       	; I could set the org address but I'm going to let that move as needed	.org 0x????
-F00:0991       	;#.org 0x0A00-start
-F00:0992       
-F00:0993       	.align 8
-F00:0994       	jumptable:
-F00:0995       	.2byte nullroutine ;0
-               S01:00000F00:  9E 0C
-F00:0996       	.2byte serialport ;2
-               S01:00000F02:  A1 0C
-F00:0997       	.2byte nullroutine ;4
-               S01:00000F04:  9E 0C
-F00:0998       	.2byte nullroutine ;6
-               S01:00000F06:  9E 0C
-F00:0999       	.2byte nullroutine ;0
-               S01:00000F08:  9E 0C
-F00:1000       	.2byte nullroutine ;0
-               S01:00000F0A:  9E 0C
-F00:1001       	.2byte nullroutine ;0
-               S01:00000F0C:  9E 0C
-F00:1002       	.2byte nullroutine ;0
-               S01:00000F0E:  9E 0C
-F00:1003       	.2byte nullroutine ;0
-               S01:00000F10:  9E 0C
-F00:1004       	.2byte nullroutine ;0
-               S01:00000F12:  9E 0C
-F00:1005       #/* 10 */
-F00:1006       	.2byte nullroutine ;0
-               S01:00000F14:  9E 0C
-F00:1007       	.2byte nullroutine ;0
-               S01:00000F16:  9E 0C
-F00:1008       	.2byte nullroutine ;0
-               S01:00000F18:  9E 0C
-F00:1009       	.2byte nullroutine ;0
-               S01:00000F1A:  9E 0C
-F00:1010       	.2byte nullroutine ;0
-               S01:00000F1C:  9E 0C
-F00:1011       	.2byte nullroutine ;0
-               S01:00000F1E:  9E 0C
-F00:1012       	.2byte nullroutine ;0
-               S01:00000F20:  9E 0C
-F00:1013       	.2byte nullroutine ;0
-               S01:00000F22:  9E 0C
-F00:1014       	.2byte nullroutine ;0
-               S01:00000F24:  9E 0C
-F00:1015       	.2byte nullroutine ;0
-               S01:00000F26:  9E 0C
-F00:1016       #/* 20 */
-F00:1017       	.2byte nullroutine ;0
-               S01:00000F28:  9E 0C
-F00:1018       	.2byte nullroutine ;0
-               S01:00000F2A:  9E 0C
-F00:1019       	.2byte nullroutine ;0
-               S01:00000F2C:  9E 0C
-F00:1020       	.2byte nullroutine ;0
-               S01:00000F2E:  9E 0C
-F00:1021       	.2byte nullroutine ;0
-               S01:00000F30:  9E 0C
-F00:1022       	.2byte nullroutine ;0
-               S01:00000F32:  9E 0C
-F00:1023       	.2byte nullroutine ;0
-               S01:00000F34:  9E 0C
-F00:1024       	.2byte nullroutine ;0
-               S01:00000F36:  9E 0C
-F00:1025       	.2byte nullroutine ;0
-               S01:00000F38:  9E 0C
-F00:1026       	.2byte nullroutine ;0
-               S01:00000F3A:  9E 0C
-F00:1027       #/* 30 */
-F00:1028       	.2byte nullroutine ;0
-               S01:00000F3C:  9E 0C
-F00:1029       	.2byte nullroutine ;0
-               S01:00000F3E:  9E 0C
-F00:1030       	.2byte nullroutine ;0
-               S01:00000F40:  9E 0C
-F00:1031       	.2byte nullroutine ;0
-               S01:00000F42:  9E 0C
-F00:1032       	.2byte nullroutine ;0
-               S01:00000F44:  9E 0C
-F00:1033       	.2byte nullroutine ;0
-               S01:00000F46:  9E 0C
-F00:1034       	.2byte nullroutine ;0
-               S01:00000F48:  9E 0C
-F00:1035       	.2byte nullroutine ;0
-               S01:00000F4A:  9E 0C
-F00:1036       	.2byte nullroutine ;0
-               S01:00000F4C:  9E 0C
-F00:1037       	.2byte nullroutine ;0
-               S01:00000F4E:  9E 0C
-F00:1038       #/* 40 */
-F00:1039       	.2byte nullroutine ;0
-               S01:00000F50:  9E 0C
-F00:1040       	.2byte nullroutine ;0
-               S01:00000F52:  9E 0C
-F00:1041       	.2byte nullroutine ;0
-               S01:00000F54:  9E 0C
-F00:1042       	.2byte nullroutine ;0
-               S01:00000F56:  9E 0C
-F00:1043       	.2byte nullroutine ;0
-               S01:00000F58:  9E 0C
-F00:1044       	.2byte nullroutine ;0
-               S01:00000F5A:  9E 0C
-F00:1045       	.2byte nullroutine ;0
-               S01:00000F5C:  9E 0C
-F00:1046       	.2byte nullroutine ;0
-               S01:00000F5E:  9E 0C
-F00:1047       	.2byte nullroutine ;0
-               S01:00000F60:  9E 0C
-F00:1048       	.2byte nullroutine ;0
-               S01:00000F62:  9E 0C
-F00:1049       #/* 50 */
-F00:1050       	.2byte nullroutine ;0
-               S01:00000F64:  9E 0C
-F00:1051       	.2byte nullroutine ;0
-               S01:00000F66:  9E 0C
-F00:1052       	.2byte nullroutine ;0
-               S01:00000F68:  9E 0C
-F00:1053       	.2byte nullroutine ;0
-               S01:00000F6A:  9E 0C
-F00:1054       	.2byte nullroutine ;0
-               S01:00000F6C:  9E 0C
-F00:1055       	.2byte nullroutine ;0
-               S01:00000F6E:  9E 0C
-F00:1056       	.2byte nullroutine ;0
-               S01:00000F70:  9E 0C
-F00:1057       	.2byte nullroutine ;0
-               S01:00000F72:  9E 0C
-F00:1058       	.2byte nullroutine ;0
-               S01:00000F74:  9E 0C
-F00:1059       	.2byte nullroutine ;0
-               S01:00000F76:  9E 0C
-F00:1060       #/* 60 */
-F00:1061       	.2byte nullroutine ;0
-               S01:00000F78:  9E 0C
-F00:1062       	.2byte nullroutine ;0
-               S01:00000F7A:  9E 0C
-F00:1063       	.2byte nullroutine ;0
-               S01:00000F7C:  9E 0C
-F00:1064       	.2byte nullroutine ;0
-               S01:00000F7E:  9E 0C
-F00:1065       	.2byte nullroutine ;0
-               S01:00000F80:  9E 0C
-F00:1066       	.2byte nullroutine ;0
-               S01:00000F82:  9E 0C
-F00:1067       	.2byte nullroutine ;0
-               S01:00000F84:  9E 0C
-F00:1068       	.2byte nullroutine ;0
-               S01:00000F86:  9E 0C
-F00:1069       	.2byte nullroutine ;0
-               S01:00000F88:  9E 0C
-F00:1070       	.2byte nullroutine ;0
-               S01:00000F8A:  9E 0C
-F00:1071       #/* 70 */
-F00:1072       	.2byte nullroutine ;0
-               S01:00000F8C:  9E 0C
-F00:1073       	.2byte nullroutine ;0
-               S01:00000F8E:  9E 0C
-F00:1074       	.2byte nullroutine ;0
-               S01:00000F90:  9E 0C
-F00:1075       	.2byte nullroutine ;0
-               S01:00000F92:  9E 0C
-F00:1076       	.2byte nullroutine ;0
-               S01:00000F94:  9E 0C
-F00:1077       	.2byte nullroutine ;0
-               S01:00000F96:  9E 0C
-F00:1078       	.2byte nullroutine ;0
-               S01:00000F98:  9E 0C
-F00:1079       	.2byte nullroutine ;0
-               S01:00000F9A:  9E 0C
-F00:1080       	.2byte nullroutine ;0
-               S01:00000F9C:  9E 0C
-F00:1081       	.2byte nullroutine ;0
-               S01:00000F9E:  9E 0C
-F00:1082       #/* 80 */
-F00:1083       	.2byte nullroutine ;0
-               S01:00000FA0:  9E 0C
-F00:1084       	.2byte nullroutine ;0
-               S01:00000FA2:  9E 0C
-F00:1085       	.2byte nullroutine ;0
-               S01:00000FA4:  9E 0C
-F00:1086       	.2byte nullroutine ;0
-               S01:00000FA6:  9E 0C
-F00:1087       	.2byte nullroutine ;0
-               S01:00000FA8:  9E 0C
-F00:1088       	.2byte nullroutine ;0
-               S01:00000FAA:  9E 0C
-F00:1089       	.2byte nullroutine ;0
-               S01:00000FAC:  9E 0C
-F00:1090       	.2byte nullroutine ;0
-               S01:00000FAE:  9E 0C
-F00:1091       	.2byte nullroutine ;0
-               S01:00000FB0:  9E 0C
-F00:1092       	.2byte nullroutine ;0
-               S01:00000FB2:  9E 0C
-F00:1093       #/* 90 */
-F00:1094       	.2byte nullroutine ;0
-               S01:00000FB4:  9E 0C
-F00:1095       	.2byte nullroutine ;0
-               S01:00000FB6:  9E 0C
-F00:1096       	.2byte nullroutine ;0
-               S01:00000FB8:  9E 0C
-F00:1097       	.2byte nullroutine ;0
-               S01:00000FBA:  9E 0C
-F00:1098       	.2byte nullroutine ;0
-               S01:00000FBC:  9E 0C
-F00:1099       	.2byte nullroutine ;0
-               S01:00000FBE:  9E 0C
-F00:1100       	.2byte nullroutine ;0
-               S01:00000FC0:  9E 0C
-F00:1101       	.2byte nullroutine ;0
-               S01:00000FC2:  9E 0C
-F00:1102       	.2byte nullroutine ;0
-               S01:00000FC4:  9E 0C
-F00:1103       	.2byte nullroutine ;0
-               S01:00000FC6:  9E 0C
-F00:1104       #/* 100 */
-F00:1105       	.2byte nullroutine ;0
-               S01:00000FC8:  9E 0C
-F00:1106       	.2byte nullroutine ;0
-               S01:00000FCA:  9E 0C
-F00:1107       	.2byte nullroutine ;0
-               S01:00000FCC:  9E 0C
-F00:1108       	.2byte nullroutine ;0
-               S01:00000FCE:  9E 0C
-F00:1109       	.2byte nullroutine ;0
-               S01:00000FD0:  9E 0C
-F00:1110       	.2byte nullroutine ;0
-               S01:00000FD2:  9E 0C
-F00:1111       	.2byte nullroutine ;0
-               S01:00000FD4:  9E 0C
-F00:1112       	.2byte nullroutine ;0
-               S01:00000FD6:  9E 0C
-F00:1113       	.2byte nullroutine ;0
-               S01:00000FD8:  9E 0C
-F00:1114       	.2byte nullroutine ;0
-               S01:00000FDA:  9E 0C
-F00:1115       #/* 110 */
-F00:1116       	.2byte nullroutine ;0
-               S01:00000FDC:  9E 0C
-F00:1117       	.2byte nullroutine ;0
-               S01:00000FDE:  9E 0C
-F00:1118       	.2byte nullroutine ;0
-               S01:00000FE0:  9E 0C
-F00:1119       	.2byte nullroutine ;0
-               S01:00000FE2:  9E 0C
-F00:1120       	.2byte nullroutine ;0
-               S01:00000FE4:  9E 0C
-F00:1121       	.2byte nullroutine ;0
-               S01:00000FE6:  9E 0C
-F00:1122       	.2byte nullroutine ;0
-               S01:00000FE8:  9E 0C
-F00:1123       	.2byte nullroutine ;0
-               S01:00000FEA:  9E 0C
-F00:1124       	.2byte nullroutine ;0
-               S01:00000FEC:  9E 0C
-F00:1125       	.2byte nullroutine ;0
-               S01:00000FEE:  9E 0C
-F00:1126       #/* 120 */
-F00:1127       	.2byte nullroutine ;0
-               S01:00000FF0:  9E 0C
-F00:1128       	.2byte nullroutine ;0
-               S01:00000FF2:  9E 0C
-F00:1129       	.2byte nullroutine ;0
-               S01:00000FF4:  9E 0C
-F00:1130       	.2byte nullroutine ;0
-               S01:00000FF6:  9E 0C
-F00:1131       	.2byte nullroutine ;0
-               S01:00000FF8:  9E 0C
-F00:1132       	.2byte nullroutine ;0
-               S01:00000FFA:  9E 0C
-F00:1133       	.2byte nullroutine ;0
-               S01:00000FFC:  9E 0C
-F00:1134       	.2byte nullroutine ;0
-               S01:00000FFE:  9E 0C
-F00:1135       
-F00:1136       	ENDOFLINE:
-F00:1137       	.if (ENDOFLINE > 0x01fff)
-F00:1138       		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x2000"
-F00:1139       	.endif
-F00:1140       	
+F00:0961       		DEBUG '!'
+F13:0001       # example : DEBUG '!'
+F13:0002       #      or : DEBUG h
+F13:0003       		push af
+               S01:00000CB3:  F5
+F13:0004       		ld a,33
+               S01:00000CB4:  3E 21
+F13:0005       		call putc
+               S01:00000CB6:  CD E0 08
+F13:0006       		pop af
+               S01:00000CB9:  F1
+F00:0962       
+F00:0963       		call getmalloctable
+               S01:00000CBA:  CD 5F 0C
+F00:0964       		DEBUG '^'
+F14:0001       # example : DEBUG '!'
+F14:0002       #      or : DEBUG h
+F14:0003       		push af
+               S01:00000CBD:  F5
+F14:0004       		ld a,94
+               S01:00000CBE:  3E 5E
+F14:0005       		call putc
+               S01:00000CC0:  CD E0 08
+F14:0006       		pop af
+               S01:00000CC3:  F1
+F00:0965       		add hl,de
+               S01:00000CC4:  19
+F00:0966       		pop de
+               S01:00000CC5:  D1
+F00:0967       		ret
+               S01:00000CC6:  C9
+F00:0968       
+F00:0969       
+F00:0970       
+F00:0971       ;# ========== Div8 8bit division =======#
+F00:0972       ;# http://tutorials.eeems.ca/Z80ASM/part4.htm#div8
+F00:0973       ;# result stored in HL
+F00:0974       ;# ld hl,4
+F00:0975       ;# ld d,2
+F00:0976       ;# call Div8
+F00:0977       Div8:                            ; this routine performs the operation HL=HL/D
+F00:0978         xor a                          ; clearing the upper 8 bits of AHL
+               S01:00000CC7:  AF
+F00:0979         ld b,16                        ; the length of the dividend (16 bits)
+               S01:00000CC8:  06 10
+F00:0980       Div8Loop:
+F00:0981         add hl,hl                      ; advancing a bit
+               S01:00000CCA:  29
+F00:0982         rla
+               S01:00000CCB:  17
+F00:0983         cp d                           ; checking if the divisor divides the digits chosen (in A)
+               S01:00000CCC:  BA
+F00:0984         jp c,Div8NextBit               ; if not, advancing without subtraction
+               S01:00000CCD:  DA D2 0C
+F00:0985         sub d                          ; subtracting the divisor
+               S01:00000CD0:  92
+F00:0986         inc l                          ; and setting the next digit of the quotient
+               S01:00000CD1:  2C
+F00:0987       Div8NextBit:
+F00:0988         djnz Div8Loop
+               S01:00000CD2:  10 F6
+F00:0989         ret
+               S01:00000CD4:  C9
+F00:0990       
+F00:0991         # ===== Mul8b 8bit multily ===#
+F00:0992         # http://tutorials.eeems.ca/Z80ASM/part4.htm
+F00:0993         Mul8b:                           ; this routine performs the operation HL=H*E
+F00:0994         ld d,0                         ; clearing D and L
+               S01:00000CD5:  16 00
+F00:0995         ld l,d
+               S01:00000CD7:  6A
+F00:0996         ld b,8                         ; we have 8 bits
+               S01:00000CD8:  06 08
+F00:0997       Mul8bLoop:
+F00:0998         add hl,hl                      ; advancing a bit
+               S01:00000CDA:  29
+F00:0999         jp nc,Mul8bSkip                ; if zero, we skip the addition (jp is used for speed)
+               S01:00000CDB:  D2 DF 0C
+F00:1000         add hl,de                      ; adding to the product if necessary
+               S01:00000CDE:  19
+F00:1001       Mul8bSkip:
+F00:1002         djnz Mul8bLoop
+               S01:00000CDF:  10 F9
+F00:1003         ret
+               S01:00000CE1:  C9
+F00:1004       
+F00:1005       ;================================
+F00:1006       ; # === loadaddress == #   THIS NEEDS CHANGING INTO A LOOKUP TABLE - not code
+F00:1007       ; ld a,x - where x = instruction id
+F00:1008       ;				id = 1, print
+F00:1009       ;					 2, printhex
+F00:1010       ;					3,loadFILE
+F00:1011       loadaddress:
+F00:1012       	cp PRINT
+               S01:00000CE2:  FE 01
+F00:1013       	jp nz,_loadaddress$2
+               S01:00000CE4:  C2 EB 0C
+F00:1014       	ld hl,print
+               S01:00000CE7:  21 A1 08
+F00:1015       	ret
+               S01:00000CEA:  C9
+F00:1016       _loadaddress$2:
+F00:1017       	cp PRINTHEX
+               S01:00000CEB:  FE 02
+F00:1018       	jp nz,_loadaddress$3
+               S01:00000CED:  C2 F4 0C
+F00:1019       	ld hl,printhex
+               S01:00000CF0:  21 CA 08
+F00:1020       	ret
+               S01:00000CF3:  C9
+F00:1021       _loadaddress$3:
+F00:1022       	cp LOADFILE
+               S01:00000CF4:  FE 03
+F00:1023       	jp nz,_loadaddress$4
+               S01:00000CF6:  C2 FD 0C
+F00:1024       	ld hl,loadFILE
+               S01:00000CF9:  21 E3 08
+F00:1025       	ret
+               S01:00000CFC:  C9
+F00:1026       _loadaddress$4:
+F00:1027       	cp MEMSET
+               S01:00000CFD:  FE 04
+F00:1028       	jp nz,_loadaddress$5
+               S01:00000CFF:  C2 06 0D
+F00:1029       	ld hl,memset
+               S01:00000D02:  21 4A 08
+F00:1030       	ret
+               S01:00000D05:  C9
+F00:1031       _loadaddress$5:
+F00:1032       	cp STRLEN
+               S01:00000D06:  FE 05
+F00:1033       	jp nz,_loadaddress$6
+               S01:00000D08:  C2 0F 0D
+F00:1034       	ld hl,strlen
+               S01:00000D0B:  21 53 08
+F00:1035       	ret
+               S01:00000D0E:  C9
+F00:1036       _loadaddress$6:
+F00:1037       	cp PUTC
+               S01:00000D0F:  FE 06
+F00:1038       	jp nz,_loadaddress$7
+               S01:00000D11:  C2 18 0D
+F00:1039       	ld hl,putc
+               S01:00000D14:  21 E0 08
+F00:1040       	ret
+               S01:00000D17:  C9
+F00:1041       _loadaddress$7:
+F00:1042       	cp TOUPPERCASE
+               S01:00000D18:  FE 07
+F00:1043       	jp nz,_loadaddress$8
+               S01:00000D1A:  C2 21 0D
+F00:1044       	ld hl,touppercase
+               S01:00000D1D:  21 7B 08
+F00:1045       	ret
+               S01:00000D20:  C9
+F00:1046       _loadaddress$8:
+F00:1047       	cp HEXTOBYTE
+               S01:00000D21:  FE 08
+F00:1048       	jp nz,_loadaddress$9
+               S01:00000D23:  C2 2A 0D
+F00:1049       	ld hl,hextobyte
+               S01:00000D26:  21 F8 09
+F00:1050       	ret
+               S01:00000D29:  C9
+F00:1051       _loadaddress$9:
+F00:1052       	cp PRINTLN
+               S01:00000D2A:  FE 09
+F00:1053       	jp nz,_loadaddress$10
+               S01:00000D2C:  C2 33 0D
+F00:1054       	ld hl,println
+               S01:00000D2F:  21 93 08
+F00:1055       	ret
+               S01:00000D32:  C9
+F00:1056       _loadaddress$10:
+F00:1057       	cp STRNCPY
+               S01:00000D33:  FE 0A
+F00:1058       	jp nz,_loadaddress$11
+               S01:00000D35:  C2 3C 0D
+F00:1059       	ld hl,strncpy
+               S01:00000D38:  21 65 08
+F00:1060       	ret
+               S01:00000D3B:  C9
+F00:1061       _loadaddress$11:
+F00:1062       	cp DIRECTORYOPEN
+               S01:00000D3C:  FE 0D
+F00:1063       	jp nz,_loadaddress$12
+               S01:00000D3E:  C2 45 0D
+F00:1064       	ld hl,directoryopen
+               S01:00000D41:  21 16 0A
+F00:1065       	ret
+               S01:00000D44:  C9
+F00:1066       _loadaddress$12:
+F00:1067       	cp GETFILENAME:
+               S01:00000D45:  FE 0F
+F00:1068       	jp nz,_loadaddress$13
+               S01:00000D47:  C2 4E 0D
+F00:1069       	ld hl,getfilename
+               S01:00000D4A:  21 24 0A
+F00:1070       	ret
+               S01:00000D4D:  C9
+F00:1071       _loadaddress$13:
+F00:1072       	cp NEXTFILE
+               S01:00000D4E:  FE 32
+F00:1073       	jp nz,_loadaddress$14
+               S01:00000D50:  C2 57 0D
+F00:1074       	ld hl,nextfile
+               S01:00000D53:  21 1D 0A
+F00:1075       	ret
+               S01:00000D56:  C9
+F00:1076       _loadaddress$14:
+F00:1077       	cp CREATEPROCESS
+               S01:00000D57:  FE 10
+F00:1078       	jp nz,_loadaddress$15
+               S01:00000D59:  C2 60 0D
+F00:1079       	ld hl,createProcess
+               S01:00000D5C:  21 40 0A
+F00:1080       	ret
+               S01:00000D5F:  C9
+F00:1081       _loadaddress$15:
+F00:1082       	cp GETCOMMANDPARAMS
+               S01:00000D60:  FE 11
+F00:1083       	jp nz,_loadaddress$16
+               S01:00000D62:  C2 69 0D
+F00:1084       	ld hl,getcommandparams
+               S01:00000D65:  21 52 0C
+F00:1085       	ret
+               S01:00000D68:  C9
+F00:1086       _loadaddress$16:
+F00:1087       	cp GETMALLOCTABLE
+               S01:00000D69:  FE 12
+F00:1088       	jp nz,_loadaddress$17
+               S01:00000D6B:  C2 72 0D
+F00:1089       	ld hl,getmalloctable
+               S01:00000D6E:  21 5F 0C
+F00:1090       	ret
+               S01:00000D71:  C9
+F00:1091       _loadaddress$17:
+F00:1092       	cp DIV8
+               S01:00000D72:  FE 13
+F00:1093       	jp nz,_loadaddress18$
+               S01:00000D74:  C2 7B 0D
+F00:1094       	ld hl,Div8
+               S01:00000D77:  21 C7 0C
+F00:1095       	ret
+               S01:00000D7A:  C9
+F00:1096       _loadaddress18$:
+F00:1097       	cp SETRESETPAGE
+               S01:00000D7B:  FE 14
+F00:1098       	jp nz,_loadaddress19$
+               S01:00000D7D:  C2 84 0D
+F00:1099       	ld hl,setresetpage
+               S01:00000D80:  21 6D 0C
+F00:1100       	ret
+               S01:00000D83:  C9
+F00:1101       _loadaddress19$:
+F00:1102       	cp PRINTHEXL
+               S01:00000D84:  FE 15
+F00:1103       	jp nz,_loadaddress20$
+               S01:00000D86:  C2 8D 0D
+F00:1104       	ld hl,printhexL
+               S01:00000D89:  21 BD 08
+F00:1105       	ret
+               S01:00000D8C:  C9
+F00:1106       _loadaddress20$:
+F00:1107       	cp STARTPROCESSINFO
+               S01:00000D8D:  FE 16
+F00:1108       	jp nz,_loadaddress21$
+               S01:00000D8F:  C2 96 0D
+F00:1109       	ld hl,startprocessinfo
+               S01:00000D92:  21 19 0B
+F00:1110       	ret
+               S01:00000D95:  C9
+F00:1111       _loadaddress21$:
+F00:1112       	cp NEXTPROCESSINFO
+               S01:00000D96:  FE 17
+F00:1113       	jp nz, _loadaddress22$
+               S01:00000D98:  C2 9F 0D
+F00:1114       	ld hl, nextprocessinfo
+               S01:00000D9B:  21 21 0B
+F00:1115       	ret
+               S01:00000D9E:  C9
+F00:1116       _loadaddress22$:
+F00:1117       	cp STRCPY
+               S01:00000D9F:  FE 18
+F00:1118       	jp nz, _loadaddress23$
+               S01:00000DA1:  C2 A8 0D
+F00:1119       	ld hl, strcpy
+               S01:00000DA4:  21 68 08
+F00:1120       	ret
+               S01:00000DA7:  C9
+F00:1121       _loadaddress23$:
+F00:1122       	cp GETPROCESSBYID
+               S01:00000DA8:  FE 1A
+F00:1123       	jp nz,_loadaddress24$
+               S01:00000DAA:  C2 B1 0D
+F00:1124       	ld hl,getprocessbyid
+               S01:00000DAD:  21 01 0C
+F00:1125       	ret
+               S01:00000DB0:  C9
+F00:1126       _loadaddress24$:
+F00:1127       	cp MULTIPLY8
+               S01:00000DB1:  FE 1B
+F00:1128       	jp nz,_loadaddress25$
+               S01:00000DB3:  C2 BA 0D
+F00:1129       	ld hl,Mul8b
+               S01:00000DB6:  21 D5 0C
+F00:1130       	ret
+               S01:00000DB9:  C9
+F00:1131       _loadaddress25$:
+F00:1132       	cp SETPROCID
+               S01:00000DBA:  FE 1C
+F00:1133       	jp nz, _loadaddress26$
+               S01:00000DBC:  C2 C3 0D
+F00:1134       	ld hl,setprocid
+               S01:00000DBF:  21 06 0B
+F00:1135       	ret
+               S01:00000DC2:  C9
+F00:1136       _loadaddress26$:
+F00:1137       	#----- not defined ---
+F00:1138       	ld hl,addressfailedmsg
+               S01:00000DC3:  21 1A 0E
+F00:1139       	call print 
+               S01:00000DC6:  CD A1 08
+F00:1140       	call printhex
+               S01:00000DC9:  CD CA 08
+F00:1141       
+F00:1142       	ld hl,0
+               S01:00000DCC:  21 00 00
+F00:1143       	ret
+               S01:00000DCF:  C9
+F00:1144       
+F00:1145       
+F00:1146       	# ======================== end subroutines ========== #
+F00:1147       	
+F00:1148       	nullroutine: 
+F00:1149       		ei
+               S01:00000DD0:  FB
+F00:1150       		reti
+               S01:00000DD1:  ED 4D
+F00:1151       
+F00:1152       	serialport: ;#/* interrupt 2, echo what was sent*/
+F00:1153       	#	di
+F00:1154       		#ld a,'*'
+F00:1155       		#out (SERIALPORT),a
+F00:1156       
+F00:1157       		in a,(SERIALPORT)
+               S01:00000DD3:  DB 01
+F00:1158       		cp 0
+               S01:00000DD5:  FE 00
+F00:1159       		jp nz,_1$
+               S01:00000DD7:  C2 DC 0D
+F00:1160       		ld a,'`'
+               S01:00000DDA:  3E 60
+F00:1161       _1$:
+F00:1162       		out (SERIALPORT),a
+               S01:00000DDC:  D3 01
+F00:1163       		ei
+               S01:00000DDE:  FB
+F00:1164       		reti
+               S01:00000DDF:  ED 4D
+F00:1165       	crlf: .string "\r\n"
+               S01:00000DE1:  0D 0A
+F00:1166       	loadedmsg: .string "JOSHUA\r\n"
+               S01:00000DE4:  4A 4F 53 48 55 41 0D 0A
+F00:1167       	readymsg: .string "\r\nReady v0.0\r\n"
+               S01:00000DED:  0D 0A 52 65 61 64 79 20 76 30 2E 30 0D 0A
+F00:1168       	commandprocessor: .string "cmd"
+               S01:00000DFC:  63 6D 64
+F00:1169       	errorloadingmsg: .string "error loading program.\r\n\"
+               S01:00000E00:  65 72 72 6F 72 20 6C 6F 61 64 69 6E 67 20 70 72
+               S01:00000E10:  6F 67 72 61 6D 2E 0D 0A 22
+F00:1170       	addressfailedmsg: .string "GetAddress failed for code:"
+               S01:00000E1A:  47 65 74 41 64 64 72 65 73 73 20 66 61 69 6C 65
+               S01:00000E2A:  64 20 66 6F 72 20 63 6F 64 65 3A
+F00:1171       
+F00:1172       	.align 8
+F00:1173       malloctable: .space 255
+F00:1174       
+F00:1175       	; I could set the org address but I'm going to let that move as needed	.org 0x????
+F00:1176       	;#.org 0x0A00-start
+F00:1177       
+F00:1178       	.align 8
+F00:1179       	jumptable:
+F00:1180       	.2byte nullroutine ;0
+               S01:00001000:  D0 0D
+F00:1181       	.2byte serialport ;2
+               S01:00001002:  D3 0D
+F00:1182       	.2byte nullroutine ;4
+               S01:00001004:  D0 0D
+F00:1183       	.2byte nullroutine ;6
+               S01:00001006:  D0 0D
+F00:1184       	.2byte nullroutine ;0
+               S01:00001008:  D0 0D
+F00:1185       	.2byte nullroutine ;0
+               S01:0000100A:  D0 0D
+F00:1186       	.2byte nullroutine ;0
+               S01:0000100C:  D0 0D
+F00:1187       	.2byte nullroutine ;0
+               S01:0000100E:  D0 0D
+F00:1188       	.2byte nullroutine ;0
+               S01:00001010:  D0 0D
+F00:1189       	.2byte nullroutine ;0
+               S01:00001012:  D0 0D
+F00:1190       #/* 10 */
+F00:1191       	.2byte nullroutine ;0
+               S01:00001014:  D0 0D
+F00:1192       	.2byte nullroutine ;0
+               S01:00001016:  D0 0D
+F00:1193       	.2byte nullroutine ;0
+               S01:00001018:  D0 0D
+F00:1194       	.2byte nullroutine ;0
+               S01:0000101A:  D0 0D
+F00:1195       	.2byte nullroutine ;0
+               S01:0000101C:  D0 0D
+F00:1196       	.2byte nullroutine ;0
+               S01:0000101E:  D0 0D
+F00:1197       	.2byte nullroutine ;0
+               S01:00001020:  D0 0D
+F00:1198       	.2byte nullroutine ;0
+               S01:00001022:  D0 0D
+F00:1199       	.2byte nullroutine ;0
+               S01:00001024:  D0 0D
+F00:1200       	.2byte nullroutine ;0
+               S01:00001026:  D0 0D
+F00:1201       #/* 20 */
+F00:1202       	.2byte nullroutine ;0
+               S01:00001028:  D0 0D
+F00:1203       	.2byte nullroutine ;0
+               S01:0000102A:  D0 0D
+F00:1204       	.2byte nullroutine ;0
+               S01:0000102C:  D0 0D
+F00:1205       	.2byte nullroutine ;0
+               S01:0000102E:  D0 0D
+F00:1206       	.2byte nullroutine ;0
+               S01:00001030:  D0 0D
+F00:1207       	.2byte nullroutine ;0
+               S01:00001032:  D0 0D
+F00:1208       	.2byte nullroutine ;0
+               S01:00001034:  D0 0D
+F00:1209       	.2byte nullroutine ;0
+               S01:00001036:  D0 0D
+F00:1210       	.2byte nullroutine ;0
+               S01:00001038:  D0 0D
+F00:1211       	.2byte nullroutine ;0
+               S01:0000103A:  D0 0D
+F00:1212       #/* 30 */
+F00:1213       	.2byte nullroutine ;0
+               S01:0000103C:  D0 0D
+F00:1214       	.2byte nullroutine ;0
+               S01:0000103E:  D0 0D
+F00:1215       	.2byte nullroutine ;0
+               S01:00001040:  D0 0D
+F00:1216       	.2byte nullroutine ;0
+               S01:00001042:  D0 0D
+F00:1217       	.2byte nullroutine ;0
+               S01:00001044:  D0 0D
+F00:1218       	.2byte nullroutine ;0
+               S01:00001046:  D0 0D
+F00:1219       	.2byte nullroutine ;0
+               S01:00001048:  D0 0D
+F00:1220       	.2byte nullroutine ;0
+               S01:0000104A:  D0 0D
+F00:1221       	.2byte nullroutine ;0
+               S01:0000104C:  D0 0D
+F00:1222       	.2byte nullroutine ;0
+               S01:0000104E:  D0 0D
+F00:1223       #/* 40 */
+F00:1224       	.2byte nullroutine ;0
+               S01:00001050:  D0 0D
+F00:1225       	.2byte nullroutine ;0
+               S01:00001052:  D0 0D
+F00:1226       	.2byte nullroutine ;0
+               S01:00001054:  D0 0D
+F00:1227       	.2byte nullroutine ;0
+               S01:00001056:  D0 0D
+F00:1228       	.2byte nullroutine ;0
+               S01:00001058:  D0 0D
+F00:1229       	.2byte nullroutine ;0
+               S01:0000105A:  D0 0D
+F00:1230       	.2byte nullroutine ;0
+               S01:0000105C:  D0 0D
+F00:1231       	.2byte nullroutine ;0
+               S01:0000105E:  D0 0D
+F00:1232       	.2byte nullroutine ;0
+               S01:00001060:  D0 0D
+F00:1233       	.2byte nullroutine ;0
+               S01:00001062:  D0 0D
+F00:1234       #/* 50 */
+F00:1235       	.2byte nullroutine ;0
+               S01:00001064:  D0 0D
+F00:1236       	.2byte nullroutine ;0
+               S01:00001066:  D0 0D
+F00:1237       	.2byte nullroutine ;0
+               S01:00001068:  D0 0D
+F00:1238       	.2byte nullroutine ;0
+               S01:0000106A:  D0 0D
+F00:1239       	.2byte nullroutine ;0
+               S01:0000106C:  D0 0D
+F00:1240       	.2byte nullroutine ;0
+               S01:0000106E:  D0 0D
+F00:1241       	.2byte nullroutine ;0
+               S01:00001070:  D0 0D
+F00:1242       	.2byte nullroutine ;0
+               S01:00001072:  D0 0D
+F00:1243       	.2byte nullroutine ;0
+               S01:00001074:  D0 0D
+F00:1244       	.2byte nullroutine ;0
+               S01:00001076:  D0 0D
+F00:1245       #/* 60 */
+F00:1246       	.2byte nullroutine ;0
+               S01:00001078:  D0 0D
+F00:1247       	.2byte nullroutine ;0
+               S01:0000107A:  D0 0D
+F00:1248       	.2byte nullroutine ;0
+               S01:0000107C:  D0 0D
+F00:1249       	.2byte nullroutine ;0
+               S01:0000107E:  D0 0D
+F00:1250       	.2byte nullroutine ;0
+               S01:00001080:  D0 0D
+F00:1251       	.2byte nullroutine ;0
+               S01:00001082:  D0 0D
+F00:1252       	.2byte nullroutine ;0
+               S01:00001084:  D0 0D
+F00:1253       	.2byte nullroutine ;0
+               S01:00001086:  D0 0D
+F00:1254       	.2byte nullroutine ;0
+               S01:00001088:  D0 0D
+F00:1255       	.2byte nullroutine ;0
+               S01:0000108A:  D0 0D
+F00:1256       #/* 70 */
+F00:1257       	.2byte nullroutine ;0
+               S01:0000108C:  D0 0D
+F00:1258       	.2byte nullroutine ;0
+               S01:0000108E:  D0 0D
+F00:1259       	.2byte nullroutine ;0
+               S01:00001090:  D0 0D
+F00:1260       	.2byte nullroutine ;0
+               S01:00001092:  D0 0D
+F00:1261       	.2byte nullroutine ;0
+               S01:00001094:  D0 0D
+F00:1262       	.2byte nullroutine ;0
+               S01:00001096:  D0 0D
+F00:1263       	.2byte nullroutine ;0
+               S01:00001098:  D0 0D
+F00:1264       	.2byte nullroutine ;0
+               S01:0000109A:  D0 0D
+F00:1265       	.2byte nullroutine ;0
+               S01:0000109C:  D0 0D
+F00:1266       	.2byte nullroutine ;0
+               S01:0000109E:  D0 0D
+F00:1267       #/* 80 */
+F00:1268       	.2byte nullroutine ;0
+               S01:000010A0:  D0 0D
+F00:1269       	.2byte nullroutine ;0
+               S01:000010A2:  D0 0D
+F00:1270       	.2byte nullroutine ;0
+               S01:000010A4:  D0 0D
+F00:1271       	.2byte nullroutine ;0
+               S01:000010A6:  D0 0D
+F00:1272       	.2byte nullroutine ;0
+               S01:000010A8:  D0 0D
+F00:1273       	.2byte nullroutine ;0
+               S01:000010AA:  D0 0D
+F00:1274       	.2byte nullroutine ;0
+               S01:000010AC:  D0 0D
+F00:1275       	.2byte nullroutine ;0
+               S01:000010AE:  D0 0D
+F00:1276       	.2byte nullroutine ;0
+               S01:000010B0:  D0 0D
+F00:1277       	.2byte nullroutine ;0
+               S01:000010B2:  D0 0D
+F00:1278       #/* 90 */
+F00:1279       	.2byte nullroutine ;0
+               S01:000010B4:  D0 0D
+F00:1280       	.2byte nullroutine ;0
+               S01:000010B6:  D0 0D
+F00:1281       	.2byte nullroutine ;0
+               S01:000010B8:  D0 0D
+F00:1282       	.2byte nullroutine ;0
+               S01:000010BA:  D0 0D
+F00:1283       	.2byte nullroutine ;0
+               S01:000010BC:  D0 0D
+F00:1284       	.2byte nullroutine ;0
+               S01:000010BE:  D0 0D
+F00:1285       	.2byte nullroutine ;0
+               S01:000010C0:  D0 0D
+F00:1286       	.2byte nullroutine ;0
+               S01:000010C2:  D0 0D
+F00:1287       	.2byte nullroutine ;0
+               S01:000010C4:  D0 0D
+F00:1288       	.2byte nullroutine ;0
+               S01:000010C6:  D0 0D
+F00:1289       #/* 100 */
+F00:1290       	.2byte nullroutine ;0
+               S01:000010C8:  D0 0D
+F00:1291       	.2byte nullroutine ;0
+               S01:000010CA:  D0 0D
+F00:1292       	.2byte nullroutine ;0
+               S01:000010CC:  D0 0D
+F00:1293       	.2byte nullroutine ;0
+               S01:000010CE:  D0 0D
+F00:1294       	.2byte nullroutine ;0
+               S01:000010D0:  D0 0D
+F00:1295       	.2byte nullroutine ;0
+               S01:000010D2:  D0 0D
+F00:1296       	.2byte nullroutine ;0
+               S01:000010D4:  D0 0D
+F00:1297       	.2byte nullroutine ;0
+               S01:000010D6:  D0 0D
+F00:1298       	.2byte nullroutine ;0
+               S01:000010D8:  D0 0D
+F00:1299       	.2byte nullroutine ;0
+               S01:000010DA:  D0 0D
+F00:1300       #/* 110 */
+F00:1301       	.2byte nullroutine ;0
+               S01:000010DC:  D0 0D
+F00:1302       	.2byte nullroutine ;0
+               S01:000010DE:  D0 0D
+F00:1303       	.2byte nullroutine ;0
+               S01:000010E0:  D0 0D
+F00:1304       	.2byte nullroutine ;0
+               S01:000010E2:  D0 0D
+F00:1305       	.2byte nullroutine ;0
+               S01:000010E4:  D0 0D
+F00:1306       	.2byte nullroutine ;0
+               S01:000010E6:  D0 0D
+F00:1307       	.2byte nullroutine ;0
+               S01:000010E8:  D0 0D
+F00:1308       	.2byte nullroutine ;0
+               S01:000010EA:  D0 0D
+F00:1309       	.2byte nullroutine ;0
+               S01:000010EC:  D0 0D
+F00:1310       	.2byte nullroutine ;0
+               S01:000010EE:  D0 0D
+F00:1311       #/* 120 */
+F00:1312       	.2byte nullroutine ;0
+               S01:000010F0:  D0 0D
+F00:1313       	.2byte nullroutine ;0
+               S01:000010F2:  D0 0D
+F00:1314       	.2byte nullroutine ;0
+               S01:000010F4:  D0 0D
+F00:1315       	.2byte nullroutine ;0
+               S01:000010F6:  D0 0D
+F00:1316       	.2byte nullroutine ;0
+               S01:000010F8:  D0 0D
+F00:1317       	.2byte nullroutine ;0
+               S01:000010FA:  D0 0D
+F00:1318       	.2byte nullroutine ;0
+               S01:000010FC:  D0 0D
+F00:1319       	.2byte nullroutine ;0
+               S01:000010FE:  D0 0D
+F00:1320       
+F00:1321       	ENDOFLINE:
+F00:1322       	.if (ENDOFLINE > 0x01fff)
+F00:1323       		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x2000"
+F00:1324       	.endif
+F00:1325       	
 
 
 Sections:
@@ -2058,71 +2388,97 @@ F03  SERIAL.inc
 F04  SDCARD.inc
 F05  debughex
 F06  debug
-F07  REPEAT:RAM.s:line 692
+F07  debug
 F08  debug
 F09  debug
-F10  debug
+F10  REPEAT:RAM.s:line 862
 F11  debug
+F12  debug
+F13  debug
+F14  debug
 
 
 Symbols:
-ENDOFLINE EXPR(4096=0x1000) ABS 
- serialport _1$ EXPR(3242=0xcaa) ABS 
-serialport EXPR(3233=0xca1) ABS 
-nullroutine EXPR(3230=0xc9e) ABS 
-addressfailedmsg EXPR(3304=0xce8) ABS 
-_loadaddress23$ EXPR(3217=0xc91) ABS 
-_loadaddress22$ EXPR(3208=0xc88) ABS 
-_loadaddress21$ EXPR(3199=0xc7f) ABS 
-_loadaddress20$ EXPR(3190=0xc76) ABS 
-_loadaddress19$ EXPR(3181=0xc6d) ABS 
-_loadaddress18$ EXPR(3172=0xc64) ABS 
-_loadaddress$17 EXPR(3163=0xc5b) ABS 
-_loadaddress$16 EXPR(3154=0xc52) ABS 
-_loadaddress$15 EXPR(3145=0xc49) ABS 
-_loadaddress$14 EXPR(3136=0xc40) ABS 
-_loadaddress$13 EXPR(3127=0xc37) ABS 
-_loadaddress$12 EXPR(3118=0xc2e) ABS 
-_loadaddress$11 EXPR(3109=0xc25) ABS 
-_loadaddress$10 EXPR(3100=0xc1c) ABS 
-_loadaddress$9 EXPR(3091=0xc13) ABS 
-_loadaddress$8 EXPR(3082=0xc0a) ABS 
-_loadaddress$7 EXPR(3073=0xc01) ABS 
-_loadaddress$6 EXPR(3064=0xbf8) ABS 
-_loadaddress$5 EXPR(3055=0xbef) ABS 
-_loadaddress$4 EXPR(3046=0xbe6) ABS 
-_loadaddress$3 EXPR(3037=0xbdd) ABS 
-_loadaddress$2 EXPR(3028=0xbd4) ABS 
-Mul8bSkip EXPR(3016=0xbc8) ABS 
-Mul8bLoop EXPR(3011=0xbc3) ABS 
-Div8NextBit EXPR(3003=0xbbb) ABS 
-Div8Loop EXPR(2995=0xbb3) ABS 
-Div8 EXPR(2992=0xbb0) ABS 
- setresetpage 4$ EXPR(2957=0xb8d) ABS 
- setresetpage 6$ EXPR(2954=0xb8a) ABS 
- setresetpage 2$ EXPR(2938=0xb7a) ABS 
- setresetpage 1$ EXPR(2933=0xb75) ABS 
-getmallocrelativebase EXPR(2960=0xb90) ABS 
-setresetpage EXPR(2902=0xb56) ABS 
-malloctable EXPR(3584=0xe00) ABS 
-getmalloctable EXPR(2888=0xb48) ABS 
-getcommandparams EXPR(2875=0xb3b) ABS 
-endprocesstable EXPR(2875=0xb3b) UNUSED ABS 
-maxprocesses EXPR(2849=0xb21) UNUSED ABS 
-lastprogramid EXPR(2848=0xb20) UNUSED ABS 
- nextprocessinfo 1$ EXPR(2838=0xb16) ABS 
-processtable EXPR(2851=0xb23) ABS 
-Mul8b EXPR(3006=0xbbe) ABS 
-nextprocessinfo EXPR(2810=0xafa) ABS 
-currentprocessinfo EXPR(2850=0xb22) ABS 
-startprocessinfo EXPR(2802=0xaf2) ABS 
-progloadaddress EXPR(2727=0xaa7) ABS 
- createProcess _4$ EXPR(2720=0xaa0) ABS 
-_progloadaddr EXPR(2728=0xaa8) ABS 
-_createProcesserr$1 EXPR(2730=0xaaa) ABS 
-theprocessmsg EXPR(2735=0xaaf) ABS 
-thecommandlinemsg EXPR(2744=0xab8) ABS 
-theparams EXPR(2752=0xac0) ABS 
+ENDOFLINE EXPR(4352=0x1100) ABS 
+ serialport _1$ EXPR(3548=0xddc) ABS 
+serialport EXPR(3539=0xdd3) ABS 
+nullroutine EXPR(3536=0xdd0) ABS 
+addressfailedmsg EXPR(3610=0xe1a) ABS 
+_loadaddress26$ EXPR(3523=0xdc3) ABS 
+_loadaddress25$ EXPR(3514=0xdba) ABS 
+_loadaddress24$ EXPR(3505=0xdb1) ABS 
+_loadaddress23$ EXPR(3496=0xda8) ABS 
+_loadaddress22$ EXPR(3487=0xd9f) ABS 
+_loadaddress21$ EXPR(3478=0xd96) ABS 
+_loadaddress20$ EXPR(3469=0xd8d) ABS 
+_loadaddress19$ EXPR(3460=0xd84) ABS 
+_loadaddress18$ EXPR(3451=0xd7b) ABS 
+_loadaddress$17 EXPR(3442=0xd72) ABS 
+_loadaddress$16 EXPR(3433=0xd69) ABS 
+_loadaddress$15 EXPR(3424=0xd60) ABS 
+_loadaddress$14 EXPR(3415=0xd57) ABS 
+_loadaddress$13 EXPR(3406=0xd4e) ABS 
+_loadaddress$12 EXPR(3397=0xd45) ABS 
+_loadaddress$11 EXPR(3388=0xd3c) ABS 
+_loadaddress$10 EXPR(3379=0xd33) ABS 
+_loadaddress$9 EXPR(3370=0xd2a) ABS 
+_loadaddress$8 EXPR(3361=0xd21) ABS 
+_loadaddress$7 EXPR(3352=0xd18) ABS 
+_loadaddress$6 EXPR(3343=0xd0f) ABS 
+_loadaddress$5 EXPR(3334=0xd06) ABS 
+_loadaddress$4 EXPR(3325=0xcfd) ABS 
+_loadaddress$3 EXPR(3316=0xcf4) ABS 
+_loadaddress$2 EXPR(3307=0xceb) ABS 
+Mul8bSkip EXPR(3295=0xcdf) ABS 
+Mul8bLoop EXPR(3290=0xcda) ABS 
+Div8NextBit EXPR(3282=0xcd2) ABS 
+Div8Loop EXPR(3274=0xcca) ABS 
+Div8 EXPR(3271=0xcc7) ABS 
+ setresetpage 4$ EXPR(3236=0xca4) ABS 
+ setresetpage 6$ EXPR(3233=0xca1) ABS 
+ setresetpage 2$ EXPR(3217=0xc91) ABS 
+ setresetpage 1$ EXPR(3212=0xc8c) ABS 
+getmallocrelativebase EXPR(3239=0xca7) ABS 
+setresetpage EXPR(3181=0xc6d) ABS 
+malloctable EXPR(3840=0xf00) ABS 
+getmalloctable EXPR(3167=0xc5f) ABS 
+getcommandparams EXPR(3154=0xc52) ABS 
+endprocesstable EXPR(3154=0xc52) UNUSED ABS 
+maxprocesses EXPR(3128=0xc38) UNUSED ABS 
+ deleteprocessbyid 0$ EXPR(3111=0xc27) ABS 
+ deleteprocessbyid 1$ EXPR(3115=0xc2b) ABS 
+deleteprocessbyid EXPR(3098=0xc1a) UNUSED ABS 
+ getprocessbyid 1$ EXPR(3095=0xc17) ABS 
+ getprocessbyid 2$ EXPR(3076=0xc04) ABS 
+getprocessbyid EXPR(3073=0xc01) ABS 
+errormsg EXPR(3005=0xbbd) ABS 
+failed EXPR(2996=0xbb4) ABS 
+ getnewprocessid 3$ EXPR(2956=0xb8c) ABS 
+ getnewprocessid 2$ EXPR(2934=0xb76) ABS 
+ getnewprocessid 1$ EXPR(2910=0xb5e) ABS 
+ getprocessslot 1$ EXPR(2904=0xb58) ABS 
+ getprocessslot 2$ EXPR(2890=0xb4a) ABS 
+getprocessslot EXPR(2887=0xb47) ABS 
+ nextprocessinfo 1$ EXPR(2877=0xb3d) ABS 
+processtable EXPR(3130=0xc3a) ABS 
+Mul8b EXPR(3285=0xcd5) ABS 
+nextprocessinfo EXPR(2849=0xb21) ABS 
+currentprocessinfo EXPR(3129=0xc39) ABS 
+startprocessinfo EXPR(2841=0xb19) ABS 
+writeprocessinfo EXPR(2967=0xb97) ABS 
+getnewprocessid EXPR(2907=0xb5b) ABS 
+lastprogramid EXPR(3127=0xc37) ABS 
+setprocid EXPR(2822=0xb06) ABS 
+procname EXPR(3117=0xc2d) ABS 
+progloadaddress EXPR(2736=0xab0) ABS 
+createnewprocessinfo EXPR(2826=0xb0a) ABS 
+ createProcess _4$ EXPR(2726=0xaa6) ABS 
+_progloadaddr EXPR(2737=0xab1) ABS 
+_createProcesserr$1 EXPR(2739=0xab3) ABS 
+copyprogramname EXPR(2744=0xab8) ABS 
+theprocessmsg EXPR(2755=0xac3) ABS 
+thecommandlinemsg EXPR(2764=0xacc) ABS 
+theparams EXPR(2772=0xad4) ABS 
 createProcess EXPR(2624=0xa40) ABS 
 _exitgetfilename EXPR(2618=0xa3a) ABS 
 _getfilename$1 EXPR(2602=0xa2a) ABS 
@@ -2140,7 +2496,7 @@ sizeincrement EXPR(2522=0x9da) ABS
 _$nextbyte EXPR(2471=0x9a7) ABS 
  loadheader _1$ EXPR(2423=0x977) ABS 
  loadheader _2$ EXPR(2399=0x95f) ABS 
-reservemalloc EXPR(2892=0xb4c) ABS 
+reservemalloc EXPR(3171=0xc63) ABS 
  testloadaddress 45$ EXPR(2370=0x942) ABS 
 memorypages EXPR(2550=0x9f6) ABS 
  testloadaddress _4$ EXPR(2392=0x958) ABS 
@@ -2157,7 +2513,7 @@ _$ EXPR(2259=0x8d3) ABS
 printhexL EXPR(2237=0x8bd) ABS 
 _$2 EXPR(2234=0x8ba) ABS 
 _$1 EXPR(2223=0x8af) ABS 
-crlf EXPR(3247=0xcaf) ABS 
+crlf EXPR(3553=0xde1) ABS 
 nextcharacter EXPR(2185=0x889) ABS 
 converttouppercaseletter EXPR(2182=0x886) ABS 
 goagain EXPR(2173=0x87d) ABS 
@@ -2171,23 +2527,25 @@ _strlen$ EXPR(2135=0x857) ABS
 strlen EXPR(2131=0x853) ABS 
 _metset$1 EXPR(2124=0x84c) ABS 
 memset EXPR(2122=0x84a) ABS 
-errorloadingmsg EXPR(3278=0xcce) ABS 
+errorloadingmsg EXPR(3584=0xe00) ABS 
 printhex EXPR(2250=0x8ca) ABS 
 commandline EXPR(2119=0x847) ABS 
 println EXPR(2195=0x893) ABS 
 _cmdlne EXPR(2120=0x848) ABS 
 errorloading EXPR(2107=0x83b) ABS 
 loadFILE EXPR(2275=0x8e3) ABS 
-commandprocessor EXPR(3274=0xcca) ABS 
+commandprocessor EXPR(3580=0xdfc) ABS 
 commandprocessloop EXPR(2078=0x81e) ABS 
-loadedmsg EXPR(3250=0xcb2) ABS 
-jumptable EXPR(3840=0xf00) ABS 
+loadedmsg EXPR(3556=0xde4) ABS 
+jumptable EXPR(4096=0x1000) ABS 
 print EXPR(2209=0x8a1) ABS 
-readymsg EXPR(3259=0xcbb) ABS 
-loadaddress EXPR(3019=0xbcb) ABS 
+readymsg EXPR(3565=0xded) ABS 
+loadaddress EXPR(3298=0xce2) ABS 
 start EXPR(2052=0x804) UNUSED ABS 
 boot EXPR(2055=0x807) ABS 
-NEXTNUMBER EXPR(26=0x1a) UNUSED 
+NEXTNUMBER EXPR(29=0x1d) UNUSED 
+MULTIPLY8 EXPR(27=0x1b) 
+GETPROCESSBYID EXPR(26=0x1a) 
 NEXTPROCESSINFO EXPR(23=0x17) 
 STARTPROCESSINFO EXPR(22=0x16) 
 SETRESETPAGE EXPR(20=0x14) 
@@ -2210,6 +2568,7 @@ PRINTHEXL EXPR(21=0x15)
 PRINTHEX EXPR(2=0x2) 
 PRINTLN EXPR(9=0x9) 
 PRINT EXPR(1=0x1) 
+SETPROCID EXPR(28=0x1c) 
 GetAddress EXPR(2052=0x804) UNUSED 
 FALSE EXPR(0=0x0) UNUSED 
 TRUE EXPR(1=0x1) UNUSED 

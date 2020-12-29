@@ -4,8 +4,7 @@
 [some ideas](ideas.md)
 
 [library](library.md)
-
-
+[processinfo](processinfo.md)
 [commandline](commandline.md)
 
 A
@@ -42,8 +41,11 @@ G
 
 [getfilename](directory.md) 
 
-[getmalloctable.md](getmalloctable.md)
+[getmalloctable](getmalloctable.md)
 
+[getprocid](getprocid.md)
+
+[getprocessbyid](getprocessbyid.md)
 
 H  
 
@@ -70,6 +72,8 @@ M
 
 N
 
+[nextprocessinfo](startprocessinfo.md)
+
 O
 
 P
@@ -87,7 +91,7 @@ P
 
 [putc](putc.md) 
 
-
+[processinfo](processinfo.md)
 
 Q
 
@@ -100,6 +104,8 @@ S
 
 [strlen](strlen.md)
  
+ 
+[startprocessinfo](startprocessinfo.md)
 
 
 [setresetpage](setresetpage.md) - memory alloc table management

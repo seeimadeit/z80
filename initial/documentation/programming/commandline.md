@@ -2,7 +2,7 @@
 # Command line tools
 
 The command line is called Joshua, inspired by the wargames movie.
-the command line is also call the MCP - master control program as it's responsible
+The operating system is also call the MCP - master control program as it's responsible
 for loading and controlling the applications, MCP is inspired by the Tron movie.
 
 

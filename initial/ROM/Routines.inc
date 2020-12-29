@@ -42,6 +42,7 @@
 # the value in hl can change between os versions so do not hard code the values
 
 .equ GetAddress, 0x0804
+.equ SETPROCID,28
 .equ PRINT,		1
 .equ PRINTLN,	9
 .equ PRINTHEX,	2
@@ -65,9 +66,11 @@
 .equ SETRESETPAGE,20
 .equ STARTPROCESSINFO,22
 .equ NEXTPROCESSINFO,23
+.equ GETPROCESSBYID,26
+.equ MULTIPLY8,27
 
 
 
 
-.equ NEXTNUMBER,26
+.equ NEXTNUMBER,29
 

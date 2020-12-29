@@ -96,14 +96,33 @@ initialize:
 	ld a,STRNCPY
 	call GetAddress
 	ld (strncpyadr),hl
+	ld a,GETPROCESSBYID
+	call GetAddress
+	ld (getprocessbyidadr),hl
+	ld a,MULTIPLY8
+	call GetAddress
+	ld (Mul8badr),hl
+	ld a,SETPROCID
+	call GetAddress
+	ld (getprocidadr),hl
+	call getprocid
+	ld (processid),a
+	ld hl,(_getprocessid)
+	ld (getprocidadr),hl
 
 
+
+	
 
 
 
 
 	jp _main
-
+	_getprocessid: 
+	DEBUG '$'
+	ld a,(processid)
+		ret
+	processid: .byte 0
 	functionlookups:
 	.align 2
 	print: .byte 0xc3
@@ -150,6 +169,12 @@ initialize:
 	strcpyadr: .2byte 0
 	strncpy: .byte 0xc3
 	strncpyadr: .2byte 0
+	getprocessbyid: .byte 0xc3
+	getprocessbyidadr: .2byte 0
+	Mul8b: .byte 0xc3
+	Mul8badr: .2byte 0
+	getprocid: .byte 0xc3
+	getprocidadr: .2byte 0
 
 _main:
 .ifdef __DLL__
