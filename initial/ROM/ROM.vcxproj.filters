@@ -52,6 +52,7 @@
     <None Include="RAM.s" />
     <None Include="ROM.s" />
     <None Include="setmat.s" />
+    <None Include="proc.s" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="CMD.txt" />
@@ -67,6 +68,7 @@
     <Text Include="RAM.txt" />
     <Text Include="ROM.txt" />
     <Text Include="run%405000.txt" />
+    <Text Include="proc.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="keyboard.s" />

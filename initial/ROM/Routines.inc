@@ -17,12 +17,19 @@
 		pop af
 .endm
 
+.macro PRINTLN
+	push hl
+	ld hl,0
+	call println
+	pop hl
+.endm
+
 
 # address where user programs load
 .include "SERIAL.inc"
 .include "SDCARD.inc"
-.equ commandMemory, 0x1000
-.equ userMemory,0x2000
+.equ commandMemory, 0x2000
+.equ userMemory,0x3000
 .equ libMemory,0xF000
 
 .equ TRUE, 1
@@ -42,10 +49,11 @@
 .equ LOADFILE,	3
 .equ MEMSET,	4
 .equ STRLEN,	5
+.equ STRCPY,24
+.equ STRNCPY,10
 .equ PUTC,		6
 .equ TOUPPERCASE,7
 .equ HEXTOBYTE,	8
-.equ STRNCPY,10
 .equ CREATEPROCESS,16
 .equ GETCOMMANDPARAMS,17
 # filesystem - primitive functions, probably going to change 
@@ -55,8 +63,11 @@
 .equ GETMALLOCTABLE,18
 .equ DIV8,19
 .equ SETRESETPAGE,20
+.equ STARTPROCESSINFO,22
+.equ NEXTPROCESSINFO,23
 
 
 
-.equ NEXTNUMBER,22
+
+.equ NEXTNUMBER,26
 

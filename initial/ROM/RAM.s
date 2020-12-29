@@ -5,7 +5,9 @@
 #define HIWORD(l) ((WORD)(((DWORD)(l) >> 16) & 0xFFFF))
 #define LOBYTE(w) ((BYTE)(w))
 #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
-
+# process table - maximum number of entries - which also means the maximum number of processes
+.set MAXPROCESSES,4
+.set PROCINFOSIZE,6
 
 .include "SDCARD.inc"
 .include "Routines.inc"
@@ -219,10 +221,12 @@ _$2:
 
 printhexL:
 	push af
+	push hl
 	ld a,h
 	call printhex
 	ld a,l
 	call printhex
+	pop hl
 	pop af
 	ret
 # === PRINTHEX === #
@@ -602,14 +606,19 @@ _exitgetfilename:
 		jp nz,_4$
 		# hl was null so call the default address
 		call printhexL
+				### CREATENEWPROCESSINFO
 		call userMemory
+		
 		ret
 _4$:
 	call printhexL
+		### CREATENEWPROCESSINFO
 	call progloadaddress
 	ret
 progloadaddress: .byte 0xc3
 	_progloadaddr: .2byte 0
+
+
 
 _createProcesserr$1:
 		push af
@@ -621,6 +630,67 @@ _createProcesserr$1:
 theprocessmsg: .string "process:"
 thecommandlinemsg: .string "params:"
 theparams: .space 50
+
+#== updateprocessinfo ===#
+# ld hl,processname - zero terminated
+# call newprocessinfo
+# return 
+#	processid in A register
+#	processinfo pointer in HL
+
+
+
+#== startprocessinfo ==#
+# reset the process info list pointer
+# no inputs, no outputs
+startprocessinfo: 
+	push af
+	ld a,0
+	ld (currentprocessinfo),a
+	pop af
+	ret
+
+#== nextprocessinfo ===#
+# return in hl the next processinfo entry
+# also updates currentprocessinfo
+
+nextprocessinfo:
+	push af
+	ld a,(currentprocessinfo)
+	ld h,a
+	ld e,PROCINFOSIZE
+	call Mul8b
+	ex de,hl
+	ld hl,processtable
+	add hl,DE
+	inc a
+	cp MAXPROCESSES
+	jp p, 1$ ;# if we go passed the limit reset back to 0
+	ld (currentprocessinfo),a
+	pop af
+	scf ;# set cf
+	ccf ;# invert cf
+	ret
+1$: ;# if reach maxprocesses, return 0 in a & hl
+	ld a,0
+	ld (currentprocessinfo),a
+	ld h,a
+	ld l,a
+	pop af
+	scf
+	ret
+
+lastprogramid: .byte 0
+maxprocesses: .byte MAXPROCESSES
+currentprocessinfo: .byte 0; # index to a process table entry
+processtable: 
+	;# 1byte process status - 1=running, 0=no process
+	;# 1byte processID
+	;# 4bytes process name
+.rept MAXPROCESSES
+	.space PROCINFOSIZE
+.endr
+endprocesstable: ;# this does nothing and can be deleted. I'm using it to check the listing address
 
 	# === getcommandparams == #
 	;# ld hl,buffer - address of where to copy the data
@@ -748,8 +818,22 @@ Div8NextBit:
   djnz Div8Loop
   ret
 
+  # ===== Mul8b 8bit multily ===#
+  # http://tutorials.eeems.ca/Z80ASM/part4.htm
+  Mul8b:                           ; this routine performs the operation HL=H*E
+  ld d,0                         ; clearing D and L
+  ld l,d
+  ld b,8                         ; we have 8 bits
+Mul8bLoop:
+  add hl,hl                      ; advancing a bit
+  jp nc,Mul8bSkip                ; if zero, we skip the addition (jp is used for speed)
+  add hl,de                      ; adding to the product if necessary
+Mul8bSkip:
+  djnz Mul8bLoop
+  ret
+
 ;================================
-; # === loadaddress == #
+; # === loadaddress == #   THIS NEEDS CHANGING INTO A LOOKUP TABLE - not code
 ; ld a,x - where x = instruction id
 ;				id = 1, print
 ;					 2, printhex
@@ -850,6 +934,21 @@ _loadaddress19$:
 	ld hl,printhexL
 	ret
 _loadaddress20$:
+	cp STARTPROCESSINFO
+	jp nz,_loadaddress21$
+	ld hl,startprocessinfo
+	ret
+_loadaddress21$:
+	cp NEXTPROCESSINFO
+	jp nz, _loadaddress22$
+	ld hl, nextprocessinfo
+	ret
+_loadaddress22$:
+	cp STRCPY
+	jp nz, _loadaddress23$
+	ld hl, strcpy
+	ret
+_loadaddress23$:
 	#----- not defined ---
 	ld hl,addressfailedmsg
 	call print 
@@ -1035,7 +1134,7 @@ malloctable: .space 255
 	.2byte nullroutine ;0
 
 	ENDOFLINE:
-	.if (ENDOFLINE > 0x0fff)
-		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x1000"
+	.if (ENDOFLINE > 0x01fff)
+		.abort "PROGRAM TOO LARGE TO FIT BELOW <0x2000"
 	.endif
 	

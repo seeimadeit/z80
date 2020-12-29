@@ -84,6 +84,20 @@ initialize:
 	ld a,PRINTHEXL
 	call GetAddress
 	ld (printhexLadr),hl
+	ld a,STARTPROCESSINFO
+	call GetAddress
+	ld (startprocessinfoadr),hl
+	ld a,NEXTPROCESSINFO
+	call GetAddress
+	ld (nextprocessinfoadr),hl
+	ld a,STRCPY
+	call GetAddress
+	ld (strcpyadr),hl
+	ld a,STRNCPY
+	call GetAddress
+	ld (strncpyadr),hl
+
+
 
 
 
@@ -128,6 +142,14 @@ initialize:
 	setresetpageadr: .2byte 0
 	printhexL: .byte 0xc3
 	printhexLadr: .2byte 0
+	startprocessinfo: .byte 0xc3
+	startprocessinfoadr: .2byte 0
+	nextprocessinfo: .byte 0xc3
+	nextprocessinfoadr: .2byte 0
+	strcpy: .byte 0xc3
+	strcpyadr: .2byte 0
+	strncpy: .byte 0xc3
+	strncpyadr: .2byte 0
 
 _main:
 .ifdef __DLL__

@@ -1,5 +1,4 @@
-F00:0001       
-F00:0002       .include "Routines.inc"
+F00:0001       .include "Routines.inc"
 F01:0001       
 F01:0002       .macro DEBUG CHARACTER='!'
 F01:0009       
@@ -96,7 +95,7 @@ F01:0071
 F01:0072       .equ NEXTNUMBER,26
 F01:0073       
 F01:0074       
-F00:0003       .include "libs.inc"
+F00:0002       .include "libs.inc"
 F04:0001       
 F04:0002       
 F04:0003       	.ifdef __LIB__
@@ -123,7 +122,7 @@ F04:0023       		.endif
 F04:0024       		.2byte $ ;# load address
                S01:00003000:  00 30
 F04:0025       		.byte ((ENDADDRESS-$)/255)+1 ;# memory required to load (in pages)
-               S01:00003002:  02
+               S01:00003002:  03
 F04:0026       		.ifdef __STACK__
 F04:0027       			.byte __STACK__
 F04:0028       		.else 
@@ -368,58 +367,312 @@ F04:0154       _main:
 F04:0155       .ifdef __DLL__
 F04:0156       	ret
 F04:0157       .endif
-F00:0004       
-F00:0005       	ld hl,msg
-               S01:000030FA:  21 2B 31
-F00:0006       	call println
+F00:0003       
+F00:0004       .equ MAXPROCESSES,4
+F00:0005       .equ PROCINFOSIZE,6
+F00:0006       
+F00:0007       
+F00:0008       	;# 1byte process status - 1=running, 0=no process
+F00:0009       	;# 1byte processID
+F00:0010       	;# 4bytes process name (lastbyte zero)
+F00:0011       	;# ld hl,processname
+F00:0012       
+F00:0013       ld hl,psmsg
+               S01:000030FA:  21 94 31
+F00:0014       call println
                S01:000030FD:  CD BB 30
-F00:0007       	ld hl,params
-               S01:00003100:  21 54 31
-F00:0008       	call getcommandparams
-               S01:00003103:  CD DF 30
-F00:0009       	call println
-               S01:00003106:  CD BB 30
-F00:0010       	ld de,dumparea
-               S01:00003109:  11 86 31
-F00:0011       	ld hl,params
-               S01:0000310C:  21 54 31
-F00:0012       	ld a,1 ;# ask for zero terminated
-               S01:0000310F:  3E 01
-F00:0013       	call loadfile
-               S01:00003111:  CD C1 30
-F00:0014       	cp 0
-               S01:00003114:  FE 00
-F00:0015       	jp nz,error
-               S01:00003116:  C2 3B 31
-F00:0016       	ld hl,dumparea
-               S01:00003119:  21 86 31
-F00:0017       	call println
-               S01:0000311C:  CD BB 30
-F00:0018       	jp _exit
-               S01:0000311F:  C3 28 31
-F00:0019       
-F00:0020       _error: 
-F00:0021       	ld hl,error
-               S01:00003122:  21 3B 31
-F00:0022       	call println
-               S01:00003125:  CD BB 30
-F00:0023       _exit:
-F00:0024       	ld a,0
-               S01:00003128:  3E 00
-F00:0025       	ret
-               S01:0000312A:  C9
-F00:0026       
-F00:0027       
-F00:0028       msg: .string "the params are:"
-               S01:0000312B:  74 68 65 20 70 61 72 61 6D 73 20 61 72 65 3A
-F00:0029       error: .string "failed to load the file."
-               S01:0000313B:  66 61 69 6C 65 64 20 74 6F 20 6C 6F 61 64 20 74
-               S01:0000314B:  68 65 20 66 69 6C 65 2E
-F00:0030       params: .space 50
-F00:0031       
-F00:0032       ;# this program does not work correctly with the memory management - this will need to be fixed in the near future
-F00:0033       ENDADDRESS:
-F00:0034       dumparea: .space 1 ;# this is not correct the loadfile will expand passed this
+F00:0015       
+F00:0016       ld a,1
+               S01:00003100:  3E 01
+F00:0017       ld (lastprogramid),a
+               S01:00003102:  32 D5 31
+F00:0018       call writeprocessinfo
+               S01:00003105:  CD 0B 31
+F00:0019       ld a,0
+               S01:00003108:  3E 00
+F00:0020       ret
+               S01:0000310A:  C9
+F00:0021       
+F00:0022       
+F00:0023       writeprocessinfo:
+F00:0024       # prerequisties : lastprogramid has the programid set 
+F00:0025       #                 procname contains the name of the program (3bytes+zero)
+F00:0026       call getprocessslot
+               S01:0000310B:  CD 71 31
+F00:0027       jp nc, failed
+               S01:0000310E:  D2 24 31
+F00:0028       #call printhexL
+F00:0029       #PRINTLN
+F00:0030       ld a,1 ;# process is running
+               S01:00003111:  3E 01
+F00:0031       ld (hl),a
+               S01:00003113:  77
+F00:0032       inc hl
+               S01:00003114:  23
+F00:0033       ld a,(lastprogramid) ;# it is required this variable is set to the correct id before running this routine
+               S01:00003115:  3A D5 31
+F00:0034       ld (hl),a
+               S01:00003118:  77
+F00:0035       inc hl
+               S01:00003119:  23
+F00:0036       #call printhexL
+F00:0037       #PRINTLN
+F00:0038       
+F00:0039       ld de,procname
+               S01:0000311A:  11 A3 31
+F00:0040       ex de,hl
+               S01:0000311D:  EB
+F00:0041       #call printhexL
+F00:0042       #call println
+F00:0043       call strcpy
+               S01:0000311E:  CD F4 30
+F00:0044       ld a, 0
+               S01:00003121:  3E 00
+F00:0045       ret
+               S01:00003123:  C9
+F00:0046       
+F00:0047       failed:
+F00:0048       	ld hl,errormsg
+               S01:00003124:  21 2D 31
+F00:0049       	call println
+               S01:00003127:  CD BB 30
+F00:0050       	ld a,0
+               S01:0000312A:  3E 00
+F00:0051       	ret 
+               S01:0000312C:  C9
+F00:0052       
+F00:0053       errormsg: .string "could not find an empty slot, maximum number of processes running\r\n"
+               S01:0000312D:  63 6F 75 6C 64 20 6E 6F 74 20 66 69 6E 64 20 61
+               S01:0000313D:  6E 20 65 6D 70 74 79 20 73 6C 6F 74 2C 20 6D 61
+F00:0054       
+F00:0055       
+F00:0056       
+F00:0057       
+F00:0058       
+F00:0059       
+F00:0060       
+F00:0061       #=== getprocessslot ===#
+F00:0062       ;# return the first available slot in hl
+F00:0063       ;# a slot is occuppied if the processid is not zero. this routine will locate the first unoccuppied slot
+F00:0064       ;# A register returns status where 0=no slots , 1=slot available
+F00:0065       ;# if carry flag set, a slot was found
+F00:0066       ;# if carry flag not set, it did not find an empty slot
+F00:0067       getprocessslot:
+F00:0068       	call Xstartprocessinfo
+               S01:00003171:  CD A7 31
+F00:0069       2$:
+F00:0070       	DEBUG '*'
+F05:0001       # example : DEBUG '!'
+F05:0002       #      or : DEBUG h
+F05:0003       		push af
+               S01:00003174:  F5
+F05:0004       		ld a,42
+               S01:00003175:  3E 2A
+F05:0005       		call putc
+               S01:00003177:  CD CA 30
+F05:0006       		pop af
+               S01:0000317A:  F1
+F00:0071       	PRINTLN
+F06:0001       	push hl
+               S01:0000317B:  E5
+F06:0002       	ld hl,0
+               S01:0000317C:  21 00 00
+F06:0003       	call println
+               S01:0000317F:  CD BB 30
+F06:0004       	pop hl
+               S01:00003182:  E1
+F00:0072       	call Xnextprocessinfo ;
+               S01:00003183:  CD AF 31
+F00:0073       	jp c,1$ ;# if carry flag set, we reached the end
+               S01:00003186:  DA 91 31
+F00:0074       	ld a,(hl)
+               S01:00003189:  7E
+F00:0075       #	call printhex
+F00:0076       #	call printhexL
+F00:0077       	cp 0 ;# compare processids
+               S01:0000318A:  FE 00
+F00:0078       	jp nz, 2$
+               S01:0000318C:  C2 74 31
+F00:0079       	#ld hl,didfind
+F00:0080       	#call println
+F00:0081       #	ld a,1
+F00:0082       	scf ;#did find return set carry flag
+               S01:0000318F:  37
+F00:0083       	ret ;# found
+               S01:00003190:  C9
+F00:0084       
+F00:0085       1$: ;# not found
+F00:0086       	#ld hl,notfound
+F00:0087       	#call println
+F00:0088       #	ld a,0
+F00:0089       	scf ;# did not find return unset carry flag
+               S01:00003191:  37
+F00:0090       	ccf
+               S01:00003192:  3F
+F00:0091       ret
+               S01:00003193:  C9
+F00:0092       	
+F00:0093       	
+F00:0094       	
+F00:0095       
+F00:0096       psmsg: .string "Process info\r\n"
+               S01:00003194:  50 72 6F 63 65 73 73 20 69 6E 66 6F 0D 0A
+F00:0097       procname: .string "exa"
+               S01:000031A3:  65 78 61
+F00:0098       
+F00:0099       
+F00:0100       
+F00:0101       
+F00:0102       
+F00:0103       #== startprocessinfo ==#
+F00:0104       # reset the process info list pointer
+F00:0105       # no inputs, no outputs
+F00:0106       Xstartprocessinfo: 
+F00:0107       	push af
+               S01:000031A7:  F5
+F00:0108       	ld a,0
+               S01:000031A8:  3E 00
+F00:0109       	ld (currentprocessinfo),a
+               S01:000031AA:  32 D7 31
+F00:0110       	pop af
+               S01:000031AD:  F1
+F00:0111       	ret
+               S01:000031AE:  C9
+F00:0112       
+F00:0113       #== nextprocessinfo ===#
+F00:0114       # return in hl the next processinfo entry
+F00:0115       # also updates currentprocessinfo
+F00:0116       # if carry flag set, we have reach the end of the process table
+F00:0117       Xnextprocessinfo:
+F00:0118       	push af
+               S01:000031AF:  F5
+F00:0119       	ld a,(currentprocessinfo)
+               S01:000031B0:  3A D7 31
+F00:0120       	ld h,a
+               S01:000031B3:  67
+F00:0121       	ld e,PROCINFOSIZE
+               S01:000031B4:  1E 06
+F00:0122       	call Mul8b
+               S01:000031B6:  CD F0 31
+F00:0123       	ex de,hl
+               S01:000031B9:  EB
+F00:0124       	ld hl,processtable
+               S01:000031BA:  21 D8 31
+F00:0125       	add hl,DE
+               S01:000031BD:  19
+F00:0126       	inc a
+               S01:000031BE:  3C
+F00:0127       	cp MAXPROCESSES
+               S01:000031BF:  FE 04
+F00:0128       	jp p, 1$ ;# if we go passed the limit reset back to 0
+               S01:000031C1:  F2 CB 31
+F00:0129       	ld (currentprocessinfo),a
+               S01:000031C4:  32 D7 31
+F00:0130       	pop af
+               S01:000031C7:  F1
+F00:0131       	scf ;# set cf
+               S01:000031C8:  37
+F00:0132       	ccf ;# invert cf  - more process info's available so return with carry flag not set
+               S01:000031C9:  3F
+F00:0133       	ret
+               S01:000031CA:  C9
+F00:0134       1$: ;# if reach maxprocesses, return 0 in a & hl
+F00:0135       	ld a,0
+               S01:000031CB:  3E 00
+F00:0136       	ld (currentprocessinfo),a
+               S01:000031CD:  32 D7 31
+F00:0137       	ld h,a
+               S01:000031D0:  67
+F00:0138       	ld l,a
+               S01:000031D1:  6F
+F00:0139       	pop af
+               S01:000031D2:  F1
+F00:0140       	scf ;# set carry flag  - if no more process return with carry flag set
+               S01:000031D3:  37
+F00:0141       	ret
+               S01:000031D4:  C9
+F00:0142       
+F00:0143       lastprogramid: .byte 0
+               S01:000031D5:  00
+F00:0144       maxprocesses: .byte MAXPROCESSES
+               S01:000031D6:  04
+F00:0145       currentprocessinfo: .byte 0; # index to a process table entry
+               S01:000031D7:  00
+F00:0146       processtable: 
+F00:0147       	;# 1byte process status - 1=running, 0=no process
+F00:0148       	;# 1byte processID
+F00:0149       	;# 4bytes process name
+F00:0150       .rept MAXPROCESSES
+F00:0152       
+F07:0001       	.space PROCINFOSIZE
+F07:0001       	.space PROCINFOSIZE
+F07:0001       	.space PROCINFOSIZE
+F07:0001       	.space PROCINFOSIZE
+F00:0153       endprocesstable: ;# this does nothing and can be deleted. I'm using it to check the listing address
+F00:0154       
+F00:0155       
+F00:0156       
+F00:0157       
+F00:0158         # ===== Mul8b 8bit multily ===#
+F00:0159         # http://tutorials.eeems.ca/Z80ASM/part4.htm
+F00:0160         Mul8b:                           ; this routine performs the operation HL=H*E
+F00:0161         ld d,0                         ; clearing D and L
+               S01:000031F0:  16 00
+F00:0162         ld l,d
+               S01:000031F2:  6A
+F00:0163         ld b,8                         ; we have 8 bits
+               S01:000031F3:  06 08
+F00:0164       Mul8bLoop:
+F00:0165         add hl,hl                      ; advancing a bit
+               S01:000031F5:  29
+F00:0166         jp nc,Mul8bSkip                ; if zero, we skip the addition (jp is used for speed)
+               S01:000031F6:  D2 FA 31
+F00:0167         add hl,de                      ; adding to the product if necessary
+               S01:000031F9:  19
+F00:0168       Mul8bSkip:
+F00:0169         djnz Mul8bLoop
+               S01:000031FA:  10 F9
+F00:0170         ret
+               S01:000031FC:  C9
+F00:0171       
+F00:0172       
+F00:0173         #==== getprocessbyid ==#
+F00:0174       # ld a,id
+F00:0175       # call getprocessid
+F00:0176       # cp 1             - returns in A : 0 = not found, 1 = found
+F00:0177       # jp z,we succeeded
+F00:0178       getprocessbyid:
+F00:0179       
+F00:0180       	call startprocessinfo
+               S01:000031FD:  CD EE 30
+F00:0181       2$:
+F00:0182       
+F00:0183       	call nextprocessinfo ;
+               S01:00003200:  CD F1 30
+F00:0184       	jp c,1$ ;# if carry flag set, we reached the end
+               S01:00003203:  DA 13 32
+F00:0185       	push hl
+               S01:00003206:  E5
+F00:0186       	pop ix
+               S01:00003207:  DD E1
+F00:0187       	ld b,(ix+1)
+               S01:00003209:  DD 46 01
+F00:0188       	cp b ;# compare processids
+               S01:0000320C:  B8
+F00:0189       	jp nz, 2$
+               S01:0000320D:  C2 00 32
+F00:0190       	ld a,1
+               S01:00003210:  3E 01
+F00:0191       	ret ;# found
+               S01:00003212:  C9
+F00:0192       
+F00:0193       1$: ;# not found
+F00:0194       	ld a,0
+               S01:00003213:  3E 00
+F00:0195       ret
+               S01:00003215:  C9
+F00:0196       
+F00:0197       ENDADDRESS:
 
 
 Sections:
@@ -427,39 +680,60 @@ S01  seg3000
 
 
 Sources:
-F00  type.s
+F00  proc.s
 F01  Routines.inc
 F02  SERIAL.inc
 F03  SDCARD.inc
 F04  libs.inc
+F05  debug
+F06  println
+F07  REPEAT:proc.s:line 152
 
 
 Symbols:
-_error EXPR(12578=0x3122) UNUSED ABS 
-_exit EXPR(12584=0x3128) ABS 
-error EXPR(12603=0x313b) ABS 
-dumparea EXPR(12678=0x3186) ABS 
-params EXPR(12628=0x3154) ABS 
-msg EXPR(12587=0x312b) ABS 
+ getprocessbyid 1$ EXPR(12819=0x3213) ABS 
+ getprocessbyid 2$ EXPR(12800=0x3200) ABS 
+getprocessbyid EXPR(12797=0x31fd) UNUSED ABS 
+Mul8bSkip EXPR(12794=0x31fa) ABS 
+Mul8bLoop EXPR(12789=0x31f5) ABS 
+endprocesstable EXPR(12784=0x31f0) UNUSED ABS 
+maxprocesses EXPR(12758=0x31d6) UNUSED ABS 
+ Xnextprocessinfo 1$ EXPR(12747=0x31cb) ABS 
+processtable EXPR(12760=0x31d8) ABS 
+Mul8b EXPR(12784=0x31f0) ABS 
+currentprocessinfo EXPR(12759=0x31d7) ABS 
+ getprocessslot 1$ EXPR(12689=0x3191) ABS 
+Xnextprocessinfo EXPR(12719=0x31af) ABS 
+ getprocessslot 2$ EXPR(12660=0x3174) ABS 
+Xstartprocessinfo EXPR(12711=0x31a7) ABS 
+errormsg EXPR(12589=0x312d) ABS 
+procname EXPR(12707=0x31a3) ABS 
+failed EXPR(12580=0x3124) ABS 
+getprocessslot EXPR(12657=0x3171) ABS 
+writeprocessinfo EXPR(12555=0x310b) ABS 
+lastprogramid EXPR(12757=0x31d5) ABS 
+psmsg EXPR(12692=0x3194) ABS 
+PROCINFOSIZE EXPR(6=0x6) 
+MAXPROCESSES EXPR(4=0x4) 
 strncpy EXPR(12535=0x30f7) UNUSED ABS 
-strcpy EXPR(12532=0x30f4) UNUSED ABS 
-nextprocessinfo EXPR(12529=0x30f1) UNUSED ABS 
-startprocessinfo EXPR(12526=0x30ee) UNUSED ABS 
+strcpy EXPR(12532=0x30f4) ABS 
+nextprocessinfo EXPR(12529=0x30f1) ABS 
+startprocessinfo EXPR(12526=0x30ee) ABS 
 printhexL EXPR(12523=0x30eb) UNUSED ABS 
 setresetpage EXPR(12520=0x30e8) UNUSED ABS 
 Div8 EXPR(12517=0x30e5) UNUSED ABS 
 getmalloctable EXPR(12514=0x30e2) UNUSED ABS 
-getcommandparams EXPR(12511=0x30df) ABS 
+getcommandparams EXPR(12511=0x30df) UNUSED ABS 
 createProcess EXPR(12508=0x30dc) UNUSED ABS 
 getfilename EXPR(12505=0x30d9) UNUSED ABS 
 directorynextfile EXPR(12502=0x30d6) UNUSED ABS 
 directoryopen EXPR(12499=0x30d3) UNUSED ABS 
 hextobyte EXPR(12496=0x30d0) UNUSED ABS 
 touppercase EXPR(12493=0x30cd) UNUSED ABS 
-putc EXPR(12490=0x30ca) UNUSED ABS 
+putc EXPR(12490=0x30ca) ABS 
 strlen EXPR(12487=0x30c7) UNUSED ABS 
 memset EXPR(12484=0x30c4) UNUSED ABS 
-loadfile EXPR(12481=0x30c1) ABS 
+loadfile EXPR(12481=0x30c1) UNUSED ABS 
 printhex EXPR(12478=0x30be) UNUSED ABS 
 println EXPR(12475=0x30bb) ABS 
 print EXPR(12472=0x30b8) UNUSED ABS 
@@ -487,7 +761,7 @@ memsetadr EXPR(12485=0x30c5) ABS
 loadfileadr EXPR(12482=0x30c2) ABS 
 printhexadr EXPR(12479=0x30bf) ABS 
 printadr EXPR(12473=0x30b9) ABS 
-ENDADDRESS EXPR(12678=0x3186) ABS 
+ENDADDRESS EXPR(12822=0x3216) ABS 
  *current pc dummy* EXPR(12290=0x3002) INTERNAL PROT ABS 
 NEXTNUMBER EXPR(26=0x1a) UNUSED 
 NEXTPROCESSINFO EXPR(23=0x17) 

@@ -9,13 +9,16 @@ F01:0010
 F01:0011       .macro DEBUGHEX CHARACTER='!'
 F01:0018       
 F01:0019       
-F01:0020       
-F01:0021       # address where user programs load
-F01:0022       .include "SERIAL.inc"
+F01:0020       .macro PRINTLN
+F01:0025       
+F01:0026       
+F01:0027       
+F01:0028       # address where user programs load
+F01:0029       .include "SERIAL.inc"
 F02:0001       .equ SERIALPORT , 0x01
 F02:0002       .equ SERIALPORT2, 0x02
 F02:0003       
-F01:0023       .include "SDCARD.inc"
+F01:0030       .include "SDCARD.inc"
 F03:0001       .equ SDCARD,0x05
 F03:0002       ; ******* SDCARD *********
 F03:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
@@ -51,46 +54,50 @@ F03:0032       ;z80 - out - opendirectory : will open the root directory for dir
 F03:0033       .equ OPENDIRECTORY,0x31
 F03:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
 F03:0035       .equ NEXTFILE,0x32
-F01:0024       .equ commandMemory, 0x1000
-F01:0025       .equ userMemory,0x2000
-F01:0026       .equ libMemory,0xF000
-F01:0027       
-F01:0028       .equ TRUE, 1
-F01:0029       .equ FALSE, 0
-F01:0030       
-F01:0031       # the only fixed address (i hope), use it to get the address of utilities methods
-F01:0032       # ld a, PRINT
-F01:0033       # call GetAddress
-F01:0034       # address for print loaded into hl
-F01:0035       # the value in hl can change between os versions so do not hard code the values
-F01:0036       
-F01:0037       .equ GetAddress, 0x0804
-F01:0038       .equ PRINT,		1
-F01:0039       .equ PRINTLN,	9
-F01:0040       .equ PRINTHEX,	2
-F01:0041       .equ PRINTHEXL,21
-F01:0042       .equ LOADFILE,	3
-F01:0043       .equ MEMSET,	4
-F01:0044       .equ STRLEN,	5
-F01:0045       .equ PUTC,		6
-F01:0046       .equ TOUPPERCASE,7
-F01:0047       .equ HEXTOBYTE,	8
-F01:0048       .equ STRNCPY,10
-F01:0049       .equ CREATEPROCESS,16
-F01:0050       .equ GETCOMMANDPARAMS,17
-F01:0051       # filesystem - primitive functions, probably going to change 
-F01:0052       .equ DIRECTORYOPEN,13
-F01:0053       .equ DIRECTORYNEXTFILE,14
-F01:0054       .equ GETFILENAME,15
-F01:0055       .equ GETMALLOCTABLE,18
-F01:0056       .equ DIV8,19
-F01:0057       .equ SETRESETPAGE,20
-F01:0058       
-F01:0059       
-F01:0060       
-F01:0061       .equ NEXTNUMBER,22
-F01:0062       
-F01:0063       
+F01:0031       .equ commandMemory, 0x2000
+F01:0032       .equ userMemory,0x3000
+F01:0033       .equ libMemory,0xF000
+F01:0034       
+F01:0035       .equ TRUE, 1
+F01:0036       .equ FALSE, 0
+F01:0037       
+F01:0038       # the only fixed address (i hope), use it to get the address of utilities methods
+F01:0039       # ld a, PRINT
+F01:0040       # call GetAddress
+F01:0041       # address for print loaded into hl
+F01:0042       # the value in hl can change between os versions so do not hard code the values
+F01:0043       
+F01:0044       .equ GetAddress, 0x0804
+F01:0045       .equ PRINT,		1
+F01:0046       .equ PRINTLN,	9
+F01:0047       .equ PRINTHEX,	2
+F01:0048       .equ PRINTHEXL,21
+F01:0049       .equ LOADFILE,	3
+F01:0050       .equ MEMSET,	4
+F01:0051       .equ STRLEN,	5
+F01:0052       .equ STRCPY,24
+F01:0053       .equ STRNCPY,10
+F01:0054       .equ PUTC,		6
+F01:0055       .equ TOUPPERCASE,7
+F01:0056       .equ HEXTOBYTE,	8
+F01:0057       .equ CREATEPROCESS,16
+F01:0058       .equ GETCOMMANDPARAMS,17
+F01:0059       # filesystem - primitive functions, probably going to change 
+F01:0060       .equ DIRECTORYOPEN,13
+F01:0061       .equ DIRECTORYNEXTFILE,14
+F01:0062       .equ GETFILENAME,15
+F01:0063       .equ GETMALLOCTABLE,18
+F01:0064       .equ DIV8,19
+F01:0065       .equ SETRESETPAGE,20
+F01:0066       .equ STARTPROCESSINFO,22
+F01:0067       .equ NEXTPROCESSINFO,23
+F01:0068       
+F01:0069       
+F01:0070       
+F01:0071       
+F01:0072       .equ NEXTNUMBER,26
+F01:0073       
+F01:0074       
 F00:0005       .include "libs.inc"
 F04:0001       
 F04:0002       
@@ -116,305 +123,347 @@ F04:0021       		.else
 F04:0022       			.org userMemory
 F04:0023       		.endif
 F04:0024       		.2byte $ ;# load address
-               S01:00001000:  00 10
+               S01:00002000:  00 20
 F04:0025       		.byte ((ENDADDRESS-$)/255)+1 ;# memory required to load (in pages)
-               S01:00001002:  0D
+               S01:00002002:  0D
 F04:0026       		.ifdef __STACK__
 F04:0027       			.byte __STACK__
 F04:0028       		.else 
 F04:0029       			.byte 1 ;# stack size (in pages)
-               S01:00001003:  01
+               S01:00002003:  01
 F04:0030       		.endif
 F04:0031       	.endif
 F04:0032       
 F04:0033       	ld a,PRINT
-               S01:00001004:  3E 01
+               S01:00002004:  3E 01
 F04:0034       	call GetAddress
-               S01:00001006:  CD 04 08
+               S01:00002006:  CD 04 08
 F04:0035       	ld (printadr),hl
-               S01:00001009:  22 99 10
+               S01:00002009:  22 B9 20
 F04:0036       	ld a,PRINTHEX
-               S01:0000100C:  3E 02
+               S01:0000200C:  3E 02
 F04:0037       	call GetAddress
-               S01:0000100E:  CD 04 08
+               S01:0000200E:  CD 04 08
 F04:0038       	ld (printhexadr),hl
-               S01:00001011:  22 9F 10
+               S01:00002011:  22 BF 20
 F04:0039       	ld a,LOADFILE
-               S01:00001014:  3E 03
+               S01:00002014:  3E 03
 F04:0040       	call GetAddress
-               S01:00001016:  CD 04 08
+               S01:00002016:  CD 04 08
 F04:0041       	ld (loadfileadr),hl
-               S01:00001019:  22 A2 10
+               S01:00002019:  22 C2 20
 F04:0042       	ld a,MEMSET
-               S01:0000101C:  3E 04
+               S01:0000201C:  3E 04
 F04:0043       	call GetAddress
-               S01:0000101E:  CD 04 08
+               S01:0000201E:  CD 04 08
 F04:0044       	ld (memsetadr),hl
-               S01:00001021:  22 A5 10
+               S01:00002021:  22 C5 20
 F04:0045       	ld a,STRLEN
-               S01:00001024:  3E 05
+               S01:00002024:  3E 05
 F04:0046       	call GetAddress
-               S01:00001026:  CD 04 08
+               S01:00002026:  CD 04 08
 F04:0047       	ld (strlenadr),hl
-               S01:00001029:  22 A8 10
+               S01:00002029:  22 C8 20
 F04:0048       	ld a,PUTC
-               S01:0000102C:  3E 06
+               S01:0000202C:  3E 06
 F04:0049       	call GetAddress
-               S01:0000102E:  CD 04 08
+               S01:0000202E:  CD 04 08
 F04:0050       	ld (putcadr),hl
-               S01:00001031:  22 AB 10
+               S01:00002031:  22 CB 20
 F04:0051       	ld a,TOUPPERCASE
-               S01:00001034:  3E 07
+               S01:00002034:  3E 07
 F04:0052       	call GetAddress
-               S01:00001036:  CD 04 08
+               S01:00002036:  CD 04 08
 F04:0053       	ld (touppercaseadr),hl
-               S01:00001039:  22 AE 10
+               S01:00002039:  22 CE 20
 F04:0054       	ld a,HEXTOBYTE
-               S01:0000103C:  3E 08
+               S01:0000203C:  3E 08
 F04:0055       	call GetAddress
-               S01:0000103E:  CD 04 08
+               S01:0000203E:  CD 04 08
 F04:0056       	ld (hextobyteadr),hl
-               S01:00001041:  22 B1 10
+               S01:00002041:  22 D1 20
 F04:0057       	ld a,PRINTLN
-               S01:00001044:  3E 09
+               S01:00002044:  3E 09
 F04:0058       	call GetAddress
-               S01:00001046:  CD 04 08
+               S01:00002046:  CD 04 08
 F04:0059       	ld (printlnadr),hl
-               S01:00001049:  22 9C 10
+               S01:00002049:  22 BC 20
 F04:0060       	ld a,DIRECTORYOPEN
-               S01:0000104C:  3E 0D
+               S01:0000204C:  3E 0D
 F04:0061       	call GetAddress
-               S01:0000104E:  CD 04 08
+               S01:0000204E:  CD 04 08
 F04:0062       	ld (directoryopenadr),hl
-               S01:00001051:  22 B4 10
+               S01:00002051:  22 D4 20
 F04:0063       	ld a,NEXTFILE
-               S01:00001054:  3E 32
+               S01:00002054:  3E 32
 F04:0064       	call GetAddress
-               S01:00001056:  CD 04 08
+               S01:00002056:  CD 04 08
 F04:0065       	ld (directorynextfileadr),hl
-               S01:00001059:  22 B7 10
+               S01:00002059:  22 D7 20
 F04:0066       	ld a,GETFILENAME
-               S01:0000105C:  3E 0F
+               S01:0000205C:  3E 0F
 F04:0067       	call GetAddress
-               S01:0000105E:  CD 04 08
+               S01:0000205E:  CD 04 08
 F04:0068       	ld (getfilenameadr),hl
-               S01:00001061:  22 BA 10
+               S01:00002061:  22 DA 20
 F04:0069       	ld a,CREATEPROCESS
-               S01:00001064:  3E 10
+               S01:00002064:  3E 10
 F04:0070       	call GetAddress
-               S01:00001066:  CD 04 08
+               S01:00002066:  CD 04 08
 F04:0071       	ld (createProcessadr),hl
-               S01:00001069:  22 BD 10
+               S01:00002069:  22 DD 20
 F04:0072       	ld a,GETCOMMANDPARAMS
-               S01:0000106C:  3E 11
+               S01:0000206C:  3E 11
 F04:0073       	call GetAddress
-               S01:0000106E:  CD 04 08
+               S01:0000206E:  CD 04 08
 F04:0074       	ld (getcommandparamsadr),hl
-               S01:00001071:  22 C0 10
+               S01:00002071:  22 E0 20
 F04:0075       	ld a,GETMALLOCTABLE
-               S01:00001074:  3E 12
+               S01:00002074:  3E 12
 F04:0076       	call GetAddress
-               S01:00001076:  CD 04 08
+               S01:00002076:  CD 04 08
 F04:0077       	ld (getmalloctableadr),hl
-               S01:00001079:  22 C3 10
+               S01:00002079:  22 E3 20
 F04:0078       	ld a,DIV8
-               S01:0000107C:  3E 13
+               S01:0000207C:  3E 13
 F04:0079       	call GetAddress
-               S01:0000107E:  CD 04 08
+               S01:0000207E:  CD 04 08
 F04:0080       	ld (div8adr),hl
-               S01:00001081:  22 C6 10
+               S01:00002081:  22 E6 20
 F04:0081       	ld a,SETRESETPAGE
-               S01:00001084:  3E 14
+               S01:00002084:  3E 14
 F04:0082       	call GetAddress
-               S01:00001086:  CD 04 08
+               S01:00002086:  CD 04 08
 F04:0083       	ld (setresetpageadr),hl
-               S01:00001089:  22 C9 10
+               S01:00002089:  22 E9 20
 F04:0084       	ld a,PRINTHEXL
-               S01:0000108C:  3E 15
+               S01:0000208C:  3E 15
 F04:0085       	call GetAddress
-               S01:0000108E:  CD 04 08
+               S01:0000208E:  CD 04 08
 F04:0086       	ld (printhexLadr),hl
-               S01:00001091:  22 CC 10
-F04:0087       
-F04:0088       
-F04:0089       
-F04:0090       
-F04:0091       	jp _main
-               S01:00001094:  C3 CE 10
-F04:0092       
-F04:0093       	functionlookups:
-F04:0094       	.align 2
-F04:0095       	print: .byte 0xc3
-               S01:00001098:  C3
-F04:0096       	printadr: .2byte 0
-               S01:00001099:  00 00
-F04:0097       	println: .byte 0xc3
-               S01:0000109B:  C3
-F04:0098       	printlnadr: .2byte 0
-               S01:0000109C:  00 00
-F04:0099       	printhex: .byte 0xc3
-               S01:0000109E:  C3
-F04:0100       	printhexadr: .2byte 0
-               S01:0000109F:  00 00
-F04:0101       	loadfile: .byte 0xc3
-               S01:000010A1:  C3
-F04:0102       	loadfileadr: .2byte 0
-               S01:000010A2:  00 00
-F04:0103       	memset: .byte 0xc3
-               S01:000010A4:  C3
-F04:0104       	memsetadr: .2byte 0
-               S01:000010A5:  00 00
-F04:0105       	strlen: .byte 0xc3
-               S01:000010A7:  C3
-F04:0106       	strlenadr: .2byte 0
-               S01:000010A8:  00 00
-F04:0107       	putc: .byte 0xc3
-               S01:000010AA:  C3
-F04:0108       	putcadr: .2byte 0
-               S01:000010AB:  00 00
-F04:0109       	touppercase: .byte 0xc3
-               S01:000010AD:  C3
-F04:0110       	touppercaseadr: .2byte 0
-               S01:000010AE:  00 00
-F04:0111       	hextobyte: .byte 0xc3
-               S01:000010B0:  C3
-F04:0112       	hextobyteadr: .2byte 0
-               S01:000010B1:  00 00
-F04:0113       	directoryopen: .byte 0xc3
-               S01:000010B3:  C3
-F04:0114       	directoryopenadr: .2byte 0
-               S01:000010B4:  00 00
-F04:0115       	directorynextfile: .byte 0xc3
-               S01:000010B6:  C3
-F04:0116       	directorynextfileadr: .2byte 0
-               S01:000010B7:  00 00
-F04:0117       	getfilename: .byte 0xc3
-               S01:000010B9:  C3
-F04:0118       	getfilenameadr: .2byte 0
-               S01:000010BA:  00 00
-F04:0119       	createProcess: .byte 0xc3
-               S01:000010BC:  C3
-F04:0120       	createProcessadr: .2byte 0
-               S01:000010BD:  00 00
-F04:0121       	getcommandparams: .byte 0xc3
-               S01:000010BF:  C3
-F04:0122       	getcommandparamsadr: .2byte 0
-               S01:000010C0:  00 00
-F04:0123       	getmalloctable: .byte 0xc3
-               S01:000010C2:  C3
-F04:0124       	getmalloctableadr: .2byte 0
-               S01:000010C3:  00 00
-F04:0125       	Div8: .byte 0xc3
-               S01:000010C5:  C3
-F04:0126       	div8adr: .2byte 0
-               S01:000010C6:  00 00
-F04:0127       	setresetpage: .byte 0xc3
-               S01:000010C8:  C3
-F04:0128       	setresetpageadr: .2byte 0
-               S01:000010C9:  00 00
-F04:0129       	printhexL: .byte 0xc3
-               S01:000010CB:  C3
-F04:0130       	printhexLadr: .2byte 0
-               S01:000010CC:  00 00
-F04:0131       
-F04:0132       _main:
-F04:0133       .ifdef __DLL__
-F04:0134       	ret
-F04:0135       .endif
+               S01:00002091:  22 EC 20
+F04:0087       	ld a,STARTPROCESSINFO
+               S01:00002094:  3E 16
+F04:0088       	call GetAddress
+               S01:00002096:  CD 04 08
+F04:0089       	ld (startprocessinfoadr),hl
+               S01:00002099:  22 EF 20
+F04:0090       	ld a,NEXTPROCESSINFO
+               S01:0000209C:  3E 17
+F04:0091       	call GetAddress
+               S01:0000209E:  CD 04 08
+F04:0092       	ld (nextprocessinfoadr),hl
+               S01:000020A1:  22 F2 20
+F04:0093       	ld a,STRCPY
+               S01:000020A4:  3E 18
+F04:0094       	call GetAddress
+               S01:000020A6:  CD 04 08
+F04:0095       	ld (strcpyadr),hl
+               S01:000020A9:  22 F5 20
+F04:0096       	ld a,STRNCPY
+               S01:000020AC:  3E 0A
+F04:0097       	call GetAddress
+               S01:000020AE:  CD 04 08
+F04:0098       	ld (strncpyadr),hl
+               S01:000020B1:  22 F8 20
+F04:0099       
+F04:0100       
+F04:0101       
+F04:0102       
+F04:0103       
+F04:0104       
+F04:0105       	jp _main
+               S01:000020B4:  C3 FA 20
+F04:0106       
+F04:0107       	functionlookups:
+F04:0108       	.align 2
+F04:0109       	print: .byte 0xc3
+               S01:000020B8:  C3
+F04:0110       	printadr: .2byte 0
+               S01:000020B9:  00 00
+F04:0111       	println: .byte 0xc3
+               S01:000020BB:  C3
+F04:0112       	printlnadr: .2byte 0
+               S01:000020BC:  00 00
+F04:0113       	printhex: .byte 0xc3
+               S01:000020BE:  C3
+F04:0114       	printhexadr: .2byte 0
+               S01:000020BF:  00 00
+F04:0115       	loadfile: .byte 0xc3
+               S01:000020C1:  C3
+F04:0116       	loadfileadr: .2byte 0
+               S01:000020C2:  00 00
+F04:0117       	memset: .byte 0xc3
+               S01:000020C4:  C3
+F04:0118       	memsetadr: .2byte 0
+               S01:000020C5:  00 00
+F04:0119       	strlen: .byte 0xc3
+               S01:000020C7:  C3
+F04:0120       	strlenadr: .2byte 0
+               S01:000020C8:  00 00
+F04:0121       	putc: .byte 0xc3
+               S01:000020CA:  C3
+F04:0122       	putcadr: .2byte 0
+               S01:000020CB:  00 00
+F04:0123       	touppercase: .byte 0xc3
+               S01:000020CD:  C3
+F04:0124       	touppercaseadr: .2byte 0
+               S01:000020CE:  00 00
+F04:0125       	hextobyte: .byte 0xc3
+               S01:000020D0:  C3
+F04:0126       	hextobyteadr: .2byte 0
+               S01:000020D1:  00 00
+F04:0127       	directoryopen: .byte 0xc3
+               S01:000020D3:  C3
+F04:0128       	directoryopenadr: .2byte 0
+               S01:000020D4:  00 00
+F04:0129       	directorynextfile: .byte 0xc3
+               S01:000020D6:  C3
+F04:0130       	directorynextfileadr: .2byte 0
+               S01:000020D7:  00 00
+F04:0131       	getfilename: .byte 0xc3
+               S01:000020D9:  C3
+F04:0132       	getfilenameadr: .2byte 0
+               S01:000020DA:  00 00
+F04:0133       	createProcess: .byte 0xc3
+               S01:000020DC:  C3
+F04:0134       	createProcessadr: .2byte 0
+               S01:000020DD:  00 00
+F04:0135       	getcommandparams: .byte 0xc3
+               S01:000020DF:  C3
+F04:0136       	getcommandparamsadr: .2byte 0
+               S01:000020E0:  00 00
+F04:0137       	getmalloctable: .byte 0xc3
+               S01:000020E2:  C3
+F04:0138       	getmalloctableadr: .2byte 0
+               S01:000020E3:  00 00
+F04:0139       	Div8: .byte 0xc3
+               S01:000020E5:  C3
+F04:0140       	div8adr: .2byte 0
+               S01:000020E6:  00 00
+F04:0141       	setresetpage: .byte 0xc3
+               S01:000020E8:  C3
+F04:0142       	setresetpageadr: .2byte 0
+               S01:000020E9:  00 00
+F04:0143       	printhexL: .byte 0xc3
+               S01:000020EB:  C3
+F04:0144       	printhexLadr: .2byte 0
+               S01:000020EC:  00 00
+F04:0145       	startprocessinfo: .byte 0xc3
+               S01:000020EE:  C3
+F04:0146       	startprocessinfoadr: .2byte 0
+               S01:000020EF:  00 00
+F04:0147       	nextprocessinfo: .byte 0xc3
+               S01:000020F1:  C3
+F04:0148       	nextprocessinfoadr: .2byte 0
+               S01:000020F2:  00 00
+F04:0149       	strcpy: .byte 0xc3
+               S01:000020F4:  C3
+F04:0150       	strcpyadr: .2byte 0
+               S01:000020F5:  00 00
+F04:0151       	strncpy: .byte 0xc3
+               S01:000020F7:  C3
+F04:0152       	strncpyadr: .2byte 0
+               S01:000020F8:  00 00
+F04:0153       
+F04:0154       _main:
+F04:0155       .ifdef __DLL__
+F04:0156       	ret
+F04:0157       .endif
 F00:0006       	
 F00:0007       
 F00:0008       	ld hl,welcomemsg
-               S01:000010CE:  21 7E 15
+               S01:000020FA:  21 AA 25
 F00:0009       	call println
-               S01:000010D1:  CD 9B 10
+               S01:000020FD:  CD BB 20
 F00:0010       	ld a,0
-               S01:000010D4:  3E 00
+               S01:00002100:  3E 00
 F00:0011       	ld (doreload),a
-               S01:000010D6:  32 29 11
+               S01:00002102:  32 55 21
 F00:0012       
 F00:0013       newcommand:
 F00:0014       	ld a,(doreload)
-               S01:000010D9:  3A 29 11
+               S01:00002105:  3A 55 21
 F00:0015       	cp 1
-               S01:000010DC:  FE 01
+               S01:00002108:  FE 01
 F00:0016       	jp nz,1$ ;# will force command program reload
-               S01:000010DE:  C2 E8 10
+               S01:0000210A:  C2 14 21
 F00:0017       	ld hl,reloadmsg
-               S01:000010E1:  21 7F 17
+               S01:0000210D:  21 AB 27
 F00:0018       	call println
-               S01:000010E4:  CD 9B 10
+               S01:00002110:  CD BB 20
 F00:0019       	ret
-               S01:000010E7:  C9
+               S01:00002113:  C9
 F00:0020       
 F00:0021       1$:
 F00:0022       	; #setup/reset the interrupt vector who knows what could have happen to it
 F00:0023       	di
-               S01:000010E8:  F3
+               S01:00002114:  F3
 F00:0024       	im 2
-               S01:000010E9:  ED 5E
+               S01:00002115:  ED 5E
 F00:0025       	ld a, jumptable/256 ; initialize the new interrupt vector
-               S01:000010EB:  3E 1B
+               S01:00002117:  3E 2B
 F00:0026       	ld i,a
-               S01:000010ED:  ED 47
+               S01:00002119:  ED 47
 F00:0027       	ei
-               S01:000010EF:  FB
+               S01:0000211B:  FB
 F00:0028       
 F00:0029       
 F00:0030       	call resetcommandline
-               S01:000010F0:  CD 71 11
+               S01:0000211C:  CD 9D 21
 F00:0031       	ld hl,commandPromptmsg ;# display command prompt
-               S01:000010F3:  21 25 18
+               S01:0000211F:  21 51 28
 F00:0032       	call print
-               S01:000010F6:  CD 98 10
+               S01:00002122:  CD B8 20
 F00:0033       loop:
 F00:0034       	halt		;# wait for interrupt
-               S01:000010F9:  76
+               S01:00002125:  76
 F00:0035       	ld hl,cmdlineexecute ;# if user pressed enter then cmdlineexecute will contain 1
-               S01:000010FA:  21 0E 1A
+               S01:00002126:  21 3A 2A
 F00:0036       	ld a,(hl)
-               S01:000010FD:  7E
+               S01:00002129:  7E
 F00:0037       	cp 1
-               S01:000010FE:  FE 01
+               S01:0000212A:  FE 01
 F00:0038       	jp nz,loop ;# nothing to process so repeat
-               S01:00001100:  C2 F9 10
+               S01:0000212C:  C2 25 21
 F00:0039       
 F00:0040       	ld hl,cmdlinebuffer ;# test if user entered a value
-               S01:00001103:  21 10 1A
+               S01:0000212F:  21 3C 2A
 F00:0041       	call strlen
-               S01:00001106:  CD A7 10
+               S01:00002132:  CD C7 20
 F00:0042       	ld a,b
-               S01:00001109:  78
+               S01:00002135:  78
 F00:0043       	cp 0
-               S01:0000110A:  FE 00
+               S01:00002136:  FE 00
 F00:0044       	jp z, newcommand ;# if no commands display prompt and repeat
-               S01:0000110C:  CA D9 10
+               S01:00002138:  CA 05 21
 F00:0045       	ld hl,0
-               S01:0000110F:  21 00 00
+               S01:0000213B:  21 00 00
 F00:0046       	call println
-               S01:00001112:  CD 9B 10
+               S01:0000213E:  CD BB 20
 F00:0047       	ld hl,cmdlinebuffer
-               S01:00001115:  21 10 1A
+               S01:00002141:  21 3C 2A
 F00:0048       	call findbuiltin
-               S01:00001118:  CD FC 11
+               S01:00002144:  CD 28 22
 F00:0049       	cp TRUE ;# true if builtin was found
-               S01:0000111B:  FE 01
+               S01:00002147:  FE 01
 F00:0050       	call nz,loadandrun ;# must be something to do
-               S01:0000111D:  C4 2A 11
+               S01:00002149:  C4 56 21
 F00:0051       	ld hl,0
-               S01:00001120:  21 00 00
+               S01:0000214C:  21 00 00
 F00:0052       	call println
-               S01:00001123:  CD 9B 10
+               S01:0000214F:  CD BB 20
 F00:0053       	jp newcommand
-               S01:00001126:  C3 D9 10
+               S01:00002152:  C3 05 21
 F00:0054       doreload: .byte 0
-               S01:00001129:  00
+               S01:00002155:  00
 F00:0055       
 F00:0056       loadandrun:
 F00:0057       	
 F00:0058       	ld hl,0
-               S01:0000112A:  21 00 00
+               S01:00002156:  21 00 00
 F00:0059       	call println ;# display a new line
-               S01:0000112D:  CD 9B 10
+               S01:00002159:  CD BB 20
 F00:0060       ;	ld hl, cmdlinebuffer ;# load filename of program
 F00:0061       ;	ld de, userMemory ;# address where to load program
 F00:0062       ;	call loadfile
@@ -423,76 +472,76 @@ F00:0064       ;	jp nz,loaderr ;# if load returned anything except 0, its an err
 F00:0065       ;	jp runuserMemory
 F00:0066       
 F00:0067       	ld a,1
-               S01:00001130:  3E 01
+               S01:0000215C:  3E 01
 F00:0068       	ld (ignorekeyboard),a
-               S01:00001132:  32 46 11
+               S01:0000215E:  32 72 21
 F00:0069       
 F00:0070       	call createprocess
-               S01:00001135:  CD D7 14
+               S01:00002161:  CD 03 25
 F00:0071       	cp 0
-               S01:00001138:  FE 00
+               S01:00002164:  FE 00
 F00:0072       	jp nz,loaderr
-               S01:0000113A:  C2 47 11
+               S01:00002166:  C2 73 21
 F00:0073       	call resetcommandline
-               S01:0000113D:  CD 71 11
+               S01:00002169:  CD 9D 21
 F00:0074       	ld a,0
-               S01:00001140:  3E 00
+               S01:0000216C:  3E 00
 F00:0075       	ld (ignorekeyboard),a
-               S01:00001142:  32 46 11
+               S01:0000216E:  32 72 21
 F00:0076       	ret
-               S01:00001145:  C9
+               S01:00002171:  C9
 F00:0077       
 F00:0078       
 F00:0079       ignorekeyboard: .byte 0
-               S01:00001146:  00
+               S01:00002172:  00
 F00:0080       
 F00:0081       loaderr:
 F00:0082       	call printhex ;# print return code
-               S01:00001147:  CD 9E 10
+               S01:00002173:  CD BE 20
 F00:0083       	ld hl,cmdlinebuffer
-               S01:0000114A:  21 10 1A
+               S01:00002176:  21 3C 2A
 F00:0084       	call print ;# print the command
-               S01:0000114D:  CD 98 10
+               S01:00002179:  CD B8 20
 F00:0085       	ld hl,invalidcommandmsg
-               S01:00001150:  21 29 18
+               S01:0000217C:  21 55 28
 F00:0086       	call println ;# print msg
-               S01:00001153:  CD 9B 10
+               S01:0000217F:  CD BB 20
 F00:0087       	call hexdumpcmdline
-               S01:00001156:  CD 5F 11
+               S01:00002182:  CD 8B 21
 F00:0088       ;#	call resetcommandline
 F00:0089       	ld a,0
-               S01:00001159:  3E 00
+               S01:00002185:  3E 00
 F00:0090       	ld (ignorekeyboard),a
-               S01:0000115B:  32 46 11
+               S01:00002187:  32 72 21
 F00:0091       	ret
-               S01:0000115E:  C9
+               S01:0000218A:  C9
 F00:0092       
 F00:0093       
 F00:0094       hexdumpcmdline: 
 F00:0095       	;# when an invalid command happens hexdump 16 bytes 
 F00:0096       	;# of the commmandline.
 F00:0097       	ld hl,cmdlinebuffer
-               S01:0000115F:  21 10 1A
+               S01:0000218B:  21 3C 2A
 F00:0098       	ld b,16
-               S01:00001162:  06 10
+               S01:0000218E:  06 10
 F00:0099       _hexdp$99:
 F00:0100       
 F00:0101       	;# print the byte values
 F00:0102       	ld a,(hl)
-               S01:00001164:  7E
+               S01:00002190:  7E
 F00:0103       	call printhex
-               S01:00001165:  CD 9E 10
+               S01:00002191:  CD BE 20
 F00:0104       	ld a,' '
-               S01:00001168:  3E 20
+               S01:00002194:  3E 20
 F00:0105       	call putc
-               S01:0000116A:  CD AA 10
+               S01:00002196:  CD CA 20
 F00:0106       	;# next byte
 F00:0107       	inc hl
-               S01:0000116D:  23
+               S01:00002199:  23
 F00:0108       	djnz _hexdp$99
-               S01:0000116E:  10 F4
+               S01:0000219A:  10 F4
 F00:0109       	ret
-               S01:00001170:  C9
+               S01:0000219C:  C9
 F00:0110       
 F00:0111       ;runuserMemory:
 F00:0112       	
@@ -505,168 +554,168 @@ F00:0118
 F00:0119       
 F00:0120       resetcommandline:
 F00:0121       	push af
-               S01:00001171:  F5
+               S01:0000219D:  F5
 F00:0122       	push hl
-               S01:00001172:  E5
+               S01:0000219E:  E5
 F00:0123       # reset the command line variables
 F00:0124       	ld hl,cmdlinebufferlen
-               S01:00001173:  21 0F 1A
+               S01:0000219F:  21 3B 2A
 F00:0125       	ld a,0
-               S01:00001176:  3E 00
+               S01:000021A2:  3E 00
 F00:0126       	ld (hl),a
-               S01:00001178:  77
+               S01:000021A4:  77
 F00:0127       	ld hl, cmdlinebuffer
-               S01:00001179:  21 10 1A
+               S01:000021A5:  21 3C 2A
 F00:0128       	ld b, cmdlinebuffer$-cmdlinebuffer
-               S01:0000117C:  06 32
+               S01:000021A8:  06 32
 F00:0129       	call memset
-               S01:0000117E:  CD A4 10
+               S01:000021AA:  CD C4 20
 F00:0130       	pop hl
-               S01:00001181:  E1
+               S01:000021AD:  E1
 F00:0131       	pop af
-               S01:00001182:  F1
+               S01:000021AE:  F1
 F00:0132       	ret
-               S01:00001183:  C9
+               S01:000021AF:  C9
 F00:0133       
 F00:0134       	;##############################################################
 F00:0135       	cmdline: ;#/* interrupt 2, echo what was sent*/
 F00:0136       		in a,(SERIALPORT)
-               S01:00001184:  DB 01
+               S01:000021B0:  DB 01
 F00:0137       		
 F00:0138       		push af  ;# if a program is runing the ignorekeyboard flag is set
-               S01:00001186:  F5
+               S01:000021B2:  F5
 F00:0139       	
 F00:0140       		ld a,(ignorekeyboard) ;# so we look for that flag and ignore any keypresses if set true
-               S01:00001187:  3A 46 11
+               S01:000021B3:  3A 72 21
 F00:0141       		cp a,1
-               S01:0000118A:  FE 01
+               S01:000021B6:  FE 01
 F00:0142       		jp nz,12$
-               S01:0000118C:  C2 93 11
+               S01:000021B8:  C2 BF 21
 F00:0143       		pop af
-               S01:0000118F:  F1
+               S01:000021BB:  F1
 F00:0144       		jp executeexit
-               S01:00001190:  C3 F9 11
+               S01:000021BC:  C3 25 22
 F00:0145       12$:	
 F00:0146       		pop af
-               S01:00001193:  F1
+               S01:000021BF:  F1
 F00:0147       		cp 0x0d
-               S01:00001194:  FE 0D
+               S01:000021C0:  FE 0D
 F00:0148       		jp z, executecmd
-               S01:00001196:  CA F3 11
+               S01:000021C2:  CA 1F 22
 F00:0149       		cp 0x0a
-               S01:00001199:  FE 0A
+               S01:000021C5:  FE 0A
 F00:0150       		jp z,executeexit
-               S01:0000119B:  CA F9 11
+               S01:000021C7:  CA 25 22
 F00:0151       
 F00:0152       	
 F00:0153       		ld hl,cmdlinebufferlen # load the length into b
-               S01:0000119E:  21 0F 1A
+               S01:000021CA:  21 3B 2A
 F00:0154       		ld b,0
-               S01:000011A1:  06 00
+               S01:000021CD:  06 00
 F00:0155       		ld c,(hl)
-               S01:000011A3:  4E
+               S01:000021CF:  4E
 F00:0156       
 F00:0157       
 F00:0158       		ld hl,cmdlinebuffer ;# load buffer address into hl
-               S01:000011A4:  21 10 1A
+               S01:000021D0:  21 3C 2A
 F00:0159       		add hl,bc ;# add the buffer length to get the last character pointer
-               S01:000011A7:  09
+               S01:000021D3:  09
 F00:0160       
 F00:0161       		;# for delete or backspace
 F00:0162       		cp 8
-               S01:000011A8:  FE 08
+               S01:000021D4:  FE 08
 F00:0163       		jp nz,1$
-               S01:000011AA:  C2 C2 11
+               S01:000021D6:  C2 EE 21
 F00:0164       
 F00:0165       		ld a,(cmdlinebufferlen)
-               S01:000011AD:  3A 0F 1A
+               S01:000021D9:  3A 3B 2A
 F00:0166       		cp 0
-               S01:000011B0:  FE 00
+               S01:000021DC:  FE 00
 F00:0167       		jp z,4$
-               S01:000011B2:  CA EA 11
+               S01:000021DE:  CA 16 22
 F00:0168       
 F00:0169       		dec hl
-               S01:000011B5:  2B
+               S01:000021E1:  2B
 F00:0170       		ld a,0
-               S01:000011B6:  3E 00
+               S01:000021E2:  3E 00
 F00:0171       		ld (hl),a
-               S01:000011B8:  77
+               S01:000021E4:  77
 F00:0172       		ld a,8
-               S01:000011B9:  3E 08
+               S01:000021E5:  3E 08
 F00:0173       		ld hl,cmdlinebufferlen
-               S01:000011BB:  21 0F 1A
+               S01:000021E7:  21 3B 2A
 F00:0174       		dec (hl)
-               S01:000011BE:  35
+               S01:000021EA:  35
 F00:0175       		jp 2$
-               S01:000011BF:  C3 E8 11
+               S01:000021EB:  C3 14 22
 F00:0176       
 F00:0177       1$:
 F00:0178       		cp 127
-               S01:000011C2:  FE 7F
+               S01:000021EE:  FE 7F
 F00:0179       		jp nz,3$
-               S01:000011C4:  C2 DC 11
+               S01:000021F0:  C2 08 22
 F00:0180       
 F00:0181       		ld a,(cmdlinebufferlen)
-               S01:000011C7:  3A 0F 1A
+               S01:000021F3:  3A 3B 2A
 F00:0182       		cp 0
-               S01:000011CA:  FE 00
+               S01:000021F6:  FE 00
 F00:0183       		jp z,4$
-               S01:000011CC:  CA EA 11
+               S01:000021F8:  CA 16 22
 F00:0184       
 F00:0185       		dec hl
-               S01:000011CF:  2B
+               S01:000021FB:  2B
 F00:0186       		ld a,0
-               S01:000011D0:  3E 00
+               S01:000021FC:  3E 00
 F00:0187       		ld (hl),a
-               S01:000011D2:  77
+               S01:000021FE:  77
 F00:0188       		ld a,127
-               S01:000011D3:  3E 7F
+               S01:000021FF:  3E 7F
 F00:0189       		ld hl,cmdlinebufferlen
-               S01:000011D5:  21 0F 1A
+               S01:00002201:  21 3B 2A
 F00:0190       		dec (hl)
-               S01:000011D8:  35
+               S01:00002204:  35
 F00:0191       		jp 2$
-               S01:000011D9:  C3 E8 11
+               S01:00002205:  C3 14 22
 F00:0192       
 F00:0193       3$:		
 F00:0194       		cp 0
-               S01:000011DC:  FE 00
+               S01:00002208:  FE 00
 F00:0195       		jp nz,5$
-               S01:000011DE:  C2 E3 11
+               S01:0000220A:  C2 0F 22
 F00:0196       		ld a,'`'
-               S01:000011E1:  3E 60
+               S01:0000220D:  3E 60
 F00:0197       
 F00:0198       5$:		ld (hl),a ;# store keyboard character
-               S01:000011E3:  77
+               S01:0000220F:  77
 F00:0199       		
 F00:0200       		ld hl,cmdlinebufferlen ;# load buffer length
-               S01:000011E4:  21 0F 1A
+               S01:00002210:  21 3B 2A
 F00:0201       		inc (hl) ;# increment buffer len
-               S01:000011E7:  34
+               S01:00002213:  34
 F00:0202       		
 F00:0203       
 F00:0204       2$:		out (SERIALPORT),a
-               S01:000011E8:  D3 01
+               S01:00002214:  D3 01
 F00:0205       4$:		ld a,0
-               S01:000011EA:  3E 00
+               S01:00002216:  3E 00
 F00:0206       		ld hl,cmdlineexecute
-               S01:000011EC:  21 0E 1A
+               S01:00002218:  21 3A 2A
 F00:0207       		ld (hl),a
-               S01:000011EF:  77
+               S01:0000221B:  77
 F00:0208       		jp executeexit
-               S01:000011F0:  C3 F9 11
+               S01:0000221C:  C3 25 22
 F00:0209       	executecmd:
 F00:0210       		ld a,1
-               S01:000011F3:  3E 01
+               S01:0000221F:  3E 01
 F00:0211       		ld hl,cmdlineexecute
-               S01:000011F5:  21 0E 1A
+               S01:00002221:  21 3A 2A
 F00:0212       		ld (hl),a
-               S01:000011F8:  77
+               S01:00002224:  77
 F00:0213       	executeexit:
 F00:0214       		ei
-               S01:000011F9:  FB
+               S01:00002225:  FB
 F00:0215       		reti
-               S01:000011FA:  ED 4D
+               S01:00002226:  ED 4D
 F00:0216       
 F00:0217       		
 F00:0218       	;# ======================== find builtin function =======
@@ -678,921 +727,921 @@ F00:0223
 F00:0224       findbuiltin:
 F00:0225       	
 F00:0226       	push hl ;# save hl
-               S01:000011FC:  E5
+               S01:00002228:  E5
 F00:0227       	push hl
-               S01:000011FD:  E5
+               S01:00002229:  E5
 F00:0228       
 F00:0229       
 F00:0230       	pop ix;# copy hl into ix, ix contains the user supplied cmd
-               S01:000011FE:  DD E1
+               S01:0000222A:  DD E1
 F00:0231       
 F00:0232       	ld iy,builtin ;# load start of list
-               S01:00001200:  FD 21 E6 19
+               S01:0000222C:  FD 21 12 2A
 F00:0233       	ld b,0 ;# used to keep count of the number of characters - because a 0 length is bad
-               S01:00001204:  06 00
+               S01:00002230:  06 00
 F00:0234       findbuiltinrestart:
 F00:0235       	ld l, (iy)	;# load hl with the pointer address
-               S01:00001206:  FD 6E 00
+               S01:00002232:  FD 6E 00
 F00:0236       	ld h, (iy+1)
-               S01:00001209:  FD 66 01
+               S01:00002235:  FD 66 01
 F00:0237       
 F00:0238       findbuiltin1:
 F00:0239       	ld a,(ix)
-               S01:0000120C:  DD 7E 00
+               S01:00002238:  DD 7E 00
 F00:0240       	cp 0 ;# if we have a null character we have made a match
-               S01:0000120F:  FE 00
+               S01:0000223B:  FE 00
 F00:0241       	jp z,_findbuiltinSuccess
-               S01:00001211:  CA 44 12
+               S01:0000223D:  CA 70 22
 F00:0242       
 F00:0243       	inc b ;# character count
-               S01:00001214:  04
+               S01:00002240:  04
 F00:0244       	ld a,(hl)
-               S01:00001215:  7E
+               S01:00002241:  7E
 F00:0245       	sub (ix)
-               S01:00001216:  DD 96 00
+               S01:00002242:  DD 96 00
 F00:0246       
 F00:0247       	inc ix ;# no flag changes for inc
-               S01:00001219:  DD 23
+               S01:00002245:  DD 23
 F00:0248       	inc hl
-               S01:0000121B:  23
+               S01:00002247:  23
 F00:0249       	jp z,findbuiltin1 ;# if the same characters repeat
-               S01:0000121C:  CA 0C 12
+               S01:00002248:  CA 38 22
 F00:0250       
 F00:0251       	;# if we get here, its because the characters no longer match.
 F00:0252       	;# so we need to test the builtin cmd to see if it's a zero,
 F00:0253       	;# if it is then we have matched the builtin command
 F00:0254       	dec hl ;# need to backup 1 byte because we moved it before the test
-               S01:0000121F:  2B
+               S01:0000224B:  2B
 F00:0255       	ld a,(hl)
-               S01:00001220:  7E
+               S01:0000224C:  7E
 F00:0256       	cp 0
-               S01:00001221:  FE 00
+               S01:0000224D:  FE 00
 F00:0257       	jp z,_findbuiltinSuccess
-               S01:00001223:  CA 44 12
+               S01:0000224F:  CA 70 22
 F00:0258       	;# if we reach here then we did not find a match, so
 F00:0259       	;# we can load the next builtin cmd and try again.
 F00:0260       	pop hl
-               S01:00001226:  E1
+               S01:00002252:  E1
 F00:0261       	push hl ;# save hl
-               S01:00001227:  E5
+               S01:00002253:  E5
 F00:0262       	push hl ;# restore the user supplied cmd
-               S01:00001228:  E5
+               S01:00002254:  E5
 F00:0263       	pop ix ;# now ix contains the user supplied cmd
-               S01:00001229:  DD E1
+               S01:00002255:  DD E1
 F00:0264       	;# iy still contains the builtin address pointer.
 F00:0265       	;# so if we add 4 bytes to it we will point to the next
 F00:0266       	;# table entry for the builtin command.
 F00:0267       	ld bc,4
-               S01:0000122B:  01 04 00
+               S01:00002257:  01 04 00
 F00:0268       	add iy,bc
-               S01:0000122E:  FD 09
+               S01:0000225A:  FD 09
 F00:0269       	;# before we try with the current entry we need to check
 F00:0270       	;# its not the end of the list
 F00:0271       	ld a,(iy)
-               S01:00001230:  FD 7E 00
+               S01:0000225C:  FD 7E 00
 F00:0272       	cp 0
-               S01:00001233:  FE 00
+               S01:0000225F:  FE 00
 F00:0273       	jp nz, findbuiltinrestart
-               S01:00001235:  C2 06 12
+               S01:00002261:  C2 32 22
 F00:0274       	ld a,(iy+1)
-               S01:00001238:  FD 7E 01
+               S01:00002264:  FD 7E 01
 F00:0275       	cp 0
-               S01:0000123B:  FE 00
+               S01:00002267:  FE 00
 F00:0276       	jp nz,findbuiltinrestart
-               S01:0000123D:  C2 06 12
+               S01:00002269:  C2 32 22
 F00:0277       	
 F00:0278       
 F00:0279       _findbuildtinFail:
 F00:0280       	pop hl ;# remove the save hl
-               S01:00001240:  E1
+               S01:0000226C:  E1
 F00:0281       	ld a,FALSE
-               S01:00001241:  3E 00
+               S01:0000226D:  3E 00
 F00:0282       	ret
-               S01:00001243:  C9
+               S01:0000226F:  C9
 F00:0283       _findbuiltinSuccess:
 F00:0284       	;# check the length - it can't be 0
 F00:0285       	ld a,b
-               S01:00001244:  78
+               S01:00002270:  78
 F00:0286       	cp 0
-               S01:00001245:  FE 00
+               S01:00002271:  FE 00
 F00:0287       	jp z,_findbuildtinFail
-               S01:00001247:  CA 40 12
+               S01:00002273:  CA 6C 22
 F00:0288       	;# ok good from here to continue
 F00:0289       	pop hl ;# remove the saved hl
-               S01:0000124A:  E1
+               S01:00002276:  E1
 F00:0290       	ld bc,2 ;# we have a success so now we load the address of the subroutine
-               S01:0000124B:  01 02 00
+               S01:00002277:  01 02 00
 F00:0291       	add iy,bc
-               S01:0000124E:  FD 09
+               S01:0000227A:  FD 09
 F00:0292       	
 F00:0293       	ld l, (iy)	;# load hl with the pointer address
-               S01:00001250:  FD 6E 00
+               S01:0000227C:  FD 6E 00
 F00:0294       	ld h, (iy+1) ;# to jump into the address I need to use the iy registers
-               S01:00001253:  FD 66 01
+               S01:0000227F:  FD 66 01
 F00:0295       	push hl
-               S01:00001256:  E5
+               S01:00002282:  E5
 F00:0296       	pop iy
-               S01:00001257:  FD E1
+               S01:00002283:  FD E1
 F00:0297       	jp (iy)
-               S01:00001259:  FD E9
+               S01:00002285:  FD E9
 F00:0298       	halt ;# we will never get here
-               S01:0000125B:  76
+               S01:00002287:  76
 F00:0299       
 F00:0300       
 F00:0301       
 F00:0302       		;#======================= builtin functions ====================
 F00:0303       #== hexdump memory builtin == #
 F00:0304       		hexdumpcmd: .string "h,",0
-               S01:0000125C:  68 2C
-               S01:0000125E:  00
+               S01:00002288:  68 2C
+               S01:0000228A:  00
 F00:0305       		
 F00:0306       	hexdump:
 F00:0307       		ld hl,hexdumpmsg
-               S01:00001260:  21 9D 15
+               S01:0000228C:  21 C9 25
 F00:0308       		call println
-               S01:00001263:  CD 9B 10
+               S01:0000228F:  CD BB 20
 F00:0309       		ld hl,cmdlinebuffer ;# command length must be 8 characters
-               S01:00001266:  21 10 1A
+               S01:00002292:  21 3C 2A
 F00:0310       		call strlen
-               S01:00001269:  CD A7 10
+               S01:00002295:  CD C7 20
 F00:0311       		ld a,b
-               S01:0000126C:  78
+               S01:00002298:  78
 F00:0312       		cp 8
-               S01:0000126D:  FE 08
+               S01:00002299:  FE 08
 F00:0313       		jp nz,hexdumperror
-               S01:0000126F:  C2 A6 12
+               S01:0000229B:  C2 D2 22
 F00:0314       		ld hl,cmdlinebuffer ;# the hextobyte is expect uppercase characters
-               S01:00001272:  21 10 1A
+               S01:0000229E:  21 3C 2A
 F00:0315       		call touppercase
-               S01:00001275:  CD AD 10
+               S01:000022A1:  CD CD 20
 F00:0316       		call println
-               S01:00001278:  CD 9B 10
+               S01:000022A4:  CD BB 20
 F00:0317       		ld ix,cmdlinebuffer ;# get the 4th and 5th characters into the lobyte
-               S01:0000127B:  DD 21 10 1A
+               S01:000022A7:  DD 21 3C 2A
 F00:0318       		ld h,(ix+4)
-               S01:0000127F:  DD 66 04
+               S01:000022AB:  DD 66 04
 F00:0319       		ld l,(ix+5)
-               S01:00001282:  DD 6E 05
+               S01:000022AE:  DD 6E 05
 F00:0320       		call hextobyte
-               S01:00001285:  CD B0 10
+               S01:000022B1:  CD D0 20
 F00:0321       		ld (lodump),a
-               S01:00001288:  32 06 15
+               S01:000022B4:  32 32 25
 F00:0322       	
 F00:0323       		ld h,(ix+6) ;# get the 6th and 7th characters into the hibyte
-               S01:0000128B:  DD 66 06
+               S01:000022B7:  DD 66 06
 F00:0324       		ld l,(ix+7)
-               S01:0000128E:  DD 6E 07
+               S01:000022BA:  DD 6E 07
 F00:0325       		call hextobyte
-               S01:00001291:  CD B0 10
+               S01:000022BD:  CD D0 20
 F00:0326       		ld (hidump),a
-               S01:00001294:  32 05 15
+               S01:000022C0:  32 31 25
 F00:0327       		ld hl,0
-               S01:00001297:  21 00 00
+               S01:000022C3:  21 00 00
 F00:0328       		call println
-               S01:0000129A:  CD 9B 10
+               S01:000022C6:  CD BB 20
 F00:0329       
 F00:0330       	;# hidump has the address to dump so let dump it out
 F00:0331       		call hexdumpheader
-               S01:0000129D:  CD AF 12
+               S01:000022C9:  CD DB 22
 F00:0332       		call _hexdumprint
-               S01:000012A0:  CD F7 12
+               S01:000022CC:  CD 23 23
 F00:0333       		jp hexdumpexit
-               S01:000012A3:  C3 AC 12
+               S01:000022CF:  C3 D8 22
 F00:0334       
 F00:0335       hexdumperror:
 F00:0336       		ld hl,hexdumpsyntaxmsg
-               S01:000012A6:  21 B1 15
+               S01:000022D2:  21 DD 25
 F00:0337       		call println
-               S01:000012A9:  CD 9B 10
+               S01:000022D5:  CD BB 20
 F00:0338       hexdumpexit:
 F00:0339       		ld a,TRUE
-               S01:000012AC:  3E 01
+               S01:000022D8:  3E 01
 F00:0340       		ret
-               S01:000012AE:  C9
+               S01:000022DA:  C9
 F00:0341       
 F00:0342       
 F00:0343       hexdumpheader:
 F00:0344       	push af
-               S01:000012AF:  F5
+               S01:000022DB:  F5
 F00:0345       	push bc
-               S01:000012B0:  C5
+               S01:000022DC:  C5
 F00:0346       	push hl
-               S01:000012B1:  E5
+               S01:000022DD:  E5
 F00:0347       	;# print the heading
 F00:0348       
 F00:0349       	ld b,7
-               S01:000012B2:  06 07
+               S01:000022DE:  06 07
 F00:0350       _sp$1:
 F00:0351       	ld a,' ' ;# 7 spaces
-               S01:000012B4:  3E 20
+               S01:000022E0:  3E 20
 F00:0352       	call putc
-               S01:000012B6:  CD AA 10
+               S01:000022E2:  CD CA 20
 F00:0353       	djnz _sp$1
-               S01:000012B9:  10 F9
+               S01:000022E5:  10 F9
 F00:0354       
 F00:0355       	ld a,0 ;# for column header
-               S01:000012BB:  3E 00
+               S01:000022E7:  3E 00
 F00:0356       	ld b,16 ;# 16 column headers
-               S01:000012BD:  06 10
+               S01:000022E9:  06 10
 F00:0357       _col$1:
 F00:0358       	call printhex
-               S01:000012BF:  CD 9E 10
+               S01:000022EB:  CD BE 20
 F00:0359       	inc a
-               S01:000012C2:  3C
+               S01:000022EE:  3C
 F00:0360       
 F00:0361       	push af
-               S01:000012C3:  F5
+               S01:000022EF:  F5
 F00:0362       	ld a,' '
-               S01:000012C4:  3E 20
+               S01:000022F0:  3E 20
 F00:0363       	call putc
-               S01:000012C6:  CD AA 10
+               S01:000022F2:  CD CA 20
 F00:0364       	pop af
-               S01:000012C9:  F1
+               S01:000022F5:  F1
 F00:0365       
 F00:0366       	djnz _col$1
-               S01:000012CA:  10 F3
+               S01:000022F6:  10 F3
 F00:0367       
 F00:0368       	ld hl,0 ;# newline
-               S01:000012CC:  21 00 00
+               S01:000022F8:  21 00 00
 F00:0369       	call println
-               S01:000012CF:  CD 9B 10
+               S01:000022FB:  CD BB 20
 F00:0370       	pop hl
-               S01:000012D2:  E1
+               S01:000022FE:  E1
 F00:0371       	pop bc
-               S01:000012D3:  C1
+               S01:000022FF:  C1
 F00:0372       	pop af
-               S01:000012D4:  F1
+               S01:00002300:  F1
 F00:0373       	ret
-               S01:000012D5:  C9
+               S01:00002301:  C9
 F00:0374       hexdumplinetitle:
 F00:0375       	# hl contain the address to print output format is "0x0000"
 F00:0376       	push af
-               S01:000012D6:  F5
+               S01:00002302:  F5
 F00:0377       	push hl
-               S01:000012D7:  E5
+               S01:00002303:  E5
 F00:0378       	ld hl,hexdumpprefix
-               S01:000012D8:  21 A5 15
+               S01:00002304:  21 D1 25
 F00:0379       	call print
-               S01:000012DB:  CD 98 10
+               S01:00002307:  CD B8 20
 F00:0380       	pop hl
-               S01:000012DE:  E1
+               S01:0000230A:  E1
 F00:0381       
 F00:0382       	ld a,(_highlow)
-               S01:000012DF:  3A F6 12
+               S01:0000230B:  3A 22 23
 F00:0383       	cp 0
-               S01:000012E2:  FE 00
+               S01:0000230E:  FE 00
 F00:0384       	jp z,_1$
-               S01:000012E4:  CA EB 12
+               S01:00002310:  CA 17 23
 F00:0385       	ld a,h
-               S01:000012E7:  7C
+               S01:00002313:  7C
 F00:0386       	call printhex
-               S01:000012E8:  CD 9E 10
+               S01:00002314:  CD BE 20
 F00:0387       _1$:ld a,l
-               S01:000012EB:  7D
+               S01:00002317:  7D
 F00:0388       	call printhex
-               S01:000012EC:  CD 9E 10
+               S01:00002318:  CD BE 20
 F00:0389       	ld a,' '
-               S01:000012EF:  3E 20
+               S01:0000231B:  3E 20
 F00:0390       	call putc
-               S01:000012F1:  CD AA 10
+               S01:0000231D:  CD CA 20
 F00:0391       	pop af
-               S01:000012F4:  F1
+               S01:00002320:  F1
 F00:0392       	ret
-               S01:000012F5:  C9
+               S01:00002321:  C9
 F00:0393       _highlow: .byte 0 ;# allows code reuse
-               S01:000012F6:  00
+               S01:00002322:  00
 F00:0394       
 F00:0395       _hexdumprint:
 F00:0396       	ld a,1
-               S01:000012F7:  3E 01
+               S01:00002323:  3E 01
 F00:0397       	ld (_highlow),a
-               S01:000012F9:  32 F6 12
+               S01:00002325:  32 22 23
 F00:0398       
 F00:0399       	ld hl,(hidump)
-               S01:000012FC:  2A 05 15
+               S01:00002328:  2A 31 25
 F00:0400       	ld l,0 ;# alway start at page boundry
-               S01:000012FF:  2E 00
+               S01:0000232B:  2E 00
 F00:0401       	ld b,16 ;# outer loop
-               S01:00001301:  06 10
+               S01:0000232D:  06 10
 F00:0402       _hexdp0:
 F00:0403       	push bc
-               S01:00001303:  C5
+               S01:0000232F:  C5
 F00:0404       	ld b,16 ;# inner loop
-               S01:00001304:  06 10
+               S01:00002330:  06 10
 F00:0405       		;# print the address
 F00:0406       	call hexdumplinetitle
-               S01:00001306:  CD D6 12
+               S01:00002332:  CD 02 23
 F00:0407       _hexdp$1:
 F00:0408       
 F00:0409       	;# print the byte values
 F00:0410       	push hl
-               S01:00001309:  E5
+               S01:00002335:  E5
 F00:0411       	ld hl,hidump
-               S01:0000130A:  21 05 15
+               S01:00002336:  21 31 25
 F00:0412       	ld a,(hl)
-               S01:0000130D:  7E
+               S01:00002339:  7E
 F00:0413       	pop hl
-               S01:0000130E:  E1
+               S01:0000233A:  E1
 F00:0414       	cp l
-               S01:0000130F:  BD
+               S01:0000233B:  BD
 F00:0415       	jp nz,1$
-               S01:00001310:  C2 2A 13
+               S01:0000233C:  C2 56 23
 F00:0416       
 F00:0417       	push hl
-               S01:00001313:  E5
+               S01:0000233F:  E5
 F00:0418       	ld hl,boldon ;# found the byte of interest turn on bold
-               S01:00001314:  21 A8 15
+               S01:00002340:  21 D4 25
 F00:0419       	call print
-               S01:00001317:  CD 98 10
+               S01:00002343:  CD B8 20
 F00:0420       	pop hl
-               S01:0000131A:  E1
+               S01:00002346:  E1
 F00:0421       
 F00:0422       	ld a,(hl)  ;# print the hex value
-               S01:0000131B:  7E
+               S01:00002347:  7E
 F00:0423       	call printhex
-               S01:0000131C:  CD 9E 10
+               S01:00002348:  CD BE 20
 F00:0424       	
 F00:0425       	push hl
-               S01:0000131F:  E5
+               S01:0000234B:  E5
 F00:0426       	ld hl,boldoff ;# turn off bold
-               S01:00001320:  21 AD 15
+               S01:0000234C:  21 D9 25
 F00:0427       	call print
-               S01:00001323:  CD 98 10
+               S01:0000234F:  CD B8 20
 F00:0428       	pop hl
-               S01:00001326:  E1
+               S01:00002352:  E1
 F00:0429       
 F00:0430       	jp 2$ ;# continue
-               S01:00001327:  C3 2E 13
+               S01:00002353:  C3 5A 23
 F00:0431       
 F00:0432       1$:	ld a,(hl)
-               S01:0000132A:  7E
+               S01:00002356:  7E
 F00:0433       	call printhex
-               S01:0000132B:  CD 9E 10
+               S01:00002357:  CD BE 20
 F00:0434       2$:	ld a,' '
-               S01:0000132E:  3E 20
+               S01:0000235A:  3E 20
 F00:0435       	call putc
-               S01:00001330:  CD AA 10
+               S01:0000235C:  CD CA 20
 F00:0436       	;# next byte
 F00:0437       	inc hl
-               S01:00001333:  23
+               S01:0000235F:  23
 F00:0438       	djnz _hexdp$1
-               S01:00001334:  10 D3
+               S01:00002360:  10 D3
 F00:0439       	;# now repeat the line and display the ascii value
 F00:0440       	or a ;# reset carry flag
-               S01:00001336:  B7
+               S01:00002362:  B7
 F00:0441       	ld de,16
-               S01:00001337:  11 10 00
+               S01:00002363:  11 10 00
 F00:0442       	sbc hl,de ;# subtrack 16bytes
-               S01:0000133A:  ED 52
+               S01:00002366:  ED 52
 F00:0443       
 F00:0444       	ld a,'|' ;# output border character
-               S01:0000133C:  3E 7C
+               S01:00002368:  3E 7C
 F00:0445       	call putc
-               S01:0000133E:  CD AA 10
+               S01:0000236A:  CD CA 20
 F00:0446       	ld b,16
-               S01:00001341:  06 10
+               S01:0000236D:  06 10
 F00:0447       _dexdpc$1:
 F00:0448       	ld a,(hl)
-               S01:00001343:  7E
+               S01:0000236F:  7E
 F00:0449       	cp 32 ;# space
-               S01:00001344:  FE 20
+               S01:00002370:  FE 20
 F00:0450       	jp p, _nex$2 ;# if character >= 32 jump
-               S01:00001346:  F2 4E 13
+               S01:00002372:  F2 7A 23
 F00:0451       	ld a,'.'
-               S01:00001349:  3E 2E
+               S01:00002375:  3E 2E
 F00:0452       	jp _prt$
-               S01:0000134B:  C3 55 13
+               S01:00002377:  C3 81 23
 F00:0453       _nex$2:
 F00:0454       	cp 127 ;# delete
-               S01:0000134E:  FE 7F
+               S01:0000237A:  FE 7F
 F00:0455       	jp m,_prt$ ;# if character < 127 jump print
-               S01:00001350:  FA 55 13
+               S01:0000237C:  FA 81 23
 F00:0456       	ld a,'.' ;# else print a dot
-               S01:00001353:  3E 2E
+               S01:0000237F:  3E 2E
 F00:0457       
 F00:0458       _prt$:
 F00:0459       	call putc
-               S01:00001355:  CD AA 10
+               S01:00002381:  CD CA 20
 F00:0460       	inc hl
-               S01:00001358:  23
+               S01:00002384:  23
 F00:0461       	djnz _dexdpc$1
-               S01:00001359:  10 E8
+               S01:00002385:  10 E8
 F00:0462       
 F00:0463       	ld a,"|" ;# output border character
-               S01:0000135B:  3E 7C
+               S01:00002387:  3E 7C
 F00:0464       	call putc
-               S01:0000135D:  CD AA 10
+               S01:00002389:  CD CA 20
 F00:0465       
 F00:0466       	;# next line
 F00:0467       	push hl
-               S01:00001360:  E5
+               S01:0000238C:  E5
 F00:0468       	ld hl,0
-               S01:00001361:  21 00 00
+               S01:0000238D:  21 00 00
 F00:0469       	call println
-               S01:00001364:  CD 9B 10
+               S01:00002390:  CD BB 20
 F00:0470       	pop hl
-               S01:00001367:  E1
+               S01:00002393:  E1
 F00:0471       	pop bc
-               S01:00001368:  C1
+               S01:00002394:  C1
 F00:0472       	djnz _hexdp0
-               S01:00001369:  10 98
+               S01:00002395:  10 98
 F00:0473       	ret
-               S01:0000136B:  C9
+               S01:00002397:  C9
 F00:0474       
 F00:0475       	;# ====== LOAD builtin ==== #
 F00:0476       	loadcmd: .string "l,",0
-               S01:0000136C:  6C 2C
-               S01:0000136E:  00
+               S01:00002398:  6C 2C
+               S01:0000239A:  00
 F00:0477       	load:
 F00:0478       		ld hl,loadmsg
-               S01:00001370:  21 EF 15
+               S01:0000239C:  21 1B 26
 F00:0479       		call println
-               S01:00001373:  CD 9B 10
+               S01:0000239F:  CD BB 20
 F00:0480       		ld hl,cmdlinebuffer ;# command length must be >= 10 characters
-               S01:00001376:  21 10 1A
+               S01:000023A2:  21 3C 2A
 F00:0481       		call strlen
-               S01:00001379:  CD A7 10
+               S01:000023A5:  CD C7 20
 F00:0482       		ld a,b
-               S01:0000137C:  78
+               S01:000023A8:  78
 F00:0483       		cp 10
-               S01:0000137D:  FE 0A
+               S01:000023A9:  FE 0A
 F00:0484       		jp p, _loadc$1
-               S01:0000137F:  F2 8B 13
+               S01:000023AB:  F2 B7 23
 F00:0485       		ld hl,loadsyntaxmsg ;# load failure message
-               S01:00001382:  21 F4 15
+               S01:000023AE:  21 20 26
 F00:0486       		call println
-               S01:00001385:  CD 9B 10
+               S01:000023B1:  CD BB 20
 F00:0487       		ld a,TRUE
-               S01:00001388:  3E 01
+               S01:000023B4:  3E 01
 F00:0488       		ret
-               S01:0000138A:  C9
+               S01:000023B6:  C9
 F00:0489       _loadc$1:
 F00:0490       		ld hl,cmdlinebuffer+4
-               S01:0000138B:  21 14 1A
+               S01:000023B7:  21 40 2A
 F00:0491       		ld de,_ladr
-               S01:0000138E:  11 D9 13
+               S01:000023BA:  11 05 24
 F00:0492       		ld bc,4
-               S01:00001391:  01 04 00
+               S01:000023BD:  01 04 00
 F00:0493       		ldir
-               S01:00001394:  ED B0
+               S01:000023C0:  ED B0
 F00:0494       		ld a,0
-               S01:00001396:  3E 00
+               S01:000023C2:  3E 00
 F00:0495       		ld (de),a ;# zero terminated
-               S01:00001398:  12
+               S01:000023C4:  12
 F00:0496       		ld hl,_ladr ;# hex address stored in _adr
-               S01:00001399:  21 D9 13
+               S01:000023C5:  21 05 24
 F00:0497       		call touppercase
-               S01:0000139C:  CD AD 10
+               S01:000023C8:  CD CD 20
 F00:0498       		call println
-               S01:0000139F:  CD 9B 10
+               S01:000023CB:  CD BB 20
 F00:0499       
 F00:0500       		ld ix,_ladr ;# covert text to binary address and store in hidump,lodump
-               S01:000013A2:  DD 21 D9 13
+               S01:000023CE:  DD 21 05 24
 F00:0501       		ld h,(ix)
-               S01:000013A6:  DD 66 00
+               S01:000023D2:  DD 66 00
 F00:0502       		ld l,(ix+1)
-               S01:000013A9:  DD 6E 01
+               S01:000023D5:  DD 6E 01
 F00:0503       		call hextobyte
-               S01:000013AC:  CD B0 10
+               S01:000023D8:  CD D0 20
 F00:0504       		ld (lodump),a
-               S01:000013AF:  32 06 15
+               S01:000023DB:  32 32 25
 F00:0505       		ld h,(ix+2)
-               S01:000013B2:  DD 66 02
+               S01:000023DE:  DD 66 02
 F00:0506       		ld l,(ix+3)
-               S01:000013B5:  DD 6E 03
+               S01:000023E1:  DD 6E 03
 F00:0507       		call hextobyte
-               S01:000013B8:  CD B0 10
+               S01:000023E4:  CD D0 20
 F00:0508       		ld (hidump),a
-               S01:000013BB:  32 05 15
+               S01:000023E7:  32 31 25
 F00:0509       
 F00:0510       		
 F00:0511       		ld hl,cmdlinebuffer+9
-               S01:000013BE:  21 19 1A
+               S01:000023EA:  21 45 2A
 F00:0512       		ld de,(hidump)
-               S01:000013C1:  ED 5B 05 15
+               S01:000023ED:  ED 5B 31 25
 F00:0513       		call loadfile
-               S01:000013C5:  CD A1 10
+               S01:000023F1:  CD C1 20
 F00:0514       		cp 0
-               S01:000013C8:  FE 00
+               S01:000023F4:  FE 00
 F00:0515       		jp z, _doneload$1
-               S01:000013CA:  CA D6 13
+               S01:000023F6:  CA 02 24
 F00:0516       		call printhex ;# print return code
-               S01:000013CD:  CD 9E 10
+               S01:000023F9:  CD BE 20
 F00:0517       		ld hl,loaderrormsg
-               S01:000013D0:  21 32 16
+               S01:000023FC:  21 5E 26
 F00:0518       		call println
-               S01:000013D3:  CD 9B 10
+               S01:000023FF:  CD BB 20
 F00:0519       
 F00:0520       
 F00:0521       
 F00:0522       		
 F00:0523       _doneload$1:
 F00:0524       		ld a,TRUE
-               S01:000013D6:  3E 01
+               S01:00002402:  3E 01
 F00:0525       		ret
-               S01:000013D8:  C9
+               S01:00002404:  C9
 F00:0526       _ladr: .space 5 ;# store character address
 F00:0527       
 F00:0528       ;# === run builtin ==========
 F00:0529       
 F00:0530       runcmd: .string "r,",0
-               S01:000013DE:  72 2C
-               S01:000013E0:  00
+               S01:0000240A:  72 2C
+               S01:0000240C:  00
 F00:0531       run:
 F00:0532       	ld hl,runmsg
-               S01:000013E2:  21 40 16
+               S01:0000240E:  21 6C 26
 F00:0533       	call println
-               S01:000013E5:  CD 9B 10
+               S01:00002411:  CD BB 20
 F00:0534       
 F00:0535       	ld hl,cmdlinebuffer ;# command length must be 8 characters
-               S01:000013E8:  21 10 1A
+               S01:00002414:  21 3C 2A
 F00:0536       	call strlen
-               S01:000013EB:  CD A7 10
+               S01:00002417:  CD C7 20
 F00:0537       	ld a,b
-               S01:000013EE:  78
+               S01:0000241A:  78
 F00:0538       	cp 8
-               S01:000013EF:  FE 08
+               S01:0000241B:  FE 08
 F00:0539       	jp nz, runerror
-               S01:000013F1:  C2 25 14
+               S01:0000241D:  C2 51 24
 F00:0540       	ld hl,cmdlinebuffer
-               S01:000013F4:  21 10 1A
+               S01:00002420:  21 3C 2A
 F00:0541       	call touppercase
-               S01:000013F7:  CD AD 10
+               S01:00002423:  CD CD 20
 F00:0542       	call println
-               S01:000013FA:  CD 9B 10
+               S01:00002426:  CD BB 20
 F00:0543       	ld ix, cmdlinebuffer
-               S01:000013FD:  DD 21 10 1A
+               S01:00002429:  DD 21 3C 2A
 F00:0544       	ld h,(ix+4)
-               S01:00001401:  DD 66 04
+               S01:0000242D:  DD 66 04
 F00:0545       	ld l,(ix+5)
-               S01:00001404:  DD 6E 05
+               S01:00002430:  DD 6E 05
 F00:0546       	call hextobyte
-               S01:00001407:  CD B0 10
+               S01:00002433:  CD D0 20
 F00:0547       	ld (lodump),a
-               S01:0000140A:  32 06 15
+               S01:00002436:  32 32 25
 F00:0548       
 F00:0549       	ld h,(ix+6)
-               S01:0000140D:  DD 66 06
+               S01:00002439:  DD 66 06
 F00:0550       	ld l,(ix+7)
-               S01:00001410:  DD 6E 07
+               S01:0000243C:  DD 6E 07
 F00:0551       	call hextobyte
-               S01:00001413:  CD B0 10
+               S01:0000243F:  CD D0 20
 F00:0552       	ld (hidump),a
-               S01:00001416:  32 05 15
+               S01:00002442:  32 31 25
 F00:0553       	ld hl,0
-               S01:00001419:  21 00 00
+               S01:00002445:  21 00 00
 F00:0554       	call println
-               S01:0000141C:  CD 9B 10
+               S01:00002448:  CD BB 20
 F00:0555       
 F00:0556       	call runfrom
-               S01:0000141F:  CD 04 15
+               S01:0000244B:  CD 30 25
 F00:0557       	jp runexit
-               S01:00001422:  C3 2B 14
+               S01:0000244E:  C3 57 24
 F00:0558       runerror:
 F00:0559       	ld hl,runsyntaxmsg
-               S01:00001425:  21 44 16
+               S01:00002451:  21 70 26
 F00:0560       	call println
-               S01:00001428:  CD 9B 10
+               S01:00002454:  CD BB 20
 F00:0561       runexit:
 F00:0562       	ld a,TRUE
-               S01:0000142B:  3E 01
+               S01:00002457:  3E 01
 F00:0563       	ret
-               S01:0000142D:  C9
+               S01:00002459:  C9
 F00:0564       
 F00:0565       # === help builtin === #
 F00:0566       helpcmd: .string "?"
-               S01:0000142E:  3F
+               S01:0000245A:  3F
 F00:0567       
 F00:0568       help:
 F00:0569       	ld hl,helpmsg
-               S01:00001430:  21 51 18
+               S01:0000245C:  21 7D 28
 F00:0570       	call println
-               S01:00001433:  CD 9B 10
+               S01:0000245F:  CD BB 20
 F00:0571       
 F00:0572       	ld a,TRUE
-               S01:00001436:  3E 01
+               S01:00002462:  3E 01
 F00:0573       	ret
-               S01:00001438:  C9
+               S01:00002464:  C9
 F00:0574       
 F00:0575       	# === in builtin == #
 F00:0576       incmd: .string "in,"
-               S01:00001439:  69 6E 2C
+               S01:00002465:  69 6E 2C
 F00:0577       din:
 F00:0578       	ld hl,inmsg
-               S01:0000143D:  21 75 16
+               S01:00002469:  21 A1 26
 F00:0579       	call println
-               S01:00001440:  CD 9B 10
+               S01:0000246C:  CD BB 20
 F00:0580       
 F00:0581       	ld hl,cmdlinebuffer
-               S01:00001443:  21 10 1A
+               S01:0000246F:  21 3C 2A
 F00:0582       	call strlen
-               S01:00001446:  CD A7 10
+               S01:00002472:  CD C7 20
 F00:0583       	ld a,b
-               S01:00001449:  78
+               S01:00002475:  78
 F00:0584       	cp 7
-               S01:0000144A:  FE 07
+               S01:00002476:  FE 07
 F00:0585       	jp nz, _inerror
-               S01:0000144C:  C2 71 14
+               S01:00002478:  C2 9D 24
 F00:0586       	ld hl,cmdlinebuffer
-               S01:0000144F:  21 10 1A
+               S01:0000247B:  21 3C 2A
 F00:0587       	call touppercase
-               S01:00001452:  CD AD 10
+               S01:0000247E:  CD CD 20
 F00:0588       	call println
-               S01:00001455:  CD 9B 10
+               S01:00002481:  CD BB 20
 F00:0589       	ld ix,cmdlinebuffer
-               S01:00001458:  DD 21 10 1A
+               S01:00002484:  DD 21 3C 2A
 F00:0590       	ld h,(ix+5)
-               S01:0000145C:  DD 66 05
+               S01:00002488:  DD 66 05
 F00:0591       	ld l,(ix+6)
-               S01:0000145F:  DD 6E 06
+               S01:0000248B:  DD 6E 06
 F00:0592       	call hextobyte
-               S01:00001462:  CD B0 10
+               S01:0000248E:  CD D0 20
 F00:0593       	ld (lodump),a ;# address to read in lodump
-               S01:00001465:  32 06 15
+               S01:00002491:  32 32 25
 F00:0594       	ld c,a
-               S01:00001468:  4F
+               S01:00002494:  4F
 F00:0595       	in a,(c)
-               S01:00001469:  ED 78
+               S01:00002495:  ED 78
 F00:0596       	call printhex
-               S01:0000146B:  CD 9E 10
+               S01:00002497:  CD BE 20
 F00:0597       	jp _inexit
-               S01:0000146E:  C3 77 14
+               S01:0000249A:  C3 A3 24
 F00:0598       _inerror:
 F00:0599       	ld hl,insyntaxmsg
-               S01:00001471:  21 78 16
+               S01:0000249D:  21 A4 26
 F00:0600       	call println
-               S01:00001474:  CD 9B 10
+               S01:000024A0:  CD BB 20
 F00:0601       _inexit:
 F00:0602       
 F00:0603       	ld a,TRUE
-               S01:00001477:  3E 01
+               S01:000024A3:  3E 01
 F00:0604       	ret
-               S01:00001479:  C9
+               S01:000024A5:  C9
 F00:0605       
 F00:0606       	# === out builtin == #
 F00:0607       outcmd: .string "out,"
-               S01:0000147A:  6F 75 74 2C
+               S01:000024A6:  6F 75 74 2C
 F00:0608       dout:
 F00:0609       	ld hl,outmsg
-               S01:0000147F:  21 E5 16
+               S01:000024AB:  21 11 27
 F00:0610       	call println
-               S01:00001482:  CD 9B 10
+               S01:000024AE:  CD BB 20
 F00:0611       
 F00:0612       	ld hl,cmdlinebuffer
-               S01:00001485:  21 10 1A
+               S01:000024B1:  21 3C 2A
 F00:0613       	call strlen
-               S01:00001488:  CD A7 10
+               S01:000024B4:  CD C7 20
 F00:0614       	ld a,b
-               S01:0000148B:  78
+               S01:000024B7:  78
 F00:0615       	cp 13
-               S01:0000148C:  FE 0D
+               S01:000024B8:  FE 0D
 F00:0616       	jp nz, outerror
-               S01:0000148E:  C2 BF 14
+               S01:000024BA:  C2 EB 24
 F00:0617       	ld hl,cmdlinebuffer
-               S01:00001491:  21 10 1A
+               S01:000024BD:  21 3C 2A
 F00:0618       	call touppercase
-               S01:00001494:  CD AD 10
+               S01:000024C0:  CD CD 20
 F00:0619       	call println
-               S01:00001497:  CD 9B 10
+               S01:000024C3:  CD BB 20
 F00:0620       	ld ix,cmdlinebuffer
-               S01:0000149A:  DD 21 10 1A
+               S01:000024C6:  DD 21 3C 2A
 F00:0621       	ld h,(ix+6)
-               S01:0000149E:  DD 66 06
+               S01:000024CA:  DD 66 06
 F00:0622       	ld l,(ix+7)
-               S01:000014A1:  DD 6E 07
+               S01:000024CD:  DD 6E 07
 F00:0623       	call hextobyte
-               S01:000014A4:  CD B0 10
+               S01:000024D0:  CD D0 20
 F00:0624       	ld (lodump),a ;# byte to send in lodump
-               S01:000014A7:  32 06 15
+               S01:000024D3:  32 32 25
 F00:0625       
 F00:0626       	ld h,(ix+11)
-               S01:000014AA:  DD 66 0B
+               S01:000024D6:  DD 66 0B
 F00:0627       	ld l,(ix+12)
-               S01:000014AD:  DD 6E 0C
+               S01:000024D9:  DD 6E 0C
 F00:0628       	call hextobyte
-               S01:000014B0:  CD B0 10
+               S01:000024DC:  CD D0 20
 F00:0629       	ld (hidump),a ;# address in hidump
-               S01:000014B3:  32 05 15
+               S01:000024DF:  32 31 25
 F00:0630       	ld c,a
-               S01:000014B6:  4F
+               S01:000024E2:  4F
 F00:0631       	ld a,(lodump)
-               S01:000014B7:  3A 06 15
+               S01:000024E3:  3A 32 25
 F00:0632       	out (C),A
-               S01:000014BA:  ED 79
+               S01:000024E6:  ED 79
 F00:0633       
 F00:0634       
 F00:0635       	jp outexit
-               S01:000014BC:  C3 C5 14
+               S01:000024E8:  C3 F1 24
 F00:0636       
 F00:0637       outerror:
 F00:0638       	ld hl,outsyntaxmsg
-               S01:000014BF:  21 E9 16
+               S01:000024EB:  21 15 27
 F00:0639       	call println
-               S01:000014C2:  CD 9B 10
+               S01:000024EE:  CD BB 20
 F00:0640       outexit:
 F00:0641       	ld a,TRUE
-               S01:000014C5:  3E 01
+               S01:000024F1:  3E 01
 F00:0642       	ret
-               S01:000014C7:  C9
+               S01:000024F3:  C9
 F00:0643       
 F00:0644       
 F00:0645       	# === createprocess builtin === #
 F00:0646       createprocesscmd: .string "createprocess,"
-               S01:000014C8:  63 72 65 61 74 65 70 72 6F 63 65 73 73 2C
+               S01:000024F4:  63 72 65 61 74 65 70 72 6F 63 65 73 73 2C
 F00:0647       createprocess:
 F00:0648       	ld hl,createprocessmsg
-               S01:000014D7:  21 77 17
+               S01:00002503:  21 A3 27
 F00:0649       	call println
-               S01:000014DA:  CD 9B 10
+               S01:00002506:  CD BB 20
 F00:0650       	ld hl,cmdlinebuffer
-               S01:000014DD:  21 10 1A
+               S01:00002509:  21 3C 2A
 F00:0651       	push hl ;# save program name
-               S01:000014E0:  E5
+               S01:0000250C:  E5
 F00:0652       	dec hl ;# this is stupid but it works
-               S01:000014E1:  2B
+               S01:0000250D:  2B
 F00:0653       _1$:
 F00:0654       	inc hl
-               S01:000014E2:  23
+               S01:0000250E:  23
 F00:0655       	ld a,(hl)
-               S01:000014E3:  7E
+               S01:0000250F:  7E
 F00:0656       	
 F00:0657       	cp 0 ;# null terminated
-               S01:000014E4:  FE 00
+               S01:00002510:  FE 00
 F00:0658       	jp z,_2$
-               S01:000014E6:  CA F1 14
+               S01:00002512:  CA 1D 25
 F00:0659       
 F00:0660       	cp ' ' ;# look for 1st space
-               S01:000014E9:  FE 20
+               S01:00002515:  FE 20
 F00:0661       	jp nz,_1$
-               S01:000014EB:  C2 E2 14
+               S01:00002517:  C2 0E 25
 F00:0662       	ld a,0
-               S01:000014EE:  3E 00
+               S01:0000251A:  3E 00
 F00:0663       	ld (hl),a ;# zero terminate prgram name
-               S01:000014F0:  77
+               S01:0000251C:  77
 F00:0664       _2$:
 F00:0665       	inc hl
-               S01:000014F1:  23
+               S01:0000251D:  23
 F00:0666       	push hl ;# save the command parameters
-               S01:000014F2:  E5
+               S01:0000251E:  E5
 F00:0667       	call createProcess
-               S01:000014F3:  CD BC 10
+               S01:0000251F:  CD DC 20
 F00:0668       	ret
-               S01:000014F6:  C9
+               S01:00002522:  C9
 F00:0669       
 F00:0670       #=== reload builtin ==#
 F00:0671       reloadcmd: .string "exit"
-               S01:000014F7:  65 78 69 74
+               S01:00002523:  65 78 69 74
 F00:0672       reload:
 F00:0673       	ld a,1
-               S01:000014FC:  3E 01
+               S01:00002528:  3E 01
 F00:0674       	ld (doreload),a
-               S01:000014FE:  32 29 11
+               S01:0000252A:  32 55 21
 F00:0675       	ld a,TRUE
-               S01:00001501:  3E 01
+               S01:0000252D:  3E 01
 F00:0676       	ret
-               S01:00001503:  C9
+               S01:0000252F:  C9
 F00:0677       
 F00:0678       ;# shared variables for builtin functions
 F00:0679       runfrom: .byte 0xc3 ;# jump instruction - must be next to hidump
-               S01:00001504:  C3
+               S01:00002530:  C3
 F00:0680       hidump: .byte 0 ;# used but hexdump and load
-               S01:00001505:  00
+               S01:00002531:  00
 F00:0681       lodump: .byte 0 ;# used by hexdump and load
-               S01:00001506:  00
+               S01:00002532:  00
 F00:0682       
 F00:0683       #=== malloc table builtin ==#
 F00:0684       
 F00:0685       malloctablecmd: .string "m*"
-               S01:00001507:  6D 2A
+               S01:00002533:  6D 2A
 F00:0686       malloctable:
 F00:0687       	ld hl, malloctablemsg
-               S01:0000150A:  21 0D 18
+               S01:00002536:  21 39 28
 F00:0688       	call println
-               S01:0000150D:  CD 9B 10
+               S01:00002539:  CD BB 20
 F00:0689       
 F00:0690       	call hexdumpheader
-               S01:00001510:  CD AF 12
+               S01:0000253C:  CD DB 22
 F00:0691       
 F00:0692       	ld a,0 ;# function hexdumplinetitle uses this varible to determine if both h and l should be output
-               S01:00001513:  3E 00
+               S01:0000253F:  3E 00
 F00:0693       	ld (_highlow),a ;# 0 = output low, 1 = output high and low
-               S01:00001515:  32 F6 12
+               S01:00002541:  32 22 23
 F00:0694       
 F00:0695       	ld a,0
-               S01:00001518:  3E 00
+               S01:00002544:  3E 00
 F00:0696       	ld h,0
-               S01:0000151A:  26 00
+               S01:00002546:  26 00
 F00:0697       	ld l,0
-               S01:0000151C:  2E 00
+               S01:00002548:  2E 00
 F00:0698       	ld (pagecount),hl
-               S01:0000151E:  22 7D 15
+               S01:0000254A:  22 A9 25
 F00:0699       	call getmalloctable
-               S01:00001521:  CD C2 10
+               S01:0000254D:  CD E2 20
 F00:0700       
 F00:0701       	ld b,16 ;# level 3
-               S01:00001524:  06 10
+               S01:00002550:  06 10
 F00:0702       
 F00:0703       _6$:push bc
-               S01:00001526:  C5
+               S01:00002552:  C5
 F00:0704       push hl
-               S01:00001527:  E5
+               S01:00002553:  E5
 F00:0705       push bc
-               S01:00001528:  C5
+               S01:00002554:  C5
 F00:0706       	ld hl,(pagecount)
-               S01:00001529:  2A 7D 15
+               S01:00002555:  2A A9 25
 F00:0707       	call hexdumplinetitle
-               S01:0000152C:  CD D6 12
+               S01:00002558:  CD 02 23
 F00:0708       	ld c,0x10
-               S01:0000152F:  0E 10
+               S01:0000255B:  0E 10
 F00:0709       	ld b,0
-               S01:00001531:  06 00
+               S01:0000255D:  06 00
 F00:0710       	add hl,bc
-               S01:00001533:  09
+               S01:0000255F:  09
 F00:0711       	ld (pagecount),hl
-               S01:00001534:  22 7D 15
+               S01:00002560:  22 A9 25
 F00:0712       pop bc
-               S01:00001537:  C1
+               S01:00002563:  C1
 F00:0713       pop hl
-               S01:00001538:  E1
+               S01:00002564:  E1
 F00:0714       	ld a,' '
-               S01:00001539:  3E 20
+               S01:00002565:  3E 20
 F00:0715       	call putc
-               S01:0000153B:  CD AA 10
+               S01:00002567:  CD CA 20
 F00:0716       	call putc	
-               S01:0000153E:  CD AA 10
+               S01:0000256A:  CD CA 20
 F00:0717       	call putc
-               S01:00001541:  CD AA 10
+               S01:0000256D:  CD CA 20
 F00:0718       
 F00:0719       	ld b,2 ;# level 2
-               S01:00001544:  06 02
+               S01:00002570:  06 02
 F00:0720       	
 F00:0721       _5$:push bc
-               S01:00001546:  C5
+               S01:00002572:  C5
 F00:0722       	ld a,(hl) ;# memory map
-               S01:00001547:  7E
+               S01:00002573:  7E
 F00:0723       	ld b,8 ;# level 1
-               S01:00001548:  06 08
+               S01:00002574:  06 08
 F00:0724       _1$:	 
 F00:0725       	rl a
-               S01:0000154A:  CB 17
+               S01:00002576:  CB 17
 F00:0726       	push af
-               S01:0000154C:  F5
+               S01:00002578:  F5
 F00:0727       	jp nc,_2$:
-               S01:0000154D:  D2 55 15
+               S01:00002579:  D2 81 25
 F00:0728       	ld a,'1'
-               S01:00001550:  3E 31
+               S01:0000257C:  3E 31
 F00:0729       	jp _3$:
-               S01:00001552:  C3 57 15
+               S01:0000257E:  C3 83 25
 F00:0730       _2$:
 F00:0731       	ld a,'0'
-               S01:00001555:  3E 30
+               S01:00002581:  3E 30
 F00:0732       _3$:
 F00:0733       	call putc
-               S01:00001557:  CD AA 10
+               S01:00002583:  CD CA 20
 F00:0734       	ld a,' '
-               S01:0000155A:  3E 20
+               S01:00002586:  3E 20
 F00:0735       	call putc
-               S01:0000155C:  CD AA 10
+               S01:00002588:  CD CA 20
 F00:0736       	call putc
-               S01:0000155F:  CD AA 10
+               S01:0000258B:  CD CA 20
 F00:0737       	pop af
-               S01:00001562:  F1
+               S01:0000258E:  F1
 F00:0738       	djnz _1$
-               S01:00001563:  10 E5
+               S01:0000258F:  10 E5
 F00:0739       
 F00:0740       	pop bc ;# level 2
-               S01:00001565:  C1
+               S01:00002591:  C1
 F00:0741       	inc hl ;# advance memory map point
-               S01:00001566:  23
+               S01:00002592:  23
 F00:0742       	djnz _5$
-               S01:00001567:  10 DD
+               S01:00002593:  10 DD
 F00:0743       
 F00:0744       	push hl
-               S01:00001569:  E5
+               S01:00002595:  E5
 F00:0745       
 F00:0746       	ld hl,0
-               S01:0000156A:  21 00 00
+               S01:00002596:  21 00 00
 F00:0747       	call println
-               S01:0000156D:  CD 9B 10
+               S01:00002599:  CD BB 20
 F00:0748       	pop hl
-               S01:00001570:  E1
+               S01:0000259C:  E1
 F00:0749       #	inc hl ;# advance memory map point
 F00:0750       	pop bc
-               S01:00001571:  C1
+               S01:0000259D:  C1
 F00:0751       	djnz _6$
-               S01:00001572:  10 B2
+               S01:0000259E:  10 B2
 F00:0752       
 F00:0753       	ld hl,malloctableusemsg
-               S01:00001574:  21 8A 17
+               S01:000025A0:  21 B6 27
 F00:0754       	call println
-               S01:00001577:  CD 9B 10
+               S01:000025A3:  CD BB 20
 F00:0755       	ld a,TRUE
-               S01:0000157A:  3E 01
+               S01:000025A6:  3E 01
 F00:0756       	ret
-               S01:0000157C:  C9
+               S01:000025A8:  C9
 F00:0757       
 F00:0758       pagecount: .byte 0
-               S01:0000157D:  00
+               S01:000025A9:  00
 F00:0759       
 F00:0760       		;#======================= builtin functions end ================
 F00:0761       		;# --- dev note : builtin function must return TRUE in a register
@@ -1600,141 +1649,141 @@ F00:0762       messages:
 F00:0763       ;	dbug1: .string "debug1"
 F00:0764       ;	dbug2: .string "debug2"
 F00:0765       	welcomemsg: .string "Would you like to play a game?"
-               S01:0000157E:  57 6F 75 6C 64 20 79 6F 75 20 6C 69 6B 65 20 74
-               S01:0000158E:  6F 20 70 6C 61 79 20 61 20 67 61 6D 65 3F
+               S01:000025AA:  57 6F 75 6C 64 20 79 6F 75 20 6C 69 6B 65 20 74
+               S01:000025BA:  6F 20 70 6C 61 79 20 61 20 67 61 6D 65 3F
 F00:0766       	hexdumpmsg: .string "HEXDUMP"
-               S01:0000159D:  48 45 58 44 55 4D 50
+               S01:000025C9:  48 45 58 44 55 4D 50
 F00:0767       	hexdumpprefix: .string "0x"
-               S01:000015A5:  30 78
+               S01:000025D1:  30 78
 F00:0768       	boldon: .string "\033[1m"
-               S01:000015A8:  1B 5B 31 6D
+               S01:000025D4:  1B 5B 31 6D
 F00:0769       	boldoff: .string "\033[m"
-               S01:000015AD:  1B 5B 6D
+               S01:000025D9:  1B 5B 6D
 F00:0770       	hexdumpsyntaxmsg: .string "  hexdump syntax: h,0xXXXX - address specified in hexidecimal"
-               S01:000015B1:  20 20 68 65 78 64 75 6D 70 20 73 79 6E 74 61 78
-               S01:000015C1:  3A 20 68 2C 30 78 58 58 58 58 20 2D 20 61 64 64
+               S01:000025DD:  20 20 68 65 78 64 75 6D 70 20 73 79 6E 74 61 78
+               S01:000025ED:  3A 20 68 2C 30 78 58 58 58 58 20 2D 20 61 64 64
 F00:0771       	loadmsg: .string "LOAD"
-               S01:000015EF:  4C 4F 41 44
+               S01:0000261B:  4C 4F 41 44
 F00:0772       	loadsyntaxmsg: .string "  load syntax: l,0xXXXX,filename - load file @ 0xXXXX address"
-               S01:000015F4:  20 20 6C 6F 61 64 20 73 79 6E 74 61 78 3A 20 6C
-               S01:00001604:  2C 30 78 58 58 58 58 2C 66 69 6C 65 6E 61 6D 65
+               S01:00002620:  20 20 6C 6F 61 64 20 73 79 6E 74 61 78 3A 20 6C
+               S01:00002630:  2C 30 78 58 58 58 58 2C 66 69 6C 65 6E 61 6D 65
 F00:0773       	loaderrormsg: .string "  load error."
-               S01:00001632:  20 20 6C 6F 61 64 20 65 72 72 6F 72 2E
+               S01:0000265E:  20 20 6C 6F 61 64 20 65 72 72 6F 72 2E
 F00:0774       	runmsg: .string "RUN"
-               S01:00001640:  52 55 4E
+               S01:0000266C:  52 55 4E
 F00:0775       	runsyntaxmsg: .string "  run syntax: r,0xXXXX - run from 0xXXXX address"
-               S01:00001644:  20 20 72 75 6E 20 73 79 6E 74 61 78 3A 20 72 2C
-               S01:00001654:  30 78 58 58 58 58 20 2D 20 72 75 6E 20 66 72 6F
+               S01:00002670:  20 20 72 75 6E 20 73 79 6E 74 61 78 3A 20 72 2C
+               S01:00002680:  30 78 58 58 58 58 20 2D 20 72 75 6E 20 66 72 6F
 F00:0776       	inmsg: .string "IN"
-               S01:00001675:  49 4E
+               S01:000026A1:  49 4E
 F00:0777       	insyntaxmsg: .string "  peripheral in syntax: in,0xYY - execute IN A,(0xYY) - register A is displayed in hex on return"
-               S01:00001678:  20 20 70 65 72 69 70 68 65 72 61 6C 20 69 6E 20
-               S01:00001688:  73 79 6E 74 61 78 3A 20 69 6E 2C 30 78 59 59 20
+               S01:000026A4:  20 20 70 65 72 69 70 68 65 72 61 6C 20 69 6E 20
+               S01:000026B4:  73 79 6E 74 61 78 3A 20 69 6E 2C 30 78 59 59 20
 F00:0778       	inerrormsg: .string "  in error."
-               S01:000016D9:  20 20 69 6E 20 65 72 72 6F 72 2E
+               S01:00002705:  20 20 69 6E 20 65 72 72 6F 72 2E
 F00:0779       	outmsg: .string "OUT"
-               S01:000016E5:  4F 55 54
+               S01:00002711:  4F 55 54
 F00:0780       	outsyntaxmsg: .string "  peripheral out syntax: out,0xXX,0xYY - executes\r\nLD A,0xXX\r\nOUT (0xYY), A\r\nwhere 0xYY is
-               S01:000016E9:  20 20 70 65 72 69 70 68 65 72 61 6C 20 6F 75 74
-               S01:000016F9:  20 73 79 6E 74 61 78 3A 20 6F 75 74 2C 30 78 58
+               S01:00002715:  20 20 70 65 72 69 70 68 65 72 61 6C 20 6F 75 74
+               S01:00002725:  20 73 79 6E 74 61 78 3A 20 6F 75 74 2C 30 78 58
 F00:0781       	outerrormsg: .string " out error."
-               S01:0000176B:  20 6F 75 74 20 65 72 72 6F 72 2E
+               S01:00002797:  20 6F 75 74 20 65 72 72 6F 72 2E
 F00:0782       	createprocessmsg: .string "hell no"
-               S01:00001777:  68 65 6C 6C 20 6E 6F
+               S01:000027A3:  68 65 6C 6C 20 6E 6F
 F00:0783       	reloadmsg: .string "reloading."
-               S01:0000177F:  72 65 6C 6F 61 64 69 6E 67 2E
+               S01:000027AB:  72 65 6C 6F 61 64 69 6E 67 2E
 F00:0784       	malloctableusemsg: .string "table is showing memory pages\r\n take the left value and the heading value to create the p
-               S01:0000178A:  74 61 62 6C 65 20 69 73 20 73 68 6F 77 69 6E 67
-               S01:0000179A:  20 6D 65 6D 6F 72 79 20 70 61 67 65 73 0D 0A 20
+               S01:000027B6:  74 61 62 6C 65 20 69 73 20 73 68 6F 77 69 6E 67
+               S01:000027C6:  20 6D 65 6D 6F 72 79 20 70 61 67 65 73 0D 0A 20
 F00:0785       	malloctablemsg: .string "Memory Allocation Table"
-               S01:0000180D:  4D 65 6D 6F 72 79 20 41 6C 6C 6F 63 61 74 69 6F
-               S01:0000181D:  6E 20 54 61 62 6C 65
+               S01:00002839:  4D 65 6D 6F 72 79 20 41 6C 6C 6F 63 61 74 69 6F
+               S01:00002849:  6E 20 54 61 62 6C 65
 F00:0786       
 F00:0787       
 F00:0788       
 F00:0789       	commandPromptmsg: .string "\r\n>";
-               S01:00001825:  0D 0A 3E
+               S01:00002851:  0D 0A 3E
 F00:0790       	invalidcommandmsg: .string ": Invalid command.Shall we play a game?"
-               S01:00001829:  3A 20 49 6E 76 61 6C 69 64 20 63 6F 6D 6D 61 6E
-               S01:00001839:  64 2E 53 68 61 6C 6C 20 77 65 20 70 6C 61 79 20
+               S01:00002855:  3A 20 49 6E 76 61 6C 69 64 20 63 6F 6D 6D 61 6E
+               S01:00002865:  64 2E 53 68 61 6C 6C 20 77 65 20 70 6C 61 79 20
 F00:0791       	helpmsg: .byte "Joshua MCP builtin commands:\r\n"
-               S01:00001851:  4A 6F 73 68 75 61 20 4D 43 50 20 62 75 69 6C 74
-               S01:00001861:  69 6E 20 63 6F 6D 6D 61 6E 64 73 3A 0D 0A
+               S01:0000287D:  4A 6F 73 68 75 61 20 4D 43 50 20 62 75 69 6C 74
+               S01:0000288D:  69 6E 20 63 6F 6D 6D 61 6E 64 73 3A 0D 0A
 F00:0792       			 .byte "? - help, you are reading help right now\r\n"
-               S01:0000186F:  3F 20 2D 20 68 65 6C 70 2C 20 79 6F 75 20 61 72
-               S01:0000187F:  65 20 72 65 61 64 69 6E 67 20 68 65 6C 70 20 72
+               S01:0000289B:  3F 20 2D 20 68 65 6C 70 2C 20 79 6F 75 20 61 72
+               S01:000028AB:  65 20 72 65 61 64 69 6E 67 20 68 65 6C 70 20 72
 F00:0793       			 .byte "h,0xXXXX - hexdump from address 0xXXXX for 255 bytes\r\n"
-               S01:00001899:  68 2C 30 78 58 58 58 58 20 2D 20 68 65 78 64 75
-               S01:000018A9:  6D 70 20 66 72 6F 6D 20 61 64 64 72 65 73 73 20
+               S01:000028C5:  68 2C 30 78 58 58 58 58 20 2D 20 68 65 78 64 75
+               S01:000028D5:  6D 70 20 66 72 6F 6D 20 61 64 64 72 65 73 73 20
 F00:0794       			 .byte "l,0xXXXX,filename - load into memory at 0xXXXX the file filename\r\n"
-               S01:000018CF:  6C 2C 30 78 58 58 58 58 2C 66 69 6C 65 6E 61 6D
-               S01:000018DF:  65 20 2D 20 6C 6F 61 64 20 69 6E 74 6F 20 6D 65
+               S01:000028FB:  6C 2C 30 78 58 58 58 58 2C 66 69 6C 65 6E 61 6D
+               S01:0000290B:  65 20 2D 20 6C 6F 61 64 20 69 6E 74 6F 20 6D 65
 F00:0795       			 .byte "r,0xXXXX - run from address 0xXXXX\r\n"
-               S01:00001911:  72 2C 30 78 58 58 58 58 20 2D 20 72 75 6E 20 66
-               S01:00001921:  72 6F 6D 20 61 64 64 72 65 73 73 20 30 78 58 58
+               S01:0000293D:  72 2C 30 78 58 58 58 58 20 2D 20 72 75 6E 20 66
+               S01:0000294D:  72 6F 6D 20 61 64 64 72 65 73 73 20 30 78 58 58
 F00:0796       			 .byte "in,0xYY - receive from peripheral at address 0xYY\r\n"
-               S01:00001935:  69 6E 2C 30 78 59 59 20 2D 20 72 65 63 65 69 76
-               S01:00001945:  65 20 66 72 6F 6D 20 70 65 72 69 70 68 65 72 61
+               S01:00002961:  69 6E 2C 30 78 59 59 20 2D 20 72 65 63 65 69 76
+               S01:00002971:  65 20 66 72 6F 6D 20 70 65 72 69 70 68 65 72 61
 F00:0797       			 .byte "out,0xXX,0xYY - send to peripheral at address 0xYY then value 0xXX\r\n"
-               S01:00001968:  6F 75 74 2C 30 78 58 58 2C 30 78 59 59 20 2D 20
-               S01:00001978:  73 65 6E 64 20 74 6F 20 70 65 72 69 70 68 65 72
+               S01:00002994:  6F 75 74 2C 30 78 58 58 2C 30 78 59 59 20 2D 20
+               S01:000029A4:  73 65 6E 64 20 74 6F 20 70 65 72 69 70 68 65 72
 F00:0798       			 .byte "m* - show malloc table\r\n"
-               S01:000019AC:  6D 2A 20 2D 20 73 68 6F 77 20 6D 61 6C 6C 6F 63
-               S01:000019BC:  20 74 61 62 6C 65 0D 0A
+               S01:000029D8:  6D 2A 20 2D 20 73 68 6F 77 20 6D 61 6C 6C 6F 63
+               S01:000029E8:  20 74 61 62 6C 65 0D 0A
 F00:0799       			 .byte "exit - exit and reload the MCP\r\n"
-               S01:000019C4:  65 78 69 74 20 2D 20 65 78 69 74 20 61 6E 64 20
-               S01:000019D4:  72 65 6C 6F 61 64 20 74 68 65 20 4D 43 50 0D 0A
+               S01:000029F0:  65 78 69 74 20 2D 20 65 78 69 74 20 61 6E 64 20
+               S01:00002A00:  72 65 6C 6F 61 64 20 74 68 65 20 4D 43 50 0D 0A
 F00:0800       			 .string 0
-               S01:000019E4:  00
+               S01:00002A10:  00
 F00:0801       builtin:
 F00:0802       	;# 2bytes pointer to command - zero terminated, 2bytes pointer to handler Routines
 F00:0803       	;# last item will have 0x000 to indicate end of list
 F00:0804       	;#hexdump
 F00:0805       		.2byte hexdumpcmd,hexdump
-               S01:000019E6:  5C 12
-               S01:000019E8:  60 12
+               S01:00002A12:  88 22
+               S01:00002A14:  8C 22
 F00:0806       		.2byte loadcmd,load
-               S01:000019EA:  6C 13
-               S01:000019EC:  70 13
+               S01:00002A16:  98 23
+               S01:00002A18:  9C 23
 F00:0807       		.2byte runcmd,run
-               S01:000019EE:  DE 13
-               S01:000019F0:  E2 13
+               S01:00002A1A:  0A 24
+               S01:00002A1C:  0E 24
 F00:0808       		.2byte helpcmd,help
-               S01:000019F2:  2E 14
-               S01:000019F4:  30 14
+               S01:00002A1E:  5A 24
+               S01:00002A20:  5C 24
 F00:0809       		.2byte outcmd,dout
-               S01:000019F6:  7A 14
-               S01:000019F8:  7F 14
+               S01:00002A22:  A6 24
+               S01:00002A24:  AB 24
 F00:0810       		.2byte incmd,din
-               S01:000019FA:  39 14
-               S01:000019FC:  3D 14
+               S01:00002A26:  65 24
+               S01:00002A28:  69 24
 F00:0811       		.2byte createprocesscmd,createprocess
-               S01:000019FE:  C8 14
-               S01:00001A00:  D7 14
+               S01:00002A2A:  F4 24
+               S01:00002A2C:  03 25
 F00:0812       		.2byte reloadcmd,reload
-               S01:00001A02:  F7 14
-               S01:00001A04:  FC 14
+               S01:00002A2E:  23 25
+               S01:00002A30:  28 25
 F00:0813       		.2byte malloctablecmd,malloctable
-               S01:00001A06:  07 15
-               S01:00001A08:  0A 15
+               S01:00002A32:  33 25
+               S01:00002A34:  36 25
 F00:0814       
 F00:0815       	endoflist: .2byte 0,0
-               S01:00001A0A:  00 00
-               S01:00001A0C:  00 00
+               S01:00002A36:  00 00
+               S01:00002A38:  00 00
 F00:0816       
 F00:0817       data:
 F00:0818       	cmdlineexecute: .byte 0
-               S01:00001A0E:  00
+               S01:00002A3A:  00
 F00:0819       	cmdlinebufferlen: .byte 0
-               S01:00001A0F:  00
+               S01:00002A3B:  00
 F00:0820       	cmdlinebuffer: .space 50
 F00:0821       	cmdlinebuffer$:
 F00:0822       
 F00:0823       	nullroutine:
 F00:0824       		ei
-               S01:00001A42:  FB
+               S01:00002A6E:  FB
 F00:0825       		reti
-               S01:00001A43:  ED 4D
+               S01:00002A6F:  ED 4D
 F00:0826       
 F00:0827       	
 F00:0828       
@@ -1743,280 +1792,280 @@ F00:0830       	;#.org 0x700
 F00:0831       	.align 8
 F00:0832       	jumptable: ;# for keyboard interrupts
 F00:0833       	.2byte nullroutine ;0
-               S01:00001B00:  42 1A
+               S01:00002B00:  6E 2A
 F00:0834       	.2byte cmdline ;2
-               S01:00001B02:  84 11
+               S01:00002B02:  B0 21
 F00:0835       	.2byte nullroutine ;4
-               S01:00001B04:  42 1A
+               S01:00002B04:  6E 2A
 F00:0836       	.2byte nullroutine ;6
-               S01:00001B06:  42 1A
+               S01:00002B06:  6E 2A
 F00:0837       	.2byte nullroutine ;0
-               S01:00001B08:  42 1A
+               S01:00002B08:  6E 2A
 F00:0838       	.2byte nullroutine ;0
-               S01:00001B0A:  42 1A
+               S01:00002B0A:  6E 2A
 F00:0839       	.2byte nullroutine ;0
-               S01:00001B0C:  42 1A
+               S01:00002B0C:  6E 2A
 F00:0840       	.2byte nullroutine ;0
-               S01:00001B0E:  42 1A
+               S01:00002B0E:  6E 2A
 F00:0841       	.2byte nullroutine ;0
-               S01:00001B10:  42 1A
+               S01:00002B10:  6E 2A
 F00:0842       	.2byte nullroutine ;0
-               S01:00001B12:  42 1A
+               S01:00002B12:  6E 2A
 F00:0843       #/* 10 */
 F00:0844       	.2byte nullroutine ;0
-               S01:00001B14:  42 1A
+               S01:00002B14:  6E 2A
 F00:0845       	.2byte nullroutine ;0
-               S01:00001B16:  42 1A
+               S01:00002B16:  6E 2A
 F00:0846       	.2byte nullroutine ;0
-               S01:00001B18:  42 1A
+               S01:00002B18:  6E 2A
 F00:0847       	.2byte nullroutine ;0
-               S01:00001B1A:  42 1A
+               S01:00002B1A:  6E 2A
 F00:0848       	.2byte nullroutine ;0
-               S01:00001B1C:  42 1A
+               S01:00002B1C:  6E 2A
 F00:0849       	.2byte nullroutine ;0
-               S01:00001B1E:  42 1A
+               S01:00002B1E:  6E 2A
 F00:0850       	.2byte nullroutine ;0
-               S01:00001B20:  42 1A
+               S01:00002B20:  6E 2A
 F00:0851       	.2byte nullroutine ;0
-               S01:00001B22:  42 1A
+               S01:00002B22:  6E 2A
 F00:0852       	.2byte nullroutine ;0
-               S01:00001B24:  42 1A
+               S01:00002B24:  6E 2A
 F00:0853       	.2byte nullroutine ;0
-               S01:00001B26:  42 1A
+               S01:00002B26:  6E 2A
 F00:0854       #/* 20 */
 F00:0855       	.2byte nullroutine ;0
-               S01:00001B28:  42 1A
+               S01:00002B28:  6E 2A
 F00:0856       	.2byte nullroutine ;0
-               S01:00001B2A:  42 1A
+               S01:00002B2A:  6E 2A
 F00:0857       	.2byte nullroutine ;0
-               S01:00001B2C:  42 1A
+               S01:00002B2C:  6E 2A
 F00:0858       	.2byte nullroutine ;0
-               S01:00001B2E:  42 1A
+               S01:00002B2E:  6E 2A
 F00:0859       	.2byte nullroutine ;0
-               S01:00001B30:  42 1A
+               S01:00002B30:  6E 2A
 F00:0860       	.2byte nullroutine ;0
-               S01:00001B32:  42 1A
+               S01:00002B32:  6E 2A
 F00:0861       	.2byte nullroutine ;0
-               S01:00001B34:  42 1A
+               S01:00002B34:  6E 2A
 F00:0862       	.2byte nullroutine ;0
-               S01:00001B36:  42 1A
+               S01:00002B36:  6E 2A
 F00:0863       	.2byte nullroutine ;0
-               S01:00001B38:  42 1A
+               S01:00002B38:  6E 2A
 F00:0864       	.2byte nullroutine ;0
-               S01:00001B3A:  42 1A
+               S01:00002B3A:  6E 2A
 F00:0865       #/* 30 */
 F00:0866       	.2byte nullroutine ;0
-               S01:00001B3C:  42 1A
+               S01:00002B3C:  6E 2A
 F00:0867       	.2byte nullroutine ;0
-               S01:00001B3E:  42 1A
+               S01:00002B3E:  6E 2A
 F00:0868       	.2byte nullroutine ;0
-               S01:00001B40:  42 1A
+               S01:00002B40:  6E 2A
 F00:0869       	.2byte nullroutine ;0
-               S01:00001B42:  42 1A
+               S01:00002B42:  6E 2A
 F00:0870       	.2byte nullroutine ;0
-               S01:00001B44:  42 1A
+               S01:00002B44:  6E 2A
 F00:0871       	.2byte nullroutine ;0
-               S01:00001B46:  42 1A
+               S01:00002B46:  6E 2A
 F00:0872       	.2byte nullroutine ;0
-               S01:00001B48:  42 1A
+               S01:00002B48:  6E 2A
 F00:0873       	.2byte nullroutine ;0
-               S01:00001B4A:  42 1A
+               S01:00002B4A:  6E 2A
 F00:0874       	.2byte nullroutine ;0
-               S01:00001B4C:  42 1A
+               S01:00002B4C:  6E 2A
 F00:0875       	.2byte nullroutine ;0
-               S01:00001B4E:  42 1A
+               S01:00002B4E:  6E 2A
 F00:0876       #/* 40 */
 F00:0877       	.2byte nullroutine ;0
-               S01:00001B50:  42 1A
+               S01:00002B50:  6E 2A
 F00:0878       	.2byte nullroutine ;0
-               S01:00001B52:  42 1A
+               S01:00002B52:  6E 2A
 F00:0879       	.2byte nullroutine ;0
-               S01:00001B54:  42 1A
+               S01:00002B54:  6E 2A
 F00:0880       	.2byte nullroutine ;0
-               S01:00001B56:  42 1A
+               S01:00002B56:  6E 2A
 F00:0881       	.2byte nullroutine ;0
-               S01:00001B58:  42 1A
+               S01:00002B58:  6E 2A
 F00:0882       	.2byte nullroutine ;0
-               S01:00001B5A:  42 1A
+               S01:00002B5A:  6E 2A
 F00:0883       	.2byte nullroutine ;0
-               S01:00001B5C:  42 1A
+               S01:00002B5C:  6E 2A
 F00:0884       	.2byte nullroutine ;0
-               S01:00001B5E:  42 1A
+               S01:00002B5E:  6E 2A
 F00:0885       	.2byte nullroutine ;0
-               S01:00001B60:  42 1A
+               S01:00002B60:  6E 2A
 F00:0886       	.2byte nullroutine ;0
-               S01:00001B62:  42 1A
+               S01:00002B62:  6E 2A
 F00:0887       #/* 50 */
 F00:0888       	.2byte nullroutine ;0
-               S01:00001B64:  42 1A
+               S01:00002B64:  6E 2A
 F00:0889       	.2byte nullroutine ;0
-               S01:00001B66:  42 1A
+               S01:00002B66:  6E 2A
 F00:0890       	.2byte nullroutine ;0
-               S01:00001B68:  42 1A
+               S01:00002B68:  6E 2A
 F00:0891       	.2byte nullroutine ;0
-               S01:00001B6A:  42 1A
+               S01:00002B6A:  6E 2A
 F00:0892       	.2byte nullroutine ;0
-               S01:00001B6C:  42 1A
+               S01:00002B6C:  6E 2A
 F00:0893       	.2byte nullroutine ;0
-               S01:00001B6E:  42 1A
+               S01:00002B6E:  6E 2A
 F00:0894       	.2byte nullroutine ;0
-               S01:00001B70:  42 1A
+               S01:00002B70:  6E 2A
 F00:0895       	.2byte nullroutine ;0
-               S01:00001B72:  42 1A
+               S01:00002B72:  6E 2A
 F00:0896       	.2byte nullroutine ;0
-               S01:00001B74:  42 1A
+               S01:00002B74:  6E 2A
 F00:0897       	.2byte nullroutine ;0
-               S01:00001B76:  42 1A
+               S01:00002B76:  6E 2A
 F00:0898       #/* 60 */
 F00:0899       	.2byte nullroutine ;0
-               S01:00001B78:  42 1A
+               S01:00002B78:  6E 2A
 F00:0900       	.2byte nullroutine ;0
-               S01:00001B7A:  42 1A
+               S01:00002B7A:  6E 2A
 F00:0901       	.2byte nullroutine ;0
-               S01:00001B7C:  42 1A
+               S01:00002B7C:  6E 2A
 F00:0902       	.2byte nullroutine ;0
-               S01:00001B7E:  42 1A
+               S01:00002B7E:  6E 2A
 F00:0903       	.2byte nullroutine ;0
-               S01:00001B80:  42 1A
+               S01:00002B80:  6E 2A
 F00:0904       	.2byte nullroutine ;0
-               S01:00001B82:  42 1A
+               S01:00002B82:  6E 2A
 F00:0905       	.2byte nullroutine ;0
-               S01:00001B84:  42 1A
+               S01:00002B84:  6E 2A
 F00:0906       	.2byte nullroutine ;0
-               S01:00001B86:  42 1A
+               S01:00002B86:  6E 2A
 F00:0907       	.2byte nullroutine ;0
-               S01:00001B88:  42 1A
+               S01:00002B88:  6E 2A
 F00:0908       	.2byte nullroutine ;0
-               S01:00001B8A:  42 1A
+               S01:00002B8A:  6E 2A
 F00:0909       #/* 70 */
 F00:0910       	.2byte nullroutine ;0
-               S01:00001B8C:  42 1A
+               S01:00002B8C:  6E 2A
 F00:0911       	.2byte nullroutine ;0
-               S01:00001B8E:  42 1A
+               S01:00002B8E:  6E 2A
 F00:0912       	.2byte nullroutine ;0
-               S01:00001B90:  42 1A
+               S01:00002B90:  6E 2A
 F00:0913       	.2byte nullroutine ;0
-               S01:00001B92:  42 1A
+               S01:00002B92:  6E 2A
 F00:0914       	.2byte nullroutine ;0
-               S01:00001B94:  42 1A
+               S01:00002B94:  6E 2A
 F00:0915       	.2byte nullroutine ;0
-               S01:00001B96:  42 1A
+               S01:00002B96:  6E 2A
 F00:0916       	.2byte nullroutine ;0
-               S01:00001B98:  42 1A
+               S01:00002B98:  6E 2A
 F00:0917       	.2byte nullroutine ;0
-               S01:00001B9A:  42 1A
+               S01:00002B9A:  6E 2A
 F00:0918       	.2byte nullroutine ;0
-               S01:00001B9C:  42 1A
+               S01:00002B9C:  6E 2A
 F00:0919       	.2byte nullroutine ;0
-               S01:00001B9E:  42 1A
+               S01:00002B9E:  6E 2A
 F00:0920       #/* 80 */
 F00:0921       	.2byte nullroutine ;0
-               S01:00001BA0:  42 1A
+               S01:00002BA0:  6E 2A
 F00:0922       	.2byte nullroutine ;0
-               S01:00001BA2:  42 1A
+               S01:00002BA2:  6E 2A
 F00:0923       	.2byte nullroutine ;0
-               S01:00001BA4:  42 1A
+               S01:00002BA4:  6E 2A
 F00:0924       	.2byte nullroutine ;0
-               S01:00001BA6:  42 1A
+               S01:00002BA6:  6E 2A
 F00:0925       	.2byte nullroutine ;0
-               S01:00001BA8:  42 1A
+               S01:00002BA8:  6E 2A
 F00:0926       	.2byte nullroutine ;0
-               S01:00001BAA:  42 1A
+               S01:00002BAA:  6E 2A
 F00:0927       	.2byte nullroutine ;0
-               S01:00001BAC:  42 1A
+               S01:00002BAC:  6E 2A
 F00:0928       	.2byte nullroutine ;0
-               S01:00001BAE:  42 1A
+               S01:00002BAE:  6E 2A
 F00:0929       	.2byte nullroutine ;0
-               S01:00001BB0:  42 1A
+               S01:00002BB0:  6E 2A
 F00:0930       	.2byte nullroutine ;0
-               S01:00001BB2:  42 1A
+               S01:00002BB2:  6E 2A
 F00:0931       #/* 90 */
 F00:0932       	.2byte nullroutine ;0
-               S01:00001BB4:  42 1A
+               S01:00002BB4:  6E 2A
 F00:0933       	.2byte nullroutine ;0
-               S01:00001BB6:  42 1A
+               S01:00002BB6:  6E 2A
 F00:0934       	.2byte nullroutine ;0
-               S01:00001BB8:  42 1A
+               S01:00002BB8:  6E 2A
 F00:0935       	.2byte nullroutine ;0
-               S01:00001BBA:  42 1A
+               S01:00002BBA:  6E 2A
 F00:0936       	.2byte nullroutine ;0
-               S01:00001BBC:  42 1A
+               S01:00002BBC:  6E 2A
 F00:0937       	.2byte nullroutine ;0
-               S01:00001BBE:  42 1A
+               S01:00002BBE:  6E 2A
 F00:0938       	.2byte nullroutine ;0
-               S01:00001BC0:  42 1A
+               S01:00002BC0:  6E 2A
 F00:0939       	.2byte nullroutine ;0
-               S01:00001BC2:  42 1A
+               S01:00002BC2:  6E 2A
 F00:0940       	.2byte nullroutine ;0
-               S01:00001BC4:  42 1A
+               S01:00002BC4:  6E 2A
 F00:0941       	.2byte nullroutine ;0
-               S01:00001BC6:  42 1A
+               S01:00002BC6:  6E 2A
 F00:0942       #/* 100 */
 F00:0943       	.2byte nullroutine ;0
-               S01:00001BC8:  42 1A
+               S01:00002BC8:  6E 2A
 F00:0944       	.2byte nullroutine ;0
-               S01:00001BCA:  42 1A
+               S01:00002BCA:  6E 2A
 F00:0945       	.2byte nullroutine ;0
-               S01:00001BCC:  42 1A
+               S01:00002BCC:  6E 2A
 F00:0946       	.2byte nullroutine ;0
-               S01:00001BCE:  42 1A
+               S01:00002BCE:  6E 2A
 F00:0947       	.2byte nullroutine ;0
-               S01:00001BD0:  42 1A
+               S01:00002BD0:  6E 2A
 F00:0948       	.2byte nullroutine ;0
-               S01:00001BD2:  42 1A
+               S01:00002BD2:  6E 2A
 F00:0949       	.2byte nullroutine ;0
-               S01:00001BD4:  42 1A
+               S01:00002BD4:  6E 2A
 F00:0950       	.2byte nullroutine ;0
-               S01:00001BD6:  42 1A
+               S01:00002BD6:  6E 2A
 F00:0951       	.2byte nullroutine ;0
-               S01:00001BD8:  42 1A
+               S01:00002BD8:  6E 2A
 F00:0952       	.2byte nullroutine ;0
-               S01:00001BDA:  42 1A
+               S01:00002BDA:  6E 2A
 F00:0953       #/* 110 */
 F00:0954       	.2byte nullroutine ;0
-               S01:00001BDC:  42 1A
+               S01:00002BDC:  6E 2A
 F00:0955       	.2byte nullroutine ;0
-               S01:00001BDE:  42 1A
+               S01:00002BDE:  6E 2A
 F00:0956       	.2byte nullroutine ;0
-               S01:00001BE0:  42 1A
+               S01:00002BE0:  6E 2A
 F00:0957       	.2byte nullroutine ;0
-               S01:00001BE2:  42 1A
+               S01:00002BE2:  6E 2A
 F00:0958       	.2byte nullroutine ;0
-               S01:00001BE4:  42 1A
+               S01:00002BE4:  6E 2A
 F00:0959       	.2byte nullroutine ;0
-               S01:00001BE6:  42 1A
+               S01:00002BE6:  6E 2A
 F00:0960       	.2byte nullroutine ;0
-               S01:00001BE8:  42 1A
+               S01:00002BE8:  6E 2A
 F00:0961       	.2byte nullroutine ;0
-               S01:00001BEA:  42 1A
+               S01:00002BEA:  6E 2A
 F00:0962       	.2byte nullroutine ;0
-               S01:00001BEC:  42 1A
+               S01:00002BEC:  6E 2A
 F00:0963       	.2byte nullroutine ;0
-               S01:00001BEE:  42 1A
+               S01:00002BEE:  6E 2A
 F00:0964       #/* 120 */
 F00:0965       	.2byte nullroutine ;0
-               S01:00001BF0:  42 1A
+               S01:00002BF0:  6E 2A
 F00:0966       	.2byte nullroutine ;0
-               S01:00001BF2:  42 1A
+               S01:00002BF2:  6E 2A
 F00:0967       	.2byte nullroutine ;0
-               S01:00001BF4:  42 1A
+               S01:00002BF4:  6E 2A
 F00:0968       	.2byte nullroutine ;0
-               S01:00001BF6:  42 1A
+               S01:00002BF6:  6E 2A
 F00:0969       	.2byte nullroutine ;0
-               S01:00001BF8:  42 1A
+               S01:00002BF8:  6E 2A
 F00:0970       	.2byte nullroutine ;0
-               S01:00001BFA:  42 1A
+               S01:00002BFA:  6E 2A
 F00:0971       	.2byte nullroutine ;0
-               S01:00001BFC:  42 1A
+               S01:00002BFC:  6E 2A
 F00:0972       	.2byte nullroutine ;0
-               S01:00001BFE:  42 1A
+               S01:00002BFE:  6E 2A
 F00:0973       
 F00:0974       
 F00:0975       	ENDADDRESS:
 
 
 Sections:
-S01  seg1000
+S01  seg2000
 
 
 Sources:
@@ -2028,159 +2077,169 @@ F04  libs.inc
 
 
 Symbols:
-nullroutine EXPR(6722=0x1a42) ABS 
-data EXPR(6670=0x1a0e) UNUSED ABS 
-endoflist EXPR(6666=0x1a0a) UNUSED ABS 
-outerrormsg EXPR(5995=0x176b) UNUSED ABS 
-inerrormsg EXPR(5849=0x16d9) UNUSED ABS 
-messages EXPR(5502=0x157e) UNUSED ABS 
-malloctableusemsg EXPR(6026=0x178a) ABS 
- malloctable _3$ EXPR(5463=0x1557) ABS 
- malloctable _2$ EXPR(5461=0x1555) ABS 
- malloctable _1$ EXPR(5450=0x154a) ABS 
- malloctable _5$ EXPR(5446=0x1546) ABS 
- malloctable _6$ EXPR(5414=0x1526) ABS 
-pagecount EXPR(5501=0x157d) ABS 
-malloctablemsg EXPR(6157=0x180d) ABS 
-malloctable EXPR(5386=0x150a) ABS 
-malloctablecmd EXPR(5383=0x1507) ABS 
-reload EXPR(5372=0x14fc) ABS 
-reloadcmd EXPR(5367=0x14f7) ABS 
- createprocess _2$ EXPR(5361=0x14f1) ABS 
- createprocess _1$ EXPR(5346=0x14e2) ABS 
-createprocessmsg EXPR(6007=0x1777) ABS 
-createprocesscmd EXPR(5320=0x14c8) ABS 
-outsyntaxmsg EXPR(5865=0x16e9) ABS 
-outexit EXPR(5317=0x14c5) ABS 
-outerror EXPR(5311=0x14bf) ABS 
-outmsg EXPR(5861=0x16e5) ABS 
-dout EXPR(5247=0x147f) ABS 
-outcmd EXPR(5242=0x147a) ABS 
-insyntaxmsg EXPR(5752=0x1678) ABS 
-_inexit EXPR(5239=0x1477) ABS 
-_inerror EXPR(5233=0x1471) ABS 
-inmsg EXPR(5749=0x1675) ABS 
-din EXPR(5181=0x143d) ABS 
-incmd EXPR(5177=0x1439) ABS 
-helpmsg EXPR(6225=0x1851) ABS 
-help EXPR(5168=0x1430) ABS 
-helpcmd EXPR(5166=0x142e) ABS 
-runsyntaxmsg EXPR(5700=0x1644) ABS 
-runexit EXPR(5163=0x142b) ABS 
-runfrom EXPR(5380=0x1504) ABS 
-runerror EXPR(5157=0x1425) ABS 
-runmsg EXPR(5696=0x1640) ABS 
-run EXPR(5090=0x13e2) ABS 
-runcmd EXPR(5086=0x13de) ABS 
-loaderrormsg EXPR(5682=0x1632) ABS 
-_doneload$1 EXPR(5078=0x13d6) ABS 
-_ladr EXPR(5081=0x13d9) ABS 
-loadsyntaxmsg EXPR(5620=0x15f4) ABS 
-_loadc$1 EXPR(5003=0x138b) ABS 
-loadmsg EXPR(5615=0x15ef) ABS 
-load EXPR(4976=0x1370) ABS 
-loadcmd EXPR(4972=0x136c) ABS 
-_prt$ EXPR(4949=0x1355) ABS 
-_nex$2 EXPR(4942=0x134e) ABS 
-_dexdpc$1 EXPR(4931=0x1343) ABS 
- _hexdp$1 2$ EXPR(4910=0x132e) ABS 
-boldoff EXPR(5549=0x15ad) ABS 
-boldon EXPR(5544=0x15a8) ABS 
- _hexdp$1 1$ EXPR(4906=0x132a) ABS 
-_hexdp$1 EXPR(4873=0x1309) ABS 
-_hexdp0 EXPR(4867=0x1303) ABS 
- hexdumplinetitle _1$ EXPR(4843=0x12eb) ABS 
-_highlow EXPR(4854=0x12f6) ABS 
-hexdumpprefix EXPR(5541=0x15a5) ABS 
-hexdumplinetitle EXPR(4822=0x12d6) ABS 
-_col$1 EXPR(4799=0x12bf) ABS 
-_sp$1 EXPR(4788=0x12b4) ABS 
-hexdumpsyntaxmsg EXPR(5553=0x15b1) ABS 
-hexdumpexit EXPR(4780=0x12ac) ABS 
-_hexdumprint EXPR(4855=0x12f7) ABS 
-hexdumpheader EXPR(4783=0x12af) ABS 
-hidump EXPR(5381=0x1505) ABS 
-lodump EXPR(5382=0x1506) ABS 
-hexdumperror EXPR(4774=0x12a6) ABS 
-hexdumpmsg EXPR(5533=0x159d) ABS 
-hexdump EXPR(4704=0x1260) ABS 
-hexdumpcmd EXPR(4700=0x125c) ABS 
-_findbuildtinFail EXPR(4672=0x1240) ABS 
-_findbuiltinSuccess EXPR(4676=0x1244) ABS 
-findbuiltin1 EXPR(4620=0x120c) ABS 
-findbuiltinrestart EXPR(4614=0x1206) ABS 
-builtin EXPR(6630=0x19e6) ABS 
- cmdline 5$ EXPR(4579=0x11e3) ABS 
- cmdline 3$ EXPR(4572=0x11dc) ABS 
- cmdline 2$ EXPR(4584=0x11e8) ABS 
- cmdline 4$ EXPR(4586=0x11ea) ABS 
- cmdline 1$ EXPR(4546=0x11c2) ABS 
-executecmd EXPR(4595=0x11f3) ABS 
-executeexit EXPR(4601=0x11f9) ABS 
- cmdline 12$ EXPR(4499=0x1193) ABS 
-cmdline EXPR(4484=0x1184) ABS 
-cmdlinebuffer$ EXPR(6722=0x1a42) ABS 
-cmdlinebufferlen EXPR(6671=0x1a0f) ABS 
-_hexdp$99 EXPR(4452=0x1164) ABS 
-hexdumpcmdline EXPR(4447=0x115f) ABS 
-invalidcommandmsg EXPR(6185=0x1829) ABS 
-loaderr EXPR(4423=0x1147) ABS 
-createprocess EXPR(5335=0x14d7) ABS 
-ignorekeyboard EXPR(4422=0x1146) ABS 
-loadandrun EXPR(4394=0x112a) ABS 
-findbuiltin EXPR(4604=0x11fc) ABS 
-cmdlinebuffer EXPR(6672=0x1a10) ABS 
-cmdlineexecute EXPR(6670=0x1a0e) ABS 
-loop EXPR(4345=0x10f9) ABS 
-commandPromptmsg EXPR(6181=0x1825) ABS 
-resetcommandline EXPR(4465=0x1171) ABS 
-jumptable EXPR(6912=0x1b00) ABS 
-reloadmsg EXPR(6015=0x177f) ABS 
- newcommand 1$ EXPR(4328=0x10e8) ABS 
-newcommand EXPR(4313=0x10d9) ABS 
-doreload EXPR(4393=0x1129) ABS 
-welcomemsg EXPR(5502=0x157e) ABS 
-printhexL EXPR(4299=0x10cb) UNUSED ABS 
-setresetpage EXPR(4296=0x10c8) UNUSED ABS 
-Div8 EXPR(4293=0x10c5) UNUSED ABS 
-getmalloctable EXPR(4290=0x10c2) ABS 
-getcommandparams EXPR(4287=0x10bf) UNUSED ABS 
-createProcess EXPR(4284=0x10bc) ABS 
-getfilename EXPR(4281=0x10b9) UNUSED ABS 
-directorynextfile EXPR(4278=0x10b6) UNUSED ABS 
-directoryopen EXPR(4275=0x10b3) UNUSED ABS 
-hextobyte EXPR(4272=0x10b0) ABS 
-touppercase EXPR(4269=0x10ad) ABS 
-putc EXPR(4266=0x10aa) ABS 
-strlen EXPR(4263=0x10a7) ABS 
-memset EXPR(4260=0x10a4) ABS 
-loadfile EXPR(4257=0x10a1) ABS 
-printhex EXPR(4254=0x109e) ABS 
-println EXPR(4251=0x109b) ABS 
-print EXPR(4248=0x1098) ABS 
-functionlookups EXPR(4247=0x1097) UNUSED ABS 
-_main EXPR(4302=0x10ce) ABS 
-printhexLadr EXPR(4300=0x10cc) ABS 
-setresetpageadr EXPR(4297=0x10c9) ABS 
-div8adr EXPR(4294=0x10c6) ABS 
-getmalloctableadr EXPR(4291=0x10c3) ABS 
-getcommandparamsadr EXPR(4288=0x10c0) ABS 
-createProcessadr EXPR(4285=0x10bd) ABS 
-getfilenameadr EXPR(4282=0x10ba) ABS 
-directorynextfileadr EXPR(4279=0x10b7) ABS 
-directoryopenadr EXPR(4276=0x10b4) ABS 
-printlnadr EXPR(4252=0x109c) ABS 
-hextobyteadr EXPR(4273=0x10b1) ABS 
-touppercaseadr EXPR(4270=0x10ae) ABS 
-putcadr EXPR(4267=0x10ab) ABS 
-strlenadr EXPR(4264=0x10a8) ABS 
-memsetadr EXPR(4261=0x10a5) ABS 
-loadfileadr EXPR(4258=0x10a2) ABS 
-printhexadr EXPR(4255=0x109f) ABS 
-printadr EXPR(4249=0x1099) ABS 
-ENDADDRESS EXPR(7168=0x1c00) ABS 
- *current pc dummy* EXPR(4098=0x1002) INTERNAL PROT ABS 
-NEXTNUMBER EXPR(22=0x16) UNUSED 
+nullroutine EXPR(10862=0x2a6e) ABS 
+data EXPR(10810=0x2a3a) UNUSED ABS 
+endoflist EXPR(10806=0x2a36) UNUSED ABS 
+outerrormsg EXPR(10135=0x2797) UNUSED ABS 
+inerrormsg EXPR(9989=0x2705) UNUSED ABS 
+messages EXPR(9642=0x25aa) UNUSED ABS 
+malloctableusemsg EXPR(10166=0x27b6) ABS 
+ malloctable _3$ EXPR(9603=0x2583) ABS 
+ malloctable _2$ EXPR(9601=0x2581) ABS 
+ malloctable _1$ EXPR(9590=0x2576) ABS 
+ malloctable _5$ EXPR(9586=0x2572) ABS 
+ malloctable _6$ EXPR(9554=0x2552) ABS 
+pagecount EXPR(9641=0x25a9) ABS 
+malloctablemsg EXPR(10297=0x2839) ABS 
+malloctable EXPR(9526=0x2536) ABS 
+malloctablecmd EXPR(9523=0x2533) ABS 
+reload EXPR(9512=0x2528) ABS 
+reloadcmd EXPR(9507=0x2523) ABS 
+ createprocess _2$ EXPR(9501=0x251d) ABS 
+ createprocess _1$ EXPR(9486=0x250e) ABS 
+createprocessmsg EXPR(10147=0x27a3) ABS 
+createprocesscmd EXPR(9460=0x24f4) ABS 
+outsyntaxmsg EXPR(10005=0x2715) ABS 
+outexit EXPR(9457=0x24f1) ABS 
+outerror EXPR(9451=0x24eb) ABS 
+outmsg EXPR(10001=0x2711) ABS 
+dout EXPR(9387=0x24ab) ABS 
+outcmd EXPR(9382=0x24a6) ABS 
+insyntaxmsg EXPR(9892=0x26a4) ABS 
+_inexit EXPR(9379=0x24a3) ABS 
+_inerror EXPR(9373=0x249d) ABS 
+inmsg EXPR(9889=0x26a1) ABS 
+din EXPR(9321=0x2469) ABS 
+incmd EXPR(9317=0x2465) ABS 
+helpmsg EXPR(10365=0x287d) ABS 
+help EXPR(9308=0x245c) ABS 
+helpcmd EXPR(9306=0x245a) ABS 
+runsyntaxmsg EXPR(9840=0x2670) ABS 
+runexit EXPR(9303=0x2457) ABS 
+runfrom EXPR(9520=0x2530) ABS 
+runerror EXPR(9297=0x2451) ABS 
+runmsg EXPR(9836=0x266c) ABS 
+run EXPR(9230=0x240e) ABS 
+runcmd EXPR(9226=0x240a) ABS 
+loaderrormsg EXPR(9822=0x265e) ABS 
+_doneload$1 EXPR(9218=0x2402) ABS 
+_ladr EXPR(9221=0x2405) ABS 
+loadsyntaxmsg EXPR(9760=0x2620) ABS 
+_loadc$1 EXPR(9143=0x23b7) ABS 
+loadmsg EXPR(9755=0x261b) ABS 
+load EXPR(9116=0x239c) ABS 
+loadcmd EXPR(9112=0x2398) ABS 
+_prt$ EXPR(9089=0x2381) ABS 
+_nex$2 EXPR(9082=0x237a) ABS 
+_dexdpc$1 EXPR(9071=0x236f) ABS 
+ _hexdp$1 2$ EXPR(9050=0x235a) ABS 
+boldoff EXPR(9689=0x25d9) ABS 
+boldon EXPR(9684=0x25d4) ABS 
+ _hexdp$1 1$ EXPR(9046=0x2356) ABS 
+_hexdp$1 EXPR(9013=0x2335) ABS 
+_hexdp0 EXPR(9007=0x232f) ABS 
+ hexdumplinetitle _1$ EXPR(8983=0x2317) ABS 
+_highlow EXPR(8994=0x2322) ABS 
+hexdumpprefix EXPR(9681=0x25d1) ABS 
+hexdumplinetitle EXPR(8962=0x2302) ABS 
+_col$1 EXPR(8939=0x22eb) ABS 
+_sp$1 EXPR(8928=0x22e0) ABS 
+hexdumpsyntaxmsg EXPR(9693=0x25dd) ABS 
+hexdumpexit EXPR(8920=0x22d8) ABS 
+_hexdumprint EXPR(8995=0x2323) ABS 
+hexdumpheader EXPR(8923=0x22db) ABS 
+hidump EXPR(9521=0x2531) ABS 
+lodump EXPR(9522=0x2532) ABS 
+hexdumperror EXPR(8914=0x22d2) ABS 
+hexdumpmsg EXPR(9673=0x25c9) ABS 
+hexdump EXPR(8844=0x228c) ABS 
+hexdumpcmd EXPR(8840=0x2288) ABS 
+_findbuildtinFail EXPR(8812=0x226c) ABS 
+_findbuiltinSuccess EXPR(8816=0x2270) ABS 
+findbuiltin1 EXPR(8760=0x2238) ABS 
+findbuiltinrestart EXPR(8754=0x2232) ABS 
+builtin EXPR(10770=0x2a12) ABS 
+ cmdline 5$ EXPR(8719=0x220f) ABS 
+ cmdline 3$ EXPR(8712=0x2208) ABS 
+ cmdline 2$ EXPR(8724=0x2214) ABS 
+ cmdline 4$ EXPR(8726=0x2216) ABS 
+ cmdline 1$ EXPR(8686=0x21ee) ABS 
+executecmd EXPR(8735=0x221f) ABS 
+executeexit EXPR(8741=0x2225) ABS 
+ cmdline 12$ EXPR(8639=0x21bf) ABS 
+cmdline EXPR(8624=0x21b0) ABS 
+cmdlinebuffer$ EXPR(10862=0x2a6e) ABS 
+cmdlinebufferlen EXPR(10811=0x2a3b) ABS 
+_hexdp$99 EXPR(8592=0x2190) ABS 
+hexdumpcmdline EXPR(8587=0x218b) ABS 
+invalidcommandmsg EXPR(10325=0x2855) ABS 
+loaderr EXPR(8563=0x2173) ABS 
+createprocess EXPR(9475=0x2503) ABS 
+ignorekeyboard EXPR(8562=0x2172) ABS 
+loadandrun EXPR(8534=0x2156) ABS 
+findbuiltin EXPR(8744=0x2228) ABS 
+cmdlinebuffer EXPR(10812=0x2a3c) ABS 
+cmdlineexecute EXPR(10810=0x2a3a) ABS 
+loop EXPR(8485=0x2125) ABS 
+commandPromptmsg EXPR(10321=0x2851) ABS 
+resetcommandline EXPR(8605=0x219d) ABS 
+jumptable EXPR(11008=0x2b00) ABS 
+reloadmsg EXPR(10155=0x27ab) ABS 
+ newcommand 1$ EXPR(8468=0x2114) ABS 
+newcommand EXPR(8453=0x2105) ABS 
+doreload EXPR(8533=0x2155) ABS 
+welcomemsg EXPR(9642=0x25aa) ABS 
+strncpy EXPR(8439=0x20f7) UNUSED ABS 
+strcpy EXPR(8436=0x20f4) UNUSED ABS 
+nextprocessinfo EXPR(8433=0x20f1) UNUSED ABS 
+startprocessinfo EXPR(8430=0x20ee) UNUSED ABS 
+printhexL EXPR(8427=0x20eb) UNUSED ABS 
+setresetpage EXPR(8424=0x20e8) UNUSED ABS 
+Div8 EXPR(8421=0x20e5) UNUSED ABS 
+getmalloctable EXPR(8418=0x20e2) ABS 
+getcommandparams EXPR(8415=0x20df) UNUSED ABS 
+createProcess EXPR(8412=0x20dc) ABS 
+getfilename EXPR(8409=0x20d9) UNUSED ABS 
+directorynextfile EXPR(8406=0x20d6) UNUSED ABS 
+directoryopen EXPR(8403=0x20d3) UNUSED ABS 
+hextobyte EXPR(8400=0x20d0) ABS 
+touppercase EXPR(8397=0x20cd) ABS 
+putc EXPR(8394=0x20ca) ABS 
+strlen EXPR(8391=0x20c7) ABS 
+memset EXPR(8388=0x20c4) ABS 
+loadfile EXPR(8385=0x20c1) ABS 
+printhex EXPR(8382=0x20be) ABS 
+println EXPR(8379=0x20bb) ABS 
+print EXPR(8376=0x20b8) ABS 
+functionlookups EXPR(8375=0x20b7) UNUSED ABS 
+_main EXPR(8442=0x20fa) ABS 
+strncpyadr EXPR(8440=0x20f8) ABS 
+strcpyadr EXPR(8437=0x20f5) ABS 
+nextprocessinfoadr EXPR(8434=0x20f2) ABS 
+startprocessinfoadr EXPR(8431=0x20ef) ABS 
+printhexLadr EXPR(8428=0x20ec) ABS 
+setresetpageadr EXPR(8425=0x20e9) ABS 
+div8adr EXPR(8422=0x20e6) ABS 
+getmalloctableadr EXPR(8419=0x20e3) ABS 
+getcommandparamsadr EXPR(8416=0x20e0) ABS 
+createProcessadr EXPR(8413=0x20dd) ABS 
+getfilenameadr EXPR(8410=0x20da) ABS 
+directorynextfileadr EXPR(8407=0x20d7) ABS 
+directoryopenadr EXPR(8404=0x20d4) ABS 
+printlnadr EXPR(8380=0x20bc) ABS 
+hextobyteadr EXPR(8401=0x20d1) ABS 
+touppercaseadr EXPR(8398=0x20ce) ABS 
+putcadr EXPR(8395=0x20cb) ABS 
+strlenadr EXPR(8392=0x20c8) ABS 
+memsetadr EXPR(8389=0x20c5) ABS 
+loadfileadr EXPR(8386=0x20c2) ABS 
+printhexadr EXPR(8383=0x20bf) ABS 
+printadr EXPR(8377=0x20b9) ABS 
+ENDADDRESS EXPR(11264=0x2c00) ABS 
+ *current pc dummy* EXPR(8194=0x2002) INTERNAL PROT ABS 
+NEXTNUMBER EXPR(26=0x1a) UNUSED 
+NEXTPROCESSINFO EXPR(23=0x17) 
+STARTPROCESSINFO EXPR(22=0x16) 
 SETRESETPAGE EXPR(20=0x14) 
 DIV8 EXPR(19=0x13) 
 GETMALLOCTABLE EXPR(18=0x12) 
@@ -2189,10 +2248,11 @@ DIRECTORYNEXTFILE EXPR(14=0xe) UNUSED
 DIRECTORYOPEN EXPR(13=0xd) 
 GETCOMMANDPARAMS EXPR(17=0x11) 
 CREATEPROCESS EXPR(16=0x10) 
-STRNCPY EXPR(10=0xa) UNUSED 
 HEXTOBYTE EXPR(8=0x8) 
 TOUPPERCASE EXPR(7=0x7) 
 PUTC EXPR(6=0x6) 
+STRNCPY EXPR(10=0xa) 
+STRCPY EXPR(24=0x18) 
 STRLEN EXPR(5=0x5) 
 MEMSET EXPR(4=0x4) 
 LOADFILE EXPR(3=0x3) 
@@ -2204,7 +2264,7 @@ GetAddress EXPR(2052=0x804)
 FALSE EXPR(0=0x0) 
 TRUE EXPR(1=0x1) 
 libMemory EXPR(61440=0xf000) UNUSED 
-userMemory EXPR(8192=0x2000) UNUSED 
+userMemory EXPR(12288=0x3000) UNUSED 
 NEXTFILE EXPR(50=0x32) 
 OPENDIRECTORY EXPR(49=0x31) UNUSED 
 NAMEAVAILABLE EXPR(33=0x21) UNUSED 
@@ -2220,8 +2280,8 @@ FILENAMECLEAR EXPR(1=0x1) UNUSED
 SDCARD EXPR(5=0x5) UNUSED 
 SERIALPORT2 EXPR(2=0x2) UNUSED 
 SERIALPORT EXPR(1=0x1) 
-__ORG__ EXPR(4096=0x1000) 
-commandMemory EXPR(4096=0x1000) 
+__ORG__ EXPR(8192=0x2000) 
+commandMemory EXPR(8192=0x2000) 
 __VASM EXPR(0=0x0) INTERNAL 
 __MSDOSFS EXPR(0=0x0) INTERNAL 
 

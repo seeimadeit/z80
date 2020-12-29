@@ -1,5 +1,5 @@
 .set __LIB__, 1
-.set __ORG__, 0x2500
+.set __ORG__, 0x5500
 
 .include "Routines.inc"
 .include "libs.inc"

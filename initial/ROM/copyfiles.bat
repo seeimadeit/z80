@@ -110,6 +110,13 @@ if exist "setmat" (
 	pause
 	)
 
+if exist "proc" (
+	copy proc f:\
+) else (
+	echo no proc
+	pause
+	)
+
 rem if exist "x" (	copy x f:\ ) else (	echo "no x file."	pause	)
 
 
