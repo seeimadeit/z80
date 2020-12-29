@@ -438,12 +438,12 @@ F00:0010       	;# 4bytes process name (lastbyte zero)
 F00:0011       	;# ld hl,processname
 F00:0012       
 F00:0013       	ld hl,psmsg
-               S01:00003133:  21 86 31
+               S01:00003133:  21 9C 31
 F00:0014       	call println
                S01:00003136:  CD EB 30
 F00:0015       
 F00:0016       	ld hl,idmsg
-               S01:00003139:  21 95 31
+               S01:00003139:  21 AB 31
 F00:0017       	call print
                S01:0000313C:  CD E8 30
 F00:0018       	call getprocid
@@ -469,7 +469,7 @@ F00:0026       #	PRINTLN
 F00:0027       	call nextprocessinfo ;
                S01:00003150:  CD 21 31
 F00:0028       	jp c,1$ ;# if carry flag set, we reached the end
-               S01:00003153:  DA 83 31
+               S01:00003153:  DA 99 31
 F00:0029       	ld a,(hl)
                S01:00003156:  7E
 F00:0030       	cp 0
@@ -505,28 +505,51 @@ F00:0045       	inc hl
                S01:00003175:  23
 F00:0046       	djnz 3$
                S01:00003176:  10 F9
-F00:0047       	PRINTLN
+F00:0047       	ld a,' '
+               S01:00003178:  3E 20
+F00:0048       	call putc
+               S01:0000317A:  CD FA 30
+F00:0049       	push hl
+               S01:0000317D:  E5
+F00:0050       	pop ix
+               S01:0000317E:  DD E1
+F00:0051       	ld h,(ix+0) ;# load the baseaddress
+               S01:00003180:  DD 66 00
+F00:0052       	ld l,(ix+1)
+               S01:00003183:  DD 6E 01
+F00:0053       	call printhexL
+               S01:00003186:  CD 1B 31
+F00:0054       	push ix
+               S01:00003189:  DD E5
+F00:0055       	pop hl
+               S01:0000318B:  E1
+F00:0056       	inc hl ;# adjust the pointer
+               S01:0000318C:  23
+F00:0057       	inc hl
+               S01:0000318D:  23
+F00:0058       
+F00:0059       	PRINTLN
 F07:0001       	push hl
-               S01:00003178:  E5
+               S01:0000318E:  E5
 F07:0002       	ld hl,0
-               S01:00003179:  21 00 00
+               S01:0000318F:  21 00 00
 F07:0003       	call println
-               S01:0000317C:  CD EB 30
+               S01:00003192:  CD EB 30
 F07:0004       	pop hl
-               S01:0000317F:  E1
-F00:0048       	jp 2$
-               S01:00003180:  C3 50 31
-F00:0049       1$:
-F00:0050       	ld a,0
-               S01:00003183:  3E 00
-F00:0051       	ret
-               S01:00003185:  C9
-F00:0052       
-F00:0053       	psmsg: .string "Process info\r\n"
-               S01:00003186:  50 72 6F 63 65 73 73 20 69 6E 66 6F 0D 0A
-F00:0054       	idmsg: .string "this processID: "
-               S01:00003195:  74 68 69 73 20 70 72 6F 63 65 73 73 49 44 3A 20
-F00:0055       ENDADDRESS:
+               S01:00003195:  E1
+F00:0060       	jp 2$
+               S01:00003196:  C3 50 31
+F00:0061       1$:
+F00:0062       	ld a,0
+               S01:00003199:  3E 00
+F00:0063       	ret
+               S01:0000319B:  C9
+F00:0064       
+F00:0065       	psmsg: .string "Process info\r\n"
+               S01:0000319C:  50 72 6F 63 65 73 73 20 69 6E 66 6F 0D 0A
+F00:0066       	idmsg: .string "this processID: "
+               S01:000031AB:  74 68 69 73 20 70 72 6F 63 65 73 73 49 44 3A 20
+F00:0067       ENDADDRESS:
 
 
 Sections:
@@ -546,17 +569,17 @@ F07  println
 
 Symbols:
  _main 3$ EXPR(12657=0x3171) ABS 
- _main 1$ EXPR(12675=0x3183) ABS 
+ _main 1$ EXPR(12697=0x3199) ABS 
  _main 2$ EXPR(12624=0x3150) ABS 
-idmsg EXPR(12693=0x3195) ABS 
-psmsg EXPR(12678=0x3186) ABS 
+idmsg EXPR(12715=0x31ab) ABS 
+psmsg EXPR(12700=0x319c) ABS 
 Mul8b EXPR(12589=0x312d) UNUSED ABS 
 getprocessbyid EXPR(12586=0x312a) UNUSED ABS 
 strncpy EXPR(12583=0x3127) UNUSED ABS 
 strcpy EXPR(12580=0x3124) UNUSED ABS 
 nextprocessinfo EXPR(12577=0x3121) ABS 
 startprocessinfo EXPR(12574=0x311e) ABS 
-printhexL EXPR(12571=0x311b) UNUSED ABS 
+printhexL EXPR(12571=0x311b) ABS 
 setresetpage EXPR(12568=0x3118) UNUSED ABS 
 Div8 EXPR(12565=0x3115) UNUSED ABS 
 getmalloctable EXPR(12562=0x3112) UNUSED ABS 
@@ -604,7 +627,7 @@ memsetadr EXPR(12533=0x30f5) ABS
 loadfileadr EXPR(12530=0x30f2) ABS 
 printhexadr EXPR(12527=0x30ef) ABS 
 printadr EXPR(12521=0x30e9) ABS 
-ENDADDRESS EXPR(12710=0x31a6) ABS 
+ENDADDRESS EXPR(12732=0x31bc) ABS 
  *current pc dummy* EXPR(12290=0x3002) INTERNAL PROT ABS 
 NEXTNUMBER EXPR(29=0x1d) UNUSED 
 MULTIPLY8 EXPR(27=0x1b) 

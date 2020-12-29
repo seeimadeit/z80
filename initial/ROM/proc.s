@@ -44,6 +44,18 @@
 	call putc ;# display process name
 	inc hl
 	djnz 3$
+	ld a,' '
+	call putc
+	push hl
+	pop ix
+	ld h,(ix+0) ;# load the baseaddress
+	ld l,(ix+1)
+	call printhexL
+	push ix
+	pop hl
+	inc hl ;# adjust the pointer
+	inc hl
+
 	PRINTLN
 	jp 2$
 1$:

@@ -7,7 +7,7 @@
 #define HIBYTE(w) ((BYTE)(((WORD)(w) >> 8) & 0xFF))
 # process table - maximum number of entries - which also means the maximum number of processes
 .set MAXPROCESSES,4
-.set PROCINFOSIZE,6
+.set PROCINFOSIZE,8
 
 .include "SDCARD.inc"
 .include "Routines.inc"
@@ -607,12 +607,15 @@ _exitgetfilename:
 		cp 0
 		jp nz,_4$
 		# hl was null so call the default address
-		call printhexL
+		#pih call printhexL
 				### CREATENEWPROCESSINFO
-		call createnewprocessinfo
-		call userMemory
+		# just for the fun of it,lets write usermemory into progloadaddr and reuse the dynamic address code
+		ld hl,userMemory
+		ld (_progloadaddr),hl
+		#pih call createnewprocessinfo
+		#pih call userMemory
 		
-		ret
+		# pih ret
 _4$:
 	call printhexL
 		### CREATENEWPROCESSINFO
@@ -652,13 +655,14 @@ setprocid:
 
 #== createnewprocessinfo ===#
 # variable procname is expected to be populated
+# variable _progloadaddr contains the program address
 # return 
 
 createnewprocessinfo:
 	push af
 	push hl
 	push bc
-	push de  'just do everything for now - need to look and fix this
+	push de  ;#just do everything for now - need to look and fix this
 	call getnewprocessid
 	call writeprocessinfo
 	pop de
@@ -782,22 +786,33 @@ writeprocessinfo:
 #call printhexL
 #PRINTLN
 	ld a,'R' ;# process is running
-	ld (hl),a
+	ld (hl),a ;# byte position 1
 	inc hl
 	ld a,(lastprogramid) ;# it is required this variable is set to the correct id before running this routine
-	ld (hl),a
+	ld (hl),a ;# byte position 2
 	inc hl
 #call printhexL
 #PRINTLN
-
+	push hl ;# save it
 	ld de,procname
 	ex de,hl
 #call printhexL
 #call println
-	ld c,4
+	ld c,4    ;# byte positions 3 , 4 , 5 ,6
 	ld b,0
 	call strncpy ;# problem needs addressing: if the program name is < 4 bytes the copy will more than needed.
 					;# we need a strncpy that stops on a null byte
+	
+	pop hl
+	inc hl
+	inc hl
+	inc hl
+	inc hl ;# advance hl to account for the 4 bytes to copy the process name
+	ld de,(_progloadaddr)
+	ld (hl),d   ;# byte position 7
+	inc hl
+	ld (hl),e   ;# byte position 8
+	inc hl ;# ready for the next byte position
 	ld a, 0
 	ret
 
