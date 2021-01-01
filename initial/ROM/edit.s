@@ -17,7 +17,7 @@ loop:
 1$:
 	call getc
 	cp 0x1b
-	jp z,exit
+	jp z,exitx
 	call putc
 	
 	cp 0x0d
@@ -27,7 +27,7 @@ loop:
 	jp loop
 
 
-exit:
+exitx:
 	ld a,0
 	ret
 

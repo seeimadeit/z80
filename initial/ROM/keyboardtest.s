@@ -40,7 +40,7 @@ call move1_0
 
 
 loop:
-	ld a,(exit)
+	ld a,(exitv)
 	cp 0
 	jp nz,_exit$
 
@@ -181,7 +181,7 @@ _1$:
 		cp 0x1b
 		jp nz,_2$
 		ld a,1
-		ld (exit),a
+		ld (exitv),a
 		pop af
 		ei
 		reti
@@ -278,7 +278,7 @@ screenlibname: .string "screen.lib"
 
 
 
-		exit: .byte 0 ;#if true time to exit program, escape key sets to true
+		exitv: .byte 0 ;#if true time to exit program, escape key sets to true
 	crlf: .string "\r\n"
 	loadedmsg: .string "keyboard test\r\n"
 	readymsg: .string "\r\nReady v0.0\r\n"

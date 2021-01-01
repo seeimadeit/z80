@@ -658,7 +658,10 @@ setprocid:
 # variable _progloadaddr contains the program address
 # return 
 
+#dbcreatenewprocessinfomsg: .string 
+
 createnewprocessinfo:
+	DPRINTLN "createnewprocessinfo"
 	push af
 	push hl
 	push bc
@@ -675,11 +678,14 @@ ret
 #== startprocessinfo ==#
 # reset the process info list pointer
 # no inputs, no outputs
+#dbstartprocessinfomsg: .string
 startprocessinfo: 
+	DPRINTLN "startprocessinfo"
 	push af
 	ld a,0
 	ld (currentprocessinfo),a
 	pop af
+	ld hl,processtable
 	ret
 
 #== nextprocessinfo ===#
@@ -687,6 +693,7 @@ startprocessinfo:
 # also updates currentprocessinfo
 # if carry flag set, we have reach the end of the process table
 nextprocessinfo:
+	DPRINTLN "nextprocessinfo"
 	push af
 	ld a,(currentprocessinfo)
 	ld h,a
@@ -719,6 +726,7 @@ nextprocessinfo:
 ;# if carry flag set, a slot was found
 ;# if carry flag not set, it did not find an empty slot
 getprocessslot:
+	DPRINTLN "getprocessslot"
 	call startprocessinfo
 2$:
 #	DEBUG '*'
@@ -749,6 +757,7 @@ ret
 ;# this processid is unique, it cannot be 0
 
 getnewprocessid:
+	DPRINTLN "getnewprocessid"
 	push af
 	push hl
 	push bc
@@ -779,6 +788,7 @@ getnewprocessid:
 ret
 
 writeprocessinfo:
+	DPRINTLN "writeprocessinfo"
 # prerequisties : lastprogramid has the programid set 
 #               variable   procname: contains the name of the program 
 	call getprocessslot
@@ -830,8 +840,16 @@ errormsg: .string "could not find an empty slot, maximum number of processes run
 # cp 1             - returns in A : 0 = not found, 1 = found
 # jp z,we succeeded
 getprocessbyid:
-
+	DPRINTLN "getprocessbyid"
 	call startprocessinfo
+	push hl
+	pop ix
+	ld b,(ix+1)
+	cp b ;# compare processids
+    jp nz,2$
+	ld a,1
+	ret ;# found
+
 2$:
 
 	call nextprocessinfo ;
@@ -850,6 +868,7 @@ ret
 
 ;# A = processid to delete
 deleteprocessbyid:
+	DPRINTLN "deleteprocessbyid"
 push af
 	call getprocessbyid
 	cp 1 ;# 1 = we found the process
@@ -864,14 +883,71 @@ push af
 pop af
 ret 
 
+/* you are testing the writezombieprocess as it appears to not be working. you made a change
+and want to test it when the computer failed on you.
+test it with the "proc" command with will call exit/exitprocess.
+the whole point is to get the memory mapping working. it will allocate but will not release memory.
+also the cmd program needs to be changed to call createprocess
+good luck
+Peter
+*/
+
+;# == writezombieprocess ==#
+#ld a,processid
+
+writezombieprocess:
+	DPRINTLN "writezombieprocess"
+push af
+	call getprocessbyid
+	cp 1 ;# 1 = we found the process
+	jp nz,1$
+	push HL
+	pop ix
+	ld a,'Z' ;# zombie
+	ld (ix+0),a
+	pop af
+	ld (ix+6),a
+	ret
+1$:
+	pop af
+	ret
+
+
+# === exit process ====#
+# call getprocid
+# call exit
+# --
+# ld b,processsid
+# ld a,exitcode
+# call exitprocess
+# 
+exitprocess:
+	DPRINTLN "exitprocess"
+	push af
+	push bc
+#DEBUG '%'
+#	call printhex ;# print exit code for now
+	
+	ld a,b ;# get the processid and delete it - this is not a good long term solution
+#	call printhex
+			;# long term we need to mark the process as a zombie for some period of time,
+			;# this will allow the exit code to be retreived by other process. need to think about this
+	#call deleteprocessbyid
+	call writezombieprocess
+	pop bc
+	pop af
+ret
+
 procname: .space 10 ;# space for the processname, but we really only need 4 or 4+1
 lastprogramid: .byte 0
 maxprocesses: .byte MAXPROCESSES
 currentprocessinfo: .byte 0; # index to a process table entry
 processtable: 
-	;# 1byte process status - 1=running, 0=no process
-	;# 1byte processID
-	;# 4bytes process name
+	;# position 0 :  1byte process status - R=running, Z=zombie, 0=no process
+	;#			1 : 1byte processID
+	;#			2 : 4bytes process name
+	;#			6 : 1byte exitcode
+	;#			7 : 1byte spare
 .rept MAXPROCESSES
 	.space PROCINFOSIZE
 .endr
@@ -1149,6 +1225,11 @@ _loadaddress25$:
 	ld hl,setprocid
 	ret
 _loadaddress26$:
+	cp EXITPROCESS
+	jp nz, _loadaddress27$
+	ld hl,exitprocess
+	ret
+_loadaddress27$:
 	#----- not defined ---
 	ld hl,addressfailedmsg
 	call print 

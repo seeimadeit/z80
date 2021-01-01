@@ -12,13 +12,16 @@ F01:0019
 F01:0020       .macro PRINTLN
 F01:0025       
 F01:0026       
-F01:0027       
-F01:0028       # address where user programs load
-F01:0029       .include "SERIAL.inc"
+F01:0027       .macro DPRINTLN MSG=""
+F01:0034       
+F01:0035       
+F01:0036       
+F01:0037       # address where user programs load
+F01:0038       .include "SERIAL.inc"
 F02:0001       .equ SERIALPORT , 0x01
 F02:0002       .equ SERIALPORT2, 0x02
 F02:0003       
-F01:0030       .include "SDCARD.inc"
+F01:0039       .include "SDCARD.inc"
 F03:0001       .equ SDCARD,0x05
 F03:0002       ; ******* SDCARD *********
 F03:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
@@ -54,53 +57,54 @@ F03:0032       ;z80 - out - opendirectory : will open the root directory for dir
 F03:0033       .equ OPENDIRECTORY,0x31
 F03:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
 F03:0035       .equ NEXTFILE,0x32
-F01:0031       .equ commandMemory, 0x2000
-F01:0032       .equ userMemory,0x3000
-F01:0033       .equ libMemory,0xF000
-F01:0034       
-F01:0035       .equ TRUE, 1
-F01:0036       .equ FALSE, 0
-F01:0037       
-F01:0038       # the only fixed address (i hope), use it to get the address of utilities methods
-F01:0039       # ld a, PRINT
-F01:0040       # call GetAddress
-F01:0041       # address for print loaded into hl
-F01:0042       # the value in hl can change between os versions so do not hard code the values
+F01:0040       .equ commandMemory, 0x2000
+F01:0041       .equ userMemory,0x3000
+F01:0042       .equ libMemory,0xF000
 F01:0043       
-F01:0044       .equ GetAddress, 0x0804
-F01:0045       .equ SETPROCID,28
-F01:0046       .equ PRINT,		1
-F01:0047       .equ PRINTLN,	9
-F01:0048       .equ PRINTHEX,	2
-F01:0049       .equ PRINTHEXL,21
-F01:0050       .equ LOADFILE,	3
-F01:0051       .equ MEMSET,	4
-F01:0052       .equ STRLEN,	5
-F01:0053       .equ STRCPY,24
-F01:0054       .equ STRNCPY,10
-F01:0055       .equ PUTC,		6
-F01:0056       .equ TOUPPERCASE,7
-F01:0057       .equ HEXTOBYTE,	8
-F01:0058       .equ CREATEPROCESS,16
-F01:0059       .equ GETCOMMANDPARAMS,17
-F01:0060       # filesystem - primitive functions, probably going to change 
-F01:0061       .equ DIRECTORYOPEN,13
-F01:0062       .equ DIRECTORYNEXTFILE,14
-F01:0063       .equ GETFILENAME,15
-F01:0064       .equ GETMALLOCTABLE,18
-F01:0065       .equ DIV8,19
-F01:0066       .equ SETRESETPAGE,20
-F01:0067       .equ STARTPROCESSINFO,22
-F01:0068       .equ NEXTPROCESSINFO,23
-F01:0069       .equ GETPROCESSBYID,26
-F01:0070       .equ MULTIPLY8,27
-F01:0071       
-F01:0072       
-F01:0073       
-F01:0074       
-F01:0075       .equ NEXTNUMBER,29
-F01:0076       
-F01:0077       
+F01:0044       .equ TRUE, 1
+F01:0045       .equ FALSE, 0
+F01:0046       
+F01:0047       # the only fixed address (i hope), use it to get the address of utilities methods
+F01:0048       # ld a, PRINT
+F01:0049       # call GetAddress
+F01:0050       # address for print loaded into hl
+F01:0051       # the value in hl can change between os versions so do not hard code the values
+F01:0052       
+F01:0053       .equ GetAddress, 0x0804
+F01:0054       .equ SETPROCID,28
+F01:0055       .equ PRINT,		1
+F01:0056       .equ PRINTLN,	9
+F01:0057       .equ PRINTHEX,	2
+F01:0058       .equ PRINTHEXL,21
+F01:0059       .equ LOADFILE,	3
+F01:0060       .equ MEMSET,	4
+F01:0061       .equ STRLEN,	5
+F01:0062       .equ STRCPY,24
+F01:0063       .equ STRNCPY,10
+F01:0064       .equ PUTC,		6
+F01:0065       .equ TOUPPERCASE,7
+F01:0066       .equ HEXTOBYTE,	8
+F01:0067       .equ CREATEPROCESS,16
+F01:0068       .equ GETCOMMANDPARAMS,17
+F01:0069       # filesystem - primitive functions, probably going to change 
+F01:0070       .equ DIRECTORYOPEN,13
+F01:0071       .equ DIRECTORYNEXTFILE,14
+F01:0072       .equ GETFILENAME,15
+F01:0073       .equ GETMALLOCTABLE,18
+F01:0074       .equ DIV8,19
+F01:0075       .equ SETRESETPAGE,20
+F01:0076       .equ STARTPROCESSINFO,22
+F01:0077       .equ NEXTPROCESSINFO,23
+F01:0078       .equ GETPROCESSBYID,26
+F01:0079       .equ MULTIPLY8,27
+F01:0080       .equ EXITPROCESS,29
+F01:0081       
+F01:0082       
+F01:0083       
+F01:0084       
+F01:0085       .equ NEXTNUMBER,30
+F01:0086       
+F01:0087       
 F00:0005       .include "libs.inc"
 F04:0001       
 F04:0002       
@@ -121,7 +125,7 @@ F04:0014       			.byte 1 ;# stack size (in pages)
                S01:00005003:  01
 F04:0015       		.endif
 F04:0016       		jp libaddress
-               S01:00005004:  C3 F7 52
+               S01:00005004:  C3 1E 53
 F04:0017       initialize:
 F04:0018       	.else
 F04:0019       		.ifdef __ORG__
@@ -143,655 +147,704 @@ F04:0033       	ld a,PRINT
 F04:0034       	call GetAddress
                S01:00005009:  CD 04 08
 F04:0035       	ld (printadr),hl
-               S01:0000500C:  22 ED 50
+               S01:0000500C:  22 11 51
 F04:0036       	ld a,PRINTHEX
                S01:0000500F:  3E 02
 F04:0037       	call GetAddress
                S01:00005011:  CD 04 08
 F04:0038       	ld (printhexadr),hl
-               S01:00005014:  22 F3 50
+               S01:00005014:  22 17 51
 F04:0039       	ld a,LOADFILE
                S01:00005017:  3E 03
 F04:0040       	call GetAddress
                S01:00005019:  CD 04 08
 F04:0041       	ld (loadfileadr),hl
-               S01:0000501C:  22 F6 50
+               S01:0000501C:  22 1A 51
 F04:0042       	ld a,MEMSET
                S01:0000501F:  3E 04
 F04:0043       	call GetAddress
                S01:00005021:  CD 04 08
 F04:0044       	ld (memsetadr),hl
-               S01:00005024:  22 F9 50
+               S01:00005024:  22 1D 51
 F04:0045       	ld a,STRLEN
                S01:00005027:  3E 05
 F04:0046       	call GetAddress
                S01:00005029:  CD 04 08
 F04:0047       	ld (strlenadr),hl
-               S01:0000502C:  22 FC 50
+               S01:0000502C:  22 20 51
 F04:0048       	ld a,PUTC
                S01:0000502F:  3E 06
 F04:0049       	call GetAddress
                S01:00005031:  CD 04 08
 F04:0050       	ld (putcadr),hl
-               S01:00005034:  22 FF 50
+               S01:00005034:  22 23 51
 F04:0051       	ld a,TOUPPERCASE
                S01:00005037:  3E 07
 F04:0052       	call GetAddress
                S01:00005039:  CD 04 08
 F04:0053       	ld (touppercaseadr),hl
-               S01:0000503C:  22 02 51
+               S01:0000503C:  22 26 51
 F04:0054       	ld a,HEXTOBYTE
                S01:0000503F:  3E 08
 F04:0055       	call GetAddress
                S01:00005041:  CD 04 08
 F04:0056       	ld (hextobyteadr),hl
-               S01:00005044:  22 05 51
+               S01:00005044:  22 29 51
 F04:0057       	ld a,PRINTLN
                S01:00005047:  3E 09
 F04:0058       	call GetAddress
                S01:00005049:  CD 04 08
 F04:0059       	ld (printlnadr),hl
-               S01:0000504C:  22 F0 50
+               S01:0000504C:  22 14 51
 F04:0060       	ld a,DIRECTORYOPEN
                S01:0000504F:  3E 0D
 F04:0061       	call GetAddress
                S01:00005051:  CD 04 08
 F04:0062       	ld (directoryopenadr),hl
-               S01:00005054:  22 08 51
+               S01:00005054:  22 2C 51
 F04:0063       	ld a,NEXTFILE
                S01:00005057:  3E 32
 F04:0064       	call GetAddress
                S01:00005059:  CD 04 08
 F04:0065       	ld (directorynextfileadr),hl
-               S01:0000505C:  22 0B 51
+               S01:0000505C:  22 2F 51
 F04:0066       	ld a,GETFILENAME
                S01:0000505F:  3E 0F
 F04:0067       	call GetAddress
                S01:00005061:  CD 04 08
 F04:0068       	ld (getfilenameadr),hl
-               S01:00005064:  22 0E 51
+               S01:00005064:  22 32 51
 F04:0069       	ld a,CREATEPROCESS
                S01:00005067:  3E 10
 F04:0070       	call GetAddress
                S01:00005069:  CD 04 08
 F04:0071       	ld (createProcessadr),hl
-               S01:0000506C:  22 11 51
+               S01:0000506C:  22 35 51
 F04:0072       	ld a,GETCOMMANDPARAMS
                S01:0000506F:  3E 11
 F04:0073       	call GetAddress
                S01:00005071:  CD 04 08
 F04:0074       	ld (getcommandparamsadr),hl
-               S01:00005074:  22 14 51
+               S01:00005074:  22 38 51
 F04:0075       	ld a,GETMALLOCTABLE
                S01:00005077:  3E 12
 F04:0076       	call GetAddress
                S01:00005079:  CD 04 08
 F04:0077       	ld (getmalloctableadr),hl
-               S01:0000507C:  22 17 51
+               S01:0000507C:  22 3B 51
 F04:0078       	ld a,DIV8
                S01:0000507F:  3E 13
 F04:0079       	call GetAddress
                S01:00005081:  CD 04 08
 F04:0080       	ld (div8adr),hl
-               S01:00005084:  22 1A 51
+               S01:00005084:  22 3E 51
 F04:0081       	ld a,SETRESETPAGE
                S01:00005087:  3E 14
 F04:0082       	call GetAddress
                S01:00005089:  CD 04 08
 F04:0083       	ld (setresetpageadr),hl
-               S01:0000508C:  22 1D 51
+               S01:0000508C:  22 41 51
 F04:0084       	ld a,PRINTHEXL
                S01:0000508F:  3E 15
 F04:0085       	call GetAddress
                S01:00005091:  CD 04 08
 F04:0086       	ld (printhexLadr),hl
-               S01:00005094:  22 20 51
+               S01:00005094:  22 44 51
 F04:0087       	ld a,STARTPROCESSINFO
                S01:00005097:  3E 16
 F04:0088       	call GetAddress
                S01:00005099:  CD 04 08
 F04:0089       	ld (startprocessinfoadr),hl
-               S01:0000509C:  22 23 51
+               S01:0000509C:  22 47 51
 F04:0090       	ld a,NEXTPROCESSINFO
                S01:0000509F:  3E 17
 F04:0091       	call GetAddress
                S01:000050A1:  CD 04 08
 F04:0092       	ld (nextprocessinfoadr),hl
-               S01:000050A4:  22 26 51
+               S01:000050A4:  22 4A 51
 F04:0093       	ld a,STRCPY
                S01:000050A7:  3E 18
 F04:0094       	call GetAddress
                S01:000050A9:  CD 04 08
 F04:0095       	ld (strcpyadr),hl
-               S01:000050AC:  22 29 51
+               S01:000050AC:  22 4D 51
 F04:0096       	ld a,STRNCPY
                S01:000050AF:  3E 0A
 F04:0097       	call GetAddress
                S01:000050B1:  CD 04 08
 F04:0098       	ld (strncpyadr),hl
-               S01:000050B4:  22 2C 51
+               S01:000050B4:  22 50 51
 F04:0099       	ld a,GETPROCESSBYID
                S01:000050B7:  3E 1A
 F04:0100       	call GetAddress
                S01:000050B9:  CD 04 08
 F04:0101       	ld (getprocessbyidadr),hl
-               S01:000050BC:  22 2F 51
+               S01:000050BC:  22 53 51
 F04:0102       	ld a,MULTIPLY8
                S01:000050BF:  3E 1B
 F04:0103       	call GetAddress
                S01:000050C1:  CD 04 08
 F04:0104       	ld (Mul8badr),hl
-               S01:000050C4:  22 32 51
+               S01:000050C4:  22 56 51
 F04:0105       	ld a,SETPROCID
                S01:000050C7:  3E 1C
 F04:0106       	call GetAddress
                S01:000050C9:  CD 04 08
 F04:0107       	ld (getprocidadr),hl
-               S01:000050CC:  22 35 51
+               S01:000050CC:  22 59 51
 F04:0108       	call getprocid
-               S01:000050CF:  CD 34 51
+               S01:000050CF:  CD 58 51
 F04:0109       	ld (processid),a
-               S01:000050D2:  32 E9 50
-F04:0110       	ld hl,(_getprocessid)
-               S01:000050D5:  2A DE 50
-F04:0111       	ld (getprocidadr),hl
-               S01:000050D8:  22 35 51
-F04:0112       
-F04:0113       
-F04:0114       
-F04:0115       	
-F04:0116       
-F04:0117       
+               S01:000050D2:  32 0F 51
+F04:0110       	call printhex
+               S01:000050D5:  CD 16 51
+F04:0111       	ld hl,(_getprocessid)
+               S01:000050D8:  2A 04 51
+F04:0112       	ld (getprocidadr),hl
+               S01:000050DB:  22 59 51
+F04:0113       	call getprocid
+               S01:000050DE:  CD 58 51
+F04:0114       	call printhex
+               S01:000050E1:  CD 16 51
+F04:0115       	ld a,EXITPROCESS
+               S01:000050E4:  3E 1D
+F04:0116       	call GetAddress
+               S01:000050E6:  CD 04 08
+F04:0117       	ld (exitprocessadr),hl
+               S01:000050E9:  22 5C 51
 F04:0118       
 F04:0119       
-F04:0120       	jp _main
-               S01:000050DB:  C3 37 51
-F04:0121       	_getprocessid: 
-F04:0122       	DEBUG '$'
+F04:0120       
+F04:0121       
+F04:0122       	
+F04:0123       	.ifdef __LIB__
+F04:0124       		ret
+               S01:000050EC:  C9
+F04:0125       	.endif
+F04:0126       
+F04:0127       
+F04:0128       	#jp _main
+F04:0129       	call _main
+               S01:000050ED:  CD 5E 51
+F04:0130       
+F04:0131       	exit:
+F04:0132       	DEBUG '^'
 F05:0001       # example : DEBUG '!'
 F05:0002       #      or : DEBUG h
 F05:0003       		push af
-               S01:000050DE:  F5
-F05:0004       		ld a,36
-               S01:000050DF:  3E 24
+               S01:000050F0:  F5
+F05:0004       		ld a,94
+               S01:000050F1:  3E 5E
 F05:0005       		call putc
-               S01:000050E1:  CD FE 50
+               S01:000050F3:  CD 22 51
 F05:0006       		pop af
-               S01:000050E4:  F1
-F04:0123       	ld a,(processid)
-               S01:000050E5:  3A E9 50
-F04:0124       		ret
-               S01:000050E8:  C9
-F04:0125       	processid: .byte 0
-               S01:000050E9:  00
-F04:0126       	functionlookups:
-F04:0127       	.align 2
-F04:0128       	print: .byte 0xc3
-               S01:000050EC:  C3
-F04:0129       	printadr: .2byte 0
-               S01:000050ED:  00 00
-F04:0130       	println: .byte 0xc3
-               S01:000050EF:  C3
-F04:0131       	printlnadr: .2byte 0
-               S01:000050F0:  00 00
-F04:0132       	printhex: .byte 0xc3
-               S01:000050F2:  C3
-F04:0133       	printhexadr: .2byte 0
-               S01:000050F3:  00 00
-F04:0134       	loadfile: .byte 0xc3
-               S01:000050F5:  C3
-F04:0135       	loadfileadr: .2byte 0
-               S01:000050F6:  00 00
-F04:0136       	memset: .byte 0xc3
-               S01:000050F8:  C3
-F04:0137       	memsetadr: .2byte 0
-               S01:000050F9:  00 00
-F04:0138       	strlen: .byte 0xc3
-               S01:000050FB:  C3
-F04:0139       	strlenadr: .2byte 0
-               S01:000050FC:  00 00
-F04:0140       	putc: .byte 0xc3
-               S01:000050FE:  C3
-F04:0141       	putcadr: .2byte 0
-               S01:000050FF:  00 00
-F04:0142       	touppercase: .byte 0xc3
-               S01:00005101:  C3
-F04:0143       	touppercaseadr: .2byte 0
-               S01:00005102:  00 00
-F04:0144       	hextobyte: .byte 0xc3
-               S01:00005104:  C3
-F04:0145       	hextobyteadr: .2byte 0
-               S01:00005105:  00 00
-F04:0146       	directoryopen: .byte 0xc3
-               S01:00005107:  C3
-F04:0147       	directoryopenadr: .2byte 0
-               S01:00005108:  00 00
-F04:0148       	directorynextfile: .byte 0xc3
-               S01:0000510A:  C3
-F04:0149       	directorynextfileadr: .2byte 0
-               S01:0000510B:  00 00
-F04:0150       	getfilename: .byte 0xc3
-               S01:0000510D:  C3
-F04:0151       	getfilenameadr: .2byte 0
-               S01:0000510E:  00 00
-F04:0152       	createProcess: .byte 0xc3
+               S01:000050F6:  F1
+F04:0133       		push af
+               S01:000050F7:  F5
+F04:0134       		ld a,(processid)
+               S01:000050F8:  3A 0F 51
+F04:0135       		ld b,a
+               S01:000050FB:  47
+F04:0136       		call printhex
+               S01:000050FC:  CD 16 51
+F04:0137       		pop af
+               S01:000050FF:  F1
+F04:0138       	
+F04:0139       		call exitprocess
+               S01:00005100:  CD 5B 51
+F04:0140       		ret
+               S01:00005103:  C9
+F04:0141       	_getprocessid: 
+F04:0142       	DEBUG '$'
+F06:0001       # example : DEBUG '!'
+F06:0002       #      or : DEBUG h
+F06:0003       		push af
+               S01:00005104:  F5
+F06:0004       		ld a,36
+               S01:00005105:  3E 24
+F06:0005       		call putc
+               S01:00005107:  CD 22 51
+F06:0006       		pop af
+               S01:0000510A:  F1
+F04:0143       	ld a,(processid)
+               S01:0000510B:  3A 0F 51
+F04:0144       		ret
+               S01:0000510E:  C9
+F04:0145       
+F04:0146       	processid: .byte 0
+               S01:0000510F:  00
+F04:0147       	functionlookups:
+F04:0148       	.align 2
+F04:0149       	print: .byte 0xc3
                S01:00005110:  C3
-F04:0153       	createProcessadr: .2byte 0
+F04:0150       	printadr: .2byte 0
                S01:00005111:  00 00
-F04:0154       	getcommandparams: .byte 0xc3
+F04:0151       	println: .byte 0xc3
                S01:00005113:  C3
-F04:0155       	getcommandparamsadr: .2byte 0
+F04:0152       	printlnadr: .2byte 0
                S01:00005114:  00 00
-F04:0156       	getmalloctable: .byte 0xc3
+F04:0153       	printhex: .byte 0xc3
                S01:00005116:  C3
-F04:0157       	getmalloctableadr: .2byte 0
+F04:0154       	printhexadr: .2byte 0
                S01:00005117:  00 00
-F04:0158       	Div8: .byte 0xc3
+F04:0155       	loadfile: .byte 0xc3
                S01:00005119:  C3
-F04:0159       	div8adr: .2byte 0
+F04:0156       	loadfileadr: .2byte 0
                S01:0000511A:  00 00
-F04:0160       	setresetpage: .byte 0xc3
+F04:0157       	memset: .byte 0xc3
                S01:0000511C:  C3
-F04:0161       	setresetpageadr: .2byte 0
+F04:0158       	memsetadr: .2byte 0
                S01:0000511D:  00 00
-F04:0162       	printhexL: .byte 0xc3
+F04:0159       	strlen: .byte 0xc3
                S01:0000511F:  C3
-F04:0163       	printhexLadr: .2byte 0
+F04:0160       	strlenadr: .2byte 0
                S01:00005120:  00 00
-F04:0164       	startprocessinfo: .byte 0xc3
+F04:0161       	putc: .byte 0xc3
                S01:00005122:  C3
-F04:0165       	startprocessinfoadr: .2byte 0
+F04:0162       	putcadr: .2byte 0
                S01:00005123:  00 00
-F04:0166       	nextprocessinfo: .byte 0xc3
+F04:0163       	touppercase: .byte 0xc3
                S01:00005125:  C3
-F04:0167       	nextprocessinfoadr: .2byte 0
+F04:0164       	touppercaseadr: .2byte 0
                S01:00005126:  00 00
-F04:0168       	strcpy: .byte 0xc3
+F04:0165       	hextobyte: .byte 0xc3
                S01:00005128:  C3
-F04:0169       	strcpyadr: .2byte 0
+F04:0166       	hextobyteadr: .2byte 0
                S01:00005129:  00 00
-F04:0170       	strncpy: .byte 0xc3
+F04:0167       	directoryopen: .byte 0xc3
                S01:0000512B:  C3
-F04:0171       	strncpyadr: .2byte 0
+F04:0168       	directoryopenadr: .2byte 0
                S01:0000512C:  00 00
-F04:0172       	getprocessbyid: .byte 0xc3
+F04:0169       	directorynextfile: .byte 0xc3
                S01:0000512E:  C3
-F04:0173       	getprocessbyidadr: .2byte 0
+F04:0170       	directorynextfileadr: .2byte 0
                S01:0000512F:  00 00
-F04:0174       	Mul8b: .byte 0xc3
+F04:0171       	getfilename: .byte 0xc3
                S01:00005131:  C3
-F04:0175       	Mul8badr: .2byte 0
+F04:0172       	getfilenameadr: .2byte 0
                S01:00005132:  00 00
-F04:0176       	getprocid: .byte 0xc3
+F04:0173       	createProcess: .byte 0xc3
                S01:00005134:  C3
-F04:0177       	getprocidadr: .2byte 0
+F04:0174       	createProcessadr: .2byte 0
                S01:00005135:  00 00
-F04:0178       
-F04:0179       _main:
-F04:0180       .ifdef __DLL__
-F04:0181       	ret
-F04:0182       .endif
+F04:0175       	getcommandparams: .byte 0xc3
+               S01:00005137:  C3
+F04:0176       	getcommandparamsadr: .2byte 0
+               S01:00005138:  00 00
+F04:0177       	getmalloctable: .byte 0xc3
+               S01:0000513A:  C3
+F04:0178       	getmalloctableadr: .2byte 0
+               S01:0000513B:  00 00
+F04:0179       	Div8: .byte 0xc3
+               S01:0000513D:  C3
+F04:0180       	div8adr: .2byte 0
+               S01:0000513E:  00 00
+F04:0181       	setresetpage: .byte 0xc3
+               S01:00005140:  C3
+F04:0182       	setresetpageadr: .2byte 0
+               S01:00005141:  00 00
+F04:0183       	printhexL: .byte 0xc3
+               S01:00005143:  C3
+F04:0184       	printhexLadr: .2byte 0
+               S01:00005144:  00 00
+F04:0185       	startprocessinfo: .byte 0xc3
+               S01:00005146:  C3
+F04:0186       	startprocessinfoadr: .2byte 0
+               S01:00005147:  00 00
+F04:0187       	nextprocessinfo: .byte 0xc3
+               S01:00005149:  C3
+F04:0188       	nextprocessinfoadr: .2byte 0
+               S01:0000514A:  00 00
+F04:0189       	strcpy: .byte 0xc3
+               S01:0000514C:  C3
+F04:0190       	strcpyadr: .2byte 0
+               S01:0000514D:  00 00
+F04:0191       	strncpy: .byte 0xc3
+               S01:0000514F:  C3
+F04:0192       	strncpyadr: .2byte 0
+               S01:00005150:  00 00
+F04:0193       	getprocessbyid: .byte 0xc3
+               S01:00005152:  C3
+F04:0194       	getprocessbyidadr: .2byte 0
+               S01:00005153:  00 00
+F04:0195       	Mul8b: .byte 0xc3
+               S01:00005155:  C3
+F04:0196       	Mul8badr: .2byte 0
+               S01:00005156:  00 00
+F04:0197       	getprocid: .byte 0xc3
+               S01:00005158:  C3
+F04:0198       	getprocidadr: .2byte 0
+               S01:00005159:  00 00
+F04:0199       	exitprocess: .byte 0xc3
+               S01:0000515B:  C3
+F04:0200       	exitprocessadr: .2byte 0
+               S01:0000515C:  00 00
+F04:0201       
+F04:0202       _main:
+F04:0203       #.ifdef __LIB__
+F04:0204       #	ret
+F04:0205       #.endif
 F00:0006       .include "screen.inc"
-F06:0001       
-F06:0002       
-F06:0003       
-F06:0004       .equ TEST,2
-F06:0005       .equ ANSICODE,3
-F06:0006       
-F06:0007       
-F06:0008       
-F06:0009       
-F06:0010       
-F06:0011       
-F06:0012       
-F06:0013       #ansicode - see keyboardtest.s
-F06:0014       	# A - code to call
-F06:0015       
-F06:0016       
-F06:0017       .equ CLEARSCREEN,		1
-F06:0018       .equ CLEARENDOFSCREEN,	2
-F06:0019       .equ CLEARBEGINOFSCREEN,3
-F06:0020       .equ CLEARWHOLESCREEN,	4
-F06:0021       .equ CLEARCURRENTLINE,	5
-F06:0022       .equ CLEARTOENDOFLINE,	6
-F06:0023       .equ CLEARFROMSTARTOFLINE,7
-F06:0024       .equ CLEARLINE,			8
-F06:0025       .equ COLORRESET,		9
-F06:0026       .equ COLORBOLD,			10
-F06:0027       .equ COLORDIM,			11
-F06:0028       .equ COLORFGBLACK,		12
-F06:0029       .equ COLORFGRED,		13
-F06:0030       .equ COLORFGGREEN,		14
-F06:0031       .equ COLORFGYELLOW,		15
-F06:0032       .equ COLORFGBLUE,		16
-F06:0033       .equ COLORFGMAGENTA,	17
-F06:0034       .equ COLORFGCYAN,		18
-F06:0035       .equ COLORFGWHITE,		19
-F06:0036       .equ COLORBGBLACK,		20
-F06:0037       .equ COLORBGRED,		21
-F06:0038       .equ COLORBGGREEN,		22
-F06:0039       .equ COLORBGYELLOW,		23
-F06:0040       .equ COLORBGBLUE,		24
-F06:0041       .equ COLORBGMAGENTA,	25
-F06:0042       .equ COLORBGCYAN,		26
-F06:0043       .equ COLORBGWHITE,		27
-F06:0044       
-F06:0045       
+F07:0001       
+F07:0002       
+F07:0003       
+F07:0004       .equ TEST,2
+F07:0005       .equ ANSICODE,3
+F07:0006       
+F07:0007       
+F07:0008       
+F07:0009       
+F07:0010       
+F07:0011       
+F07:0012       
+F07:0013       #ansicode - see keyboardtest.s
+F07:0014       	# A - code to call
+F07:0015       
+F07:0016       
+F07:0017       .equ CLEARSCREEN,		1
+F07:0018       .equ CLEARENDOFSCREEN,	2
+F07:0019       .equ CLEARBEGINOFSCREEN,3
+F07:0020       .equ CLEARWHOLESCREEN,	4
+F07:0021       .equ CLEARCURRENTLINE,	5
+F07:0022       .equ CLEARTOENDOFLINE,	6
+F07:0023       .equ CLEARFROMSTARTOFLINE,7
+F07:0024       .equ CLEARLINE,			8
+F07:0025       .equ COLORRESET,		9
+F07:0026       .equ COLORBOLD,			10
+F07:0027       .equ COLORDIM,			11
+F07:0028       .equ COLORFGBLACK,		12
+F07:0029       .equ COLORFGRED,		13
+F07:0030       .equ COLORFGGREEN,		14
+F07:0031       .equ COLORFGYELLOW,		15
+F07:0032       .equ COLORFGBLUE,		16
+F07:0033       .equ COLORFGMAGENTA,	17
+F07:0034       .equ COLORFGCYAN,		18
+F07:0035       .equ COLORFGWHITE,		19
+F07:0036       .equ COLORBGBLACK,		20
+F07:0037       .equ COLORBGRED,		21
+F07:0038       .equ COLORBGGREEN,		22
+F07:0039       .equ COLORBGYELLOW,		23
+F07:0040       .equ COLORBGBLUE,		24
+F07:0041       .equ COLORBGMAGENTA,	25
+F07:0042       .equ COLORBGCYAN,		26
+F07:0043       .equ COLORBGWHITE,		27
+F07:0044       
+F07:0045       
 F00:0007       
 F00:0008       
 F00:0009       
 F00:0010       
 F00:0011         test:
 F00:0012       	ld hl,msg
-               S01:00005137:  21 3E 51
+               S01:0000515E:  21 65 51
 F00:0013       	call print
-               S01:0000513A:  CD EC 50
+               S01:00005161:  CD 10 51
 F00:0014       	
 F00:0015       	ret
-               S01:0000513D:  C9
+               S01:00005164:  C9
 F00:0016       
 F00:0017       	msg: .string "hello I'm in screen.dll"
-               S01:0000513E:  68 65 6C 6C 6F 20 49 27 6D 20 69 6E 20 73 63 72
-               S01:0000514E:  65 65 6E 2E 64 6C 6C
+               S01:00005165:  68 65 6C 6C 6F 20 49 27 6D 20 69 6E 20 73 63 72
+               S01:00005175:  65 65 6E 2E 64 6C 6C
 F00:0018       
 F00:0019       #==== print ansi escape codes =======
 F00:0020       
 F00:0021       ansicode:
 F00:0022       	# A - code to call
 F00:0023       	push af
-               S01:00005156:  F5
+               S01:0000517D:  F5
 F00:0024       
 F00:0025       	ld hl,escapeintro
-               S01:00005157:  21 8E 52
+               S01:0000517E:  21 B5 52
 F00:0026       	call print
-               S01:0000515A:  CD EC 50
+               S01:00005181:  CD 10 51
 F00:0027       
 F00:0028       	cp CLEARSCREEN
-               S01:0000515D:  FE 01
+               S01:00005184:  FE 01
 F00:0029       	jp nz,1$
-               S01:0000515F:  C2 68 51
+               S01:00005186:  C2 8F 51
 F00:0030       	ld hl,clearscreen
-               S01:00005162:  21 91 52
+               S01:00005189:  21 B8 52
 F00:0031       	jp 99$
-               S01:00005165:  C3 89 52
+               S01:0000518C:  C3 B0 52
 F00:0032       1$:	cp CLEARENDOFSCREEN
-               S01:00005168:  FE 02
+               S01:0000518F:  FE 02
 F00:0033       	jp nz,2$
-               S01:0000516A:  C2 73 51
+               S01:00005191:  C2 9A 51
 F00:0034       	ld hl,clearendofscreen
-               S01:0000516D:  21 9A 52
+               S01:00005194:  21 C1 52
 F00:0035       	jp 99$
-               S01:00005170:  C3 89 52
+               S01:00005197:  C3 B0 52
 F00:0036       2$:	cp CLEARBEGINOFSCREEN
-               S01:00005173:  FE 03
+               S01:0000519A:  FE 03
 F00:0037       	jp nz,3$
-               S01:00005175:  C2 7E 51
+               S01:0000519C:  C2 A5 51
 F00:0038       	ld hl,clearbeginofscreen
-               S01:00005178:  21 9D 52
+               S01:0000519F:  21 C4 52
 F00:0039       	jp 99$
-               S01:0000517B:  C3 89 52
+               S01:000051A2:  C3 B0 52
 F00:0040       3$:	cp CLEARWHOLESCREEN
-               S01:0000517E:  FE 04
+               S01:000051A5:  FE 04
 F00:0041       	jp nz,4$
-               S01:00005180:  C2 89 51
+               S01:000051A7:  C2 B0 51
 F00:0042       	ld hl,clearwholescreen
-               S01:00005183:  21 A0 52
+               S01:000051AA:  21 C7 52
 F00:0043       	jp 99$
-               S01:00005186:  C3 89 52
+               S01:000051AD:  C3 B0 52
 F00:0044       4$:	cp CLEARCURRENTLINE
-               S01:00005189:  FE 05
+               S01:000051B0:  FE 05
 F00:0045       	jp nz,5$
-               S01:0000518B:  C2 94 51
+               S01:000051B2:  C2 BB 51
 F00:0046       	ld hl,clearcurrentline
-               S01:0000518E:  21 A3 52
+               S01:000051B5:  21 CA 52
 F00:0047       	jp 99$
-               S01:00005191:  C3 89 52
+               S01:000051B8:  C3 B0 52
 F00:0048       5$:	cp CLEARTOENDOFLINE
-               S01:00005194:  FE 06
+               S01:000051BB:  FE 06
 F00:0049       	jp nz,6$
-               S01:00005196:  C2 9F 51
+               S01:000051BD:  C2 C6 51
 F00:0050       	ld hl,cleartoendofline
-               S01:00005199:  21 A5 52
+               S01:000051C0:  21 CC 52
 F00:0051       	jp 99$
-               S01:0000519C:  C3 89 52
+               S01:000051C3:  C3 B0 52
 F00:0052       6$:	cp CLEARFROMSTARTOFLINE
-               S01:0000519F:  FE 07
+               S01:000051C6:  FE 07
 F00:0053       	jp nz,7$
-               S01:000051A1:  C2 AA 51
+               S01:000051C8:  C2 D1 51
 F00:0054       	ld hl,clearfromstartofline
-               S01:000051A4:  21 A8 52
+               S01:000051CB:  21 CF 52
 F00:0055       	jp 99$
-               S01:000051A7:  C3 89 52
+               S01:000051CE:  C3 B0 52
 F00:0056       7$:	cp CLEARLINE
-               S01:000051AA:  FE 08
+               S01:000051D1:  FE 08
 F00:0057       	jp nz,8$
-               S01:000051AC:  C2 B5 51
+               S01:000051D3:  C2 DC 51
 F00:0058       	ld hl,clearline
-               S01:000051AF:  21 AB 52
+               S01:000051D6:  21 D2 52
 F00:0059       	jp 99$
-               S01:000051B2:  C3 89 52
+               S01:000051D9:  C3 B0 52
 F00:0060       8$:	cp COLORRESET
-               S01:000051B5:  FE 09
+               S01:000051DC:  FE 09
 F00:0061       	jp nz,9$
-               S01:000051B7:  C2 C0 51
+               S01:000051DE:  C2 E7 51
 F00:0062       	ld hl,colorreset
-               S01:000051BA:  21 AE 52
+               S01:000051E1:  21 D5 52
 F00:0063       	jp 99$
-               S01:000051BD:  C3 89 52
+               S01:000051E4:  C3 B0 52
 F00:0064       9$:	cp COLORBOLD
-               S01:000051C0:  FE 0A
+               S01:000051E7:  FE 0A
 F00:0065       	jp nz,10$
-               S01:000051C2:  C2 CB 51
+               S01:000051E9:  C2 F2 51
 F00:0066       	ld hl,colorbold
-               S01:000051C5:  21 B1 52
+               S01:000051EC:  21 D8 52
 F00:0067       	jp 99$
-               S01:000051C8:  C3 89 52
+               S01:000051EF:  C3 B0 52
 F00:0068       10$:	cp COLORDIM
-               S01:000051CB:  FE 0B
+               S01:000051F2:  FE 0B
 F00:0069       	jp nz,11$
-               S01:000051CD:  C2 D6 51
+               S01:000051F4:  C2 FD 51
 F00:0070       	ld hl,colordim
-               S01:000051D0:  21 B4 52
+               S01:000051F7:  21 DB 52
 F00:0071       	jp 99$
-               S01:000051D3:  C3 89 52
+               S01:000051FA:  C3 B0 52
 F00:0072       11$:	cp COLORFGBLACK
-               S01:000051D6:  FE 0C
+               S01:000051FD:  FE 0C
 F00:0073       	jp nz,12$
-               S01:000051D8:  C2 E1 51
+               S01:000051FF:  C2 08 52
 F00:0074       	ld hl,colorfgblack
-               S01:000051DB:  21 B7 52
+               S01:00005202:  21 DE 52
 F00:0075       	jp 99$
-               S01:000051DE:  C3 89 52
+               S01:00005205:  C3 B0 52
 F00:0076       12$:	cp COLORFGRED
-               S01:000051E1:  FE 0D
+               S01:00005208:  FE 0D
 F00:0077       	jp nz,13$
-               S01:000051E3:  C2 EC 51
+               S01:0000520A:  C2 13 52
 F00:0078       	ld hl,colorfgred
-               S01:000051E6:  21 BB 52
+               S01:0000520D:  21 E2 52
 F00:0079       	jp 99$
-               S01:000051E9:  C3 89 52
+               S01:00005210:  C3 B0 52
 F00:0080       13$:	cp COLORFGGREEN
-               S01:000051EC:  FE 0E
+               S01:00005213:  FE 0E
 F00:0081       	jp nz,14$
-               S01:000051EE:  C2 F7 51
+               S01:00005215:  C2 1E 52
 F00:0082       	ld hl,colorfggreen
-               S01:000051F1:  21 BF 52
+               S01:00005218:  21 E6 52
 F00:0083       	jp 99$
-               S01:000051F4:  C3 89 52
+               S01:0000521B:  C3 B0 52
 F00:0084       14$:	cp COLORFGYELLOW
-               S01:000051F7:  FE 0F
+               S01:0000521E:  FE 0F
 F00:0085       	jp nz,15$
-               S01:000051F9:  C2 02 52
+               S01:00005220:  C2 29 52
 F00:0086       	ld hl,colorfgyellow
-               S01:000051FC:  21 C3 52
+               S01:00005223:  21 EA 52
 F00:0087       	jp 99$
-               S01:000051FF:  C3 89 52
+               S01:00005226:  C3 B0 52
 F00:0088       15$:	cp COLORFGBLUE
-               S01:00005202:  FE 10
+               S01:00005229:  FE 10
 F00:0089       	jp nz,16$
-               S01:00005204:  C2 0D 52
+               S01:0000522B:  C2 34 52
 F00:0090       	ld hl,colorfgblue
-               S01:00005207:  21 C7 52
+               S01:0000522E:  21 EE 52
 F00:0091       	jp 99$
-               S01:0000520A:  C3 89 52
+               S01:00005231:  C3 B0 52
 F00:0092       16$:	cp COLORFGMAGENTA
-               S01:0000520D:  FE 11
+               S01:00005234:  FE 11
 F00:0093       	jp nz,17$
-               S01:0000520F:  C2 18 52
+               S01:00005236:  C2 3F 52
 F00:0094       	ld hl,colorfgmagenta
-               S01:00005212:  21 CB 52
+               S01:00005239:  21 F2 52
 F00:0095       	jp 99$
-               S01:00005215:  C3 89 52
+               S01:0000523C:  C3 B0 52
 F00:0096       17$:	cp COLORFGCYAN
-               S01:00005218:  FE 12
+               S01:0000523F:  FE 12
 F00:0097       	jp nz,18$
-               S01:0000521A:  C2 23 52
+               S01:00005241:  C2 4A 52
 F00:0098       	ld hl,colorfgmagenta
-               S01:0000521D:  21 CB 52
+               S01:00005244:  21 F2 52
 F00:0099       	jp 99$
-               S01:00005220:  C3 89 52
+               S01:00005247:  C3 B0 52
 F00:0100       18$:	cp COLORFGWHITE
-               S01:00005223:  FE 13
+               S01:0000524A:  FE 13
 F00:0101       	jp nz,19$
-               S01:00005225:  C2 2E 52
+               S01:0000524C:  C2 55 52
 F00:0102       	ld hl,colorfgwhite
-               S01:00005228:  21 D3 52
+               S01:0000524F:  21 FA 52
 F00:0103       	jp 99$
-               S01:0000522B:  C3 89 52
+               S01:00005252:  C3 B0 52
 F00:0104       19$:	cp COLORBGBLACK
-               S01:0000522E:  FE 14
+               S01:00005255:  FE 14
 F00:0105       	jp nz,20$
-               S01:00005230:  C2 39 52
+               S01:00005257:  C2 60 52
 F00:0106       	ld hl,colorbgblack
-               S01:00005233:  21 D7 52
+               S01:0000525A:  21 FE 52
 F00:0107       	jp 99$
-               S01:00005236:  C3 89 52
+               S01:0000525D:  C3 B0 52
 F00:0108       20$:	cp COLORBGRED
-               S01:00005239:  FE 15
+               S01:00005260:  FE 15
 F00:0109       	jp nz,21$
-               S01:0000523B:  C2 44 52
+               S01:00005262:  C2 6B 52
 F00:0110       	ld hl,colorbgred
-               S01:0000523E:  21 DB 52
+               S01:00005265:  21 02 53
 F00:0111       	jp 99$
-               S01:00005241:  C3 89 52
+               S01:00005268:  C3 B0 52
 F00:0112       21$:	cp COLORBGGREEN
-               S01:00005244:  FE 16
+               S01:0000526B:  FE 16
 F00:0113       	jp nz,22$
-               S01:00005246:  C2 4F 52
+               S01:0000526D:  C2 76 52
 F00:0114       	ld hl,colorbggreen
-               S01:00005249:  21 DF 52
+               S01:00005270:  21 06 53
 F00:0115       	jp 99$
-               S01:0000524C:  C3 89 52
+               S01:00005273:  C3 B0 52
 F00:0116       22$:	cp COLORBGYELLOW
-               S01:0000524F:  FE 17
+               S01:00005276:  FE 17
 F00:0117       	jp nz,23$
-               S01:00005251:  C2 5A 52
+               S01:00005278:  C2 81 52
 F00:0118       	ld hl,colorbgyellow
-               S01:00005254:  21 E3 52
+               S01:0000527B:  21 0A 53
 F00:0119       	jp 99$
-               S01:00005257:  C3 89 52
+               S01:0000527E:  C3 B0 52
 F00:0120       23$:	cp COLORBGBLUE
-               S01:0000525A:  FE 18
+               S01:00005281:  FE 18
 F00:0121       	jp nz,24$
-               S01:0000525C:  C2 65 52
+               S01:00005283:  C2 8C 52
 F00:0122       	ld hl,colorbgblue
-               S01:0000525F:  21 E7 52
+               S01:00005286:  21 0E 53
 F00:0123       	jp 99$
-               S01:00005262:  C3 89 52
+               S01:00005289:  C3 B0 52
 F00:0124       24$:	cp COLORBGMAGENTA
-               S01:00005265:  FE 19
+               S01:0000528C:  FE 19
 F00:0125       	jp nz,25$
-               S01:00005267:  C2 70 52
+               S01:0000528E:  C2 97 52
 F00:0126       	ld hl,colorbgmagenta
-               S01:0000526A:  21 EB 52
+               S01:00005291:  21 12 53
 F00:0127       	jp 99$
-               S01:0000526D:  C3 89 52
+               S01:00005294:  C3 B0 52
 F00:0128       25$:	cp COLORBGCYAN
-               S01:00005270:  FE 1A
+               S01:00005297:  FE 1A
 F00:0129       	jp nz,26$
-               S01:00005272:  C2 7B 52
+               S01:00005299:  C2 A2 52
 F00:0130       	ld hl,colorbgcyan
-               S01:00005275:  21 EF 52
+               S01:0000529C:  21 16 53
 F00:0131       	jp 99$
-               S01:00005278:  C3 89 52
+               S01:0000529F:  C3 B0 52
 F00:0132       26$:	cp COLORBGWHITE
-               S01:0000527B:  FE 1B
+               S01:000052A2:  FE 1B
 F00:0133       	jp nz,98$
-               S01:0000527D:  C2 86 52
+               S01:000052A4:  C2 AD 52
 F00:0134       	ld hl,colorbgwhite
-               S01:00005280:  21 F3 52
+               S01:000052A7:  21 1A 53
 F00:0135       	jp 99$
-               S01:00005283:  C3 89 52
+               S01:000052AA:  C3 B0 52
 F00:0136       98$: ;#default
 F00:0137       	ld hl,colorreset
-               S01:00005286:  21 AE 52
+               S01:000052AD:  21 D5 52
 F00:0138       99$:call print
-               S01:00005289:  CD EC 50
+               S01:000052B0:  CD 10 51
 F00:0139       	pop af
-               S01:0000528C:  F1
+               S01:000052B3:  F1
 F00:0140       	ret
-               S01:0000528D:  C9
+               S01:000052B4:  C9
 F00:0141       
 F00:0142       
 F00:0143       escapeintro: .string 0x1b,"["
-               S01:0000528E:  1B
-               S01:0000528F:  5B
+               S01:000052B5:  1B
+               S01:000052B6:  5B
 F00:0144       clearscreen: .string "0;0H",0x1b,"[2J"
-               S01:00005291:  30 3B 30 48
-               S01:00005295:  1B
-               S01:00005296:  5B 32 4A
+               S01:000052B8:  30 3B 30 48
+               S01:000052BC:  1B
+               S01:000052BD:  5B 32 4A
 F00:0145       clearendofscreen: .string "0J"
-               S01:0000529A:  30 4A
+               S01:000052C1:  30 4A
 F00:0146       clearbeginofscreen: .string "1J"
-               S01:0000529D:  31 4A
+               S01:000052C4:  31 4A
 F00:0147       clearwholescreen: .string "2J"
-               S01:000052A0:  32 4A
+               S01:000052C7:  32 4A
 F00:0148       clearcurrentline: .string "K"
-               S01:000052A3:  4B
+               S01:000052CA:  4B
 F00:0149       cleartoendofline: .string "0K"
-               S01:000052A5:  30 4B
+               S01:000052CC:  30 4B
 F00:0150       clearfromstartofline: .string "1K"
-               S01:000052A8:  31 4B
+               S01:000052CF:  31 4B
 F00:0151       clearline: .string "2K"
-               S01:000052AB:  32 4B
+               S01:000052D2:  32 4B
 F00:0152       colorreset: .string "0m"
-               S01:000052AE:  30 6D
+               S01:000052D5:  30 6D
 F00:0153       colorbold: .string "1m"
-               S01:000052B1:  31 6D
+               S01:000052D8:  31 6D
 F00:0154       colordim: .string "2m"
-               S01:000052B4:  32 6D
+               S01:000052DB:  32 6D
 F00:0155       colorfgblack: .string "30m"
-               S01:000052B7:  33 30 6D
+               S01:000052DE:  33 30 6D
 F00:0156       colorfgred: .string "31m"
-               S01:000052BB:  33 31 6D
+               S01:000052E2:  33 31 6D
 F00:0157       colorfggreen: .string "32m"
-               S01:000052BF:  33 32 6D
+               S01:000052E6:  33 32 6D
 F00:0158       colorfgyellow: .string "33m"
-               S01:000052C3:  33 33 6D
+               S01:000052EA:  33 33 6D
 F00:0159       colorfgblue: .string "34m"
-               S01:000052C7:  33 34 6D
+               S01:000052EE:  33 34 6D
 F00:0160       colorfgmagenta: .string "35m"
-               S01:000052CB:  33 35 6D
+               S01:000052F2:  33 35 6D
 F00:0161       colorfgcyan: .string "36m"
-               S01:000052CF:  33 36 6D
+               S01:000052F6:  33 36 6D
 F00:0162       colorfgwhite: .string "37m"
-               S01:000052D3:  33 37 6D
+               S01:000052FA:  33 37 6D
 F00:0163       colorbgblack: .string "40m"
-               S01:000052D7:  34 30 6D
+               S01:000052FE:  34 30 6D
 F00:0164       colorbgred: .string "41m"
-               S01:000052DB:  34 31 6D
+               S01:00005302:  34 31 6D
 F00:0165       colorbggreen: .string "42m"
-               S01:000052DF:  34 32 6D
+               S01:00005306:  34 32 6D
 F00:0166       colorbgyellow: .string "43m"
-               S01:000052E3:  34 33 6D
+               S01:0000530A:  34 33 6D
 F00:0167       colorbgblue: .string "44m"
-               S01:000052E7:  34 34 6D
+               S01:0000530E:  34 34 6D
 F00:0168       colorbgmagenta: .string "45m"
-               S01:000052EB:  34 35 6D
+               S01:00005312:  34 35 6D
 F00:0169       colorbgcyan: .string "46m"
-               S01:000052EF:  34 36 6D
+               S01:00005316:  34 36 6D
 F00:0170       colorbgwhite: .string "47m"
-               S01:000052F3:  34 37 6D
+               S01:0000531A:  34 37 6D
 F00:0171       
 F00:0172       
 F00:0173       
@@ -803,41 +856,41 @@ F00:0178       ;					 2, printhex
 F00:0179       ;					3,loadFILE
 F00:0180       libaddress:
 F00:0181       	cp 0
-               S01:000052F7:  FE 00
+               S01:0000531E:  FE 00
 F00:0182       	jp nz,_loadaddress3$:
-               S01:000052F9:  C2 FF 52
+               S01:00005320:  C2 26 53
 F00:0183       	jp initialize
-               S01:000052FC:  C3 07 50
+               S01:00005323:  C3 07 50
 F00:0184       
 F00:0185       
 F00:0186       
 F00:0187       _loadaddress3$:
 F00:0188       	cp TEST
-               S01:000052FF:  FE 02
+               S01:00005326:  FE 02
 F00:0189       	jp nz, _loadaddress4$
-               S01:00005301:  C2 08 53
+               S01:00005328:  C2 2F 53
 F00:0190       	ld hl,test
-               S01:00005304:  21 37 51
+               S01:0000532B:  21 5E 51
 F00:0191       	ret
-               S01:00005307:  C9
+               S01:0000532E:  C9
 F00:0192       
 F00:0193       _loadaddress4$:
 F00:0194       	cp ANSICODE
-               S01:00005308:  FE 03
+               S01:0000532F:  FE 03
 F00:0195       	jp nz, _loadaddress5$:
-               S01:0000530A:  C2 11 53
+               S01:00005331:  C2 38 53
 F00:0196       	ld hl,ansicode
-               S01:0000530D:  21 56 51
+               S01:00005334:  21 7D 51
 F00:0197       	ret
-               S01:00005310:  C9
+               S01:00005337:  C9
 F00:0198       _loadaddress5$:
 F00:0199       	#----- not defined ---
 F00:0200       
 F00:0201       
 F00:0202       	ld hl,0
-               S01:00005311:  21 00 00
+               S01:00005338:  21 00 00
 F00:0203       	ret
-               S01:00005314:  C9
+               S01:0000533B:  C9
 F00:0204       
 F00:0205       ENDADDRESS:
 
@@ -853,72 +906,73 @@ F02  SERIAL.inc
 F03  SDCARD.inc
 F04  libs.inc
 F05  debug
-F06  screen.inc
+F06  debug
+F07  screen.inc
 
 
 Symbols:
-_loadaddress5$ EXPR(21265=0x5311) ABS 
-_loadaddress4$ EXPR(21256=0x5308) ABS 
-_loadaddress3$ EXPR(21247=0x52ff) ABS 
-colorfgcyan EXPR(21199=0x52cf) UNUSED ABS 
-colorbgwhite EXPR(21235=0x52f3) ABS 
- ansicode 98$ EXPR(21126=0x5286) ABS 
-colorbgcyan EXPR(21231=0x52ef) ABS 
- ansicode 26$ EXPR(21115=0x527b) ABS 
-colorbgmagenta EXPR(21227=0x52eb) ABS 
- ansicode 25$ EXPR(21104=0x5270) ABS 
-colorbgblue EXPR(21223=0x52e7) ABS 
- ansicode 24$ EXPR(21093=0x5265) ABS 
-colorbgyellow EXPR(21219=0x52e3) ABS 
- ansicode 23$ EXPR(21082=0x525a) ABS 
-colorbggreen EXPR(21215=0x52df) ABS 
- ansicode 22$ EXPR(21071=0x524f) ABS 
-colorbgred EXPR(21211=0x52db) ABS 
- ansicode 21$ EXPR(21060=0x5244) ABS 
-colorbgblack EXPR(21207=0x52d7) ABS 
- ansicode 20$ EXPR(21049=0x5239) ABS 
-colorfgwhite EXPR(21203=0x52d3) ABS 
- ansicode 19$ EXPR(21038=0x522e) ABS 
- ansicode 18$ EXPR(21027=0x5223) ABS 
-colorfgmagenta EXPR(21195=0x52cb) ABS 
- ansicode 17$ EXPR(21016=0x5218) ABS 
-colorfgblue EXPR(21191=0x52c7) ABS 
- ansicode 16$ EXPR(21005=0x520d) ABS 
-colorfgyellow EXPR(21187=0x52c3) ABS 
- ansicode 15$ EXPR(20994=0x5202) ABS 
-colorfggreen EXPR(21183=0x52bf) ABS 
- ansicode 14$ EXPR(20983=0x51f7) ABS 
-colorfgred EXPR(21179=0x52bb) ABS 
- ansicode 13$ EXPR(20972=0x51ec) ABS 
-colorfgblack EXPR(21175=0x52b7) ABS 
- ansicode 12$ EXPR(20961=0x51e1) ABS 
-colordim EXPR(21172=0x52b4) ABS 
- ansicode 11$ EXPR(20950=0x51d6) ABS 
-colorbold EXPR(21169=0x52b1) ABS 
- ansicode 10$ EXPR(20939=0x51cb) ABS 
-colorreset EXPR(21166=0x52ae) ABS 
- ansicode 9$ EXPR(20928=0x51c0) ABS 
-clearline EXPR(21163=0x52ab) ABS 
- ansicode 8$ EXPR(20917=0x51b5) ABS 
-clearfromstartofline EXPR(21160=0x52a8) ABS 
- ansicode 7$ EXPR(20906=0x51aa) ABS 
-cleartoendofline EXPR(21157=0x52a5) ABS 
- ansicode 6$ EXPR(20895=0x519f) ABS 
-clearcurrentline EXPR(21155=0x52a3) ABS 
- ansicode 5$ EXPR(20884=0x5194) ABS 
-clearwholescreen EXPR(21152=0x52a0) ABS 
- ansicode 4$ EXPR(20873=0x5189) ABS 
-clearbeginofscreen EXPR(21149=0x529d) ABS 
- ansicode 3$ EXPR(20862=0x517e) ABS 
-clearendofscreen EXPR(21146=0x529a) ABS 
- ansicode 2$ EXPR(20851=0x5173) ABS 
- ansicode 99$ EXPR(21129=0x5289) ABS 
-clearscreen EXPR(21137=0x5291) ABS 
- ansicode 1$ EXPR(20840=0x5168) ABS 
-escapeintro EXPR(21134=0x528e) ABS 
-ansicode EXPR(20822=0x5156) ABS 
-msg EXPR(20798=0x513e) ABS 
-test EXPR(20791=0x5137) ABS 
+_loadaddress5$ EXPR(21304=0x5338) ABS 
+_loadaddress4$ EXPR(21295=0x532f) ABS 
+_loadaddress3$ EXPR(21286=0x5326) ABS 
+colorfgcyan EXPR(21238=0x52f6) UNUSED ABS 
+colorbgwhite EXPR(21274=0x531a) ABS 
+ ansicode 98$ EXPR(21165=0x52ad) ABS 
+colorbgcyan EXPR(21270=0x5316) ABS 
+ ansicode 26$ EXPR(21154=0x52a2) ABS 
+colorbgmagenta EXPR(21266=0x5312) ABS 
+ ansicode 25$ EXPR(21143=0x5297) ABS 
+colorbgblue EXPR(21262=0x530e) ABS 
+ ansicode 24$ EXPR(21132=0x528c) ABS 
+colorbgyellow EXPR(21258=0x530a) ABS 
+ ansicode 23$ EXPR(21121=0x5281) ABS 
+colorbggreen EXPR(21254=0x5306) ABS 
+ ansicode 22$ EXPR(21110=0x5276) ABS 
+colorbgred EXPR(21250=0x5302) ABS 
+ ansicode 21$ EXPR(21099=0x526b) ABS 
+colorbgblack EXPR(21246=0x52fe) ABS 
+ ansicode 20$ EXPR(21088=0x5260) ABS 
+colorfgwhite EXPR(21242=0x52fa) ABS 
+ ansicode 19$ EXPR(21077=0x5255) ABS 
+ ansicode 18$ EXPR(21066=0x524a) ABS 
+colorfgmagenta EXPR(21234=0x52f2) ABS 
+ ansicode 17$ EXPR(21055=0x523f) ABS 
+colorfgblue EXPR(21230=0x52ee) ABS 
+ ansicode 16$ EXPR(21044=0x5234) ABS 
+colorfgyellow EXPR(21226=0x52ea) ABS 
+ ansicode 15$ EXPR(21033=0x5229) ABS 
+colorfggreen EXPR(21222=0x52e6) ABS 
+ ansicode 14$ EXPR(21022=0x521e) ABS 
+colorfgred EXPR(21218=0x52e2) ABS 
+ ansicode 13$ EXPR(21011=0x5213) ABS 
+colorfgblack EXPR(21214=0x52de) ABS 
+ ansicode 12$ EXPR(21000=0x5208) ABS 
+colordim EXPR(21211=0x52db) ABS 
+ ansicode 11$ EXPR(20989=0x51fd) ABS 
+colorbold EXPR(21208=0x52d8) ABS 
+ ansicode 10$ EXPR(20978=0x51f2) ABS 
+colorreset EXPR(21205=0x52d5) ABS 
+ ansicode 9$ EXPR(20967=0x51e7) ABS 
+clearline EXPR(21202=0x52d2) ABS 
+ ansicode 8$ EXPR(20956=0x51dc) ABS 
+clearfromstartofline EXPR(21199=0x52cf) ABS 
+ ansicode 7$ EXPR(20945=0x51d1) ABS 
+cleartoendofline EXPR(21196=0x52cc) ABS 
+ ansicode 6$ EXPR(20934=0x51c6) ABS 
+clearcurrentline EXPR(21194=0x52ca) ABS 
+ ansicode 5$ EXPR(20923=0x51bb) ABS 
+clearwholescreen EXPR(21191=0x52c7) ABS 
+ ansicode 4$ EXPR(20912=0x51b0) ABS 
+clearbeginofscreen EXPR(21188=0x52c4) ABS 
+ ansicode 3$ EXPR(20901=0x51a5) ABS 
+clearendofscreen EXPR(21185=0x52c1) ABS 
+ ansicode 2$ EXPR(20890=0x519a) ABS 
+ ansicode 99$ EXPR(21168=0x52b0) ABS 
+clearscreen EXPR(21176=0x52b8) ABS 
+ ansicode 1$ EXPR(20879=0x518f) ABS 
+escapeintro EXPR(21173=0x52b5) ABS 
+ansicode EXPR(20861=0x517d) ABS 
+msg EXPR(20837=0x5165) ABS 
+test EXPR(20830=0x515e) ABS 
 COLORBGWHITE EXPR(27=0x1b) 
 COLORBGCYAN EXPR(26=0x1a) 
 COLORBGMAGENTA EXPR(25=0x19) 
@@ -948,65 +1002,69 @@ CLEARENDOFSCREEN EXPR(2=0x2)
 CLEARSCREEN EXPR(1=0x1) 
 ANSICODE EXPR(3=0x3) 
 TEST EXPR(2=0x2) 
-Mul8b EXPR(20785=0x5131) UNUSED ABS 
-getprocessbyid EXPR(20782=0x512e) UNUSED ABS 
-strncpy EXPR(20779=0x512b) UNUSED ABS 
-strcpy EXPR(20776=0x5128) UNUSED ABS 
-nextprocessinfo EXPR(20773=0x5125) UNUSED ABS 
-startprocessinfo EXPR(20770=0x5122) UNUSED ABS 
-printhexL EXPR(20767=0x511f) UNUSED ABS 
-setresetpage EXPR(20764=0x511c) UNUSED ABS 
-Div8 EXPR(20761=0x5119) UNUSED ABS 
-getmalloctable EXPR(20758=0x5116) UNUSED ABS 
-getcommandparams EXPR(20755=0x5113) UNUSED ABS 
-createProcess EXPR(20752=0x5110) UNUSED ABS 
-getfilename EXPR(20749=0x510d) UNUSED ABS 
-directorynextfile EXPR(20746=0x510a) UNUSED ABS 
-directoryopen EXPR(20743=0x5107) UNUSED ABS 
-hextobyte EXPR(20740=0x5104) UNUSED ABS 
-touppercase EXPR(20737=0x5101) UNUSED ABS 
-strlen EXPR(20731=0x50fb) UNUSED ABS 
-memset EXPR(20728=0x50f8) UNUSED ABS 
-loadfile EXPR(20725=0x50f5) UNUSED ABS 
-printhex EXPR(20722=0x50f2) UNUSED ABS 
-println EXPR(20719=0x50ef) UNUSED ABS 
-print EXPR(20716=0x50ec) ABS 
-functionlookups EXPR(20714=0x50ea) UNUSED ABS 
-putc EXPR(20734=0x50fe) ABS 
-_main EXPR(20791=0x5137) ABS 
-_getprocessid EXPR(20702=0x50de) ABS 
-processid EXPR(20713=0x50e9) ABS 
-getprocid EXPR(20788=0x5134) ABS 
-getprocidadr EXPR(20789=0x5135) ABS 
-Mul8badr EXPR(20786=0x5132) ABS 
-getprocessbyidadr EXPR(20783=0x512f) ABS 
-strncpyadr EXPR(20780=0x512c) ABS 
-strcpyadr EXPR(20777=0x5129) ABS 
-nextprocessinfoadr EXPR(20774=0x5126) ABS 
-startprocessinfoadr EXPR(20771=0x5123) ABS 
-printhexLadr EXPR(20768=0x5120) ABS 
-setresetpageadr EXPR(20765=0x511d) ABS 
-div8adr EXPR(20762=0x511a) ABS 
-getmalloctableadr EXPR(20759=0x5117) ABS 
-getcommandparamsadr EXPR(20756=0x5114) ABS 
-createProcessadr EXPR(20753=0x5111) ABS 
-getfilenameadr EXPR(20750=0x510e) ABS 
-directorynextfileadr EXPR(20747=0x510b) ABS 
-directoryopenadr EXPR(20744=0x5108) ABS 
-printlnadr EXPR(20720=0x50f0) ABS 
-hextobyteadr EXPR(20741=0x5105) ABS 
-touppercaseadr EXPR(20738=0x5102) ABS 
-putcadr EXPR(20735=0x50ff) ABS 
-strlenadr EXPR(20732=0x50fc) ABS 
-memsetadr EXPR(20729=0x50f9) ABS 
-loadfileadr EXPR(20726=0x50f6) ABS 
-printhexadr EXPR(20723=0x50f3) ABS 
-printadr EXPR(20717=0x50ed) ABS 
+Mul8b EXPR(20821=0x5155) UNUSED ABS 
+getprocessbyid EXPR(20818=0x5152) UNUSED ABS 
+strncpy EXPR(20815=0x514f) UNUSED ABS 
+strcpy EXPR(20812=0x514c) UNUSED ABS 
+nextprocessinfo EXPR(20809=0x5149) UNUSED ABS 
+startprocessinfo EXPR(20806=0x5146) UNUSED ABS 
+printhexL EXPR(20803=0x5143) UNUSED ABS 
+setresetpage EXPR(20800=0x5140) UNUSED ABS 
+Div8 EXPR(20797=0x513d) UNUSED ABS 
+getmalloctable EXPR(20794=0x513a) UNUSED ABS 
+getcommandparams EXPR(20791=0x5137) UNUSED ABS 
+createProcess EXPR(20788=0x5134) UNUSED ABS 
+getfilename EXPR(20785=0x5131) UNUSED ABS 
+directorynextfile EXPR(20782=0x512e) UNUSED ABS 
+directoryopen EXPR(20779=0x512b) UNUSED ABS 
+hextobyte EXPR(20776=0x5128) UNUSED ABS 
+touppercase EXPR(20773=0x5125) UNUSED ABS 
+strlen EXPR(20767=0x511f) UNUSED ABS 
+memset EXPR(20764=0x511c) UNUSED ABS 
+loadfile EXPR(20761=0x5119) UNUSED ABS 
+println EXPR(20755=0x5113) UNUSED ABS 
+print EXPR(20752=0x5110) ABS 
+functionlookups EXPR(20752=0x5110) UNUSED ABS 
+exitprocess EXPR(20827=0x515b) ABS 
+putc EXPR(20770=0x5122) ABS 
+exit EXPR(20720=0x50f0) UNUSED ABS 
+_main EXPR(20830=0x515e) ABS 
+exitprocessadr EXPR(20828=0x515c) ABS 
+_getprocessid EXPR(20740=0x5104) ABS 
+printhex EXPR(20758=0x5116) ABS 
+processid EXPR(20751=0x510f) ABS 
+getprocid EXPR(20824=0x5158) ABS 
+getprocidadr EXPR(20825=0x5159) ABS 
+Mul8badr EXPR(20822=0x5156) ABS 
+getprocessbyidadr EXPR(20819=0x5153) ABS 
+strncpyadr EXPR(20816=0x5150) ABS 
+strcpyadr EXPR(20813=0x514d) ABS 
+nextprocessinfoadr EXPR(20810=0x514a) ABS 
+startprocessinfoadr EXPR(20807=0x5147) ABS 
+printhexLadr EXPR(20804=0x5144) ABS 
+setresetpageadr EXPR(20801=0x5141) ABS 
+div8adr EXPR(20798=0x513e) ABS 
+getmalloctableadr EXPR(20795=0x513b) ABS 
+getcommandparamsadr EXPR(20792=0x5138) ABS 
+createProcessadr EXPR(20789=0x5135) ABS 
+getfilenameadr EXPR(20786=0x5132) ABS 
+directorynextfileadr EXPR(20783=0x512f) ABS 
+directoryopenadr EXPR(20780=0x512c) ABS 
+printlnadr EXPR(20756=0x5114) ABS 
+hextobyteadr EXPR(20777=0x5129) ABS 
+touppercaseadr EXPR(20774=0x5126) ABS 
+putcadr EXPR(20771=0x5123) ABS 
+strlenadr EXPR(20768=0x5120) ABS 
+memsetadr EXPR(20765=0x511d) ABS 
+loadfileadr EXPR(20762=0x511a) ABS 
+printhexadr EXPR(20759=0x5117) ABS 
+printadr EXPR(20753=0x5111) ABS 
 initialize EXPR(20487=0x5007) ABS 
-libaddress EXPR(21239=0x52f7) ABS 
-ENDADDRESS EXPR(21269=0x5315) ABS 
+libaddress EXPR(21278=0x531e) ABS 
+ENDADDRESS EXPR(21308=0x533c) ABS 
  *current pc dummy* EXPR(20482=0x5002) INTERNAL PROT ABS 
-NEXTNUMBER EXPR(29=0x1d) UNUSED 
+NEXTNUMBER EXPR(30=0x1e) UNUSED 
+EXITPROCESS EXPR(29=0x1d) 
 MULTIPLY8 EXPR(27=0x1b) 
 GETPROCESSBYID EXPR(26=0x1a) 
 NEXTPROCESSINFO EXPR(23=0x17) 

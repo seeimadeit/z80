@@ -24,6 +24,15 @@
 	pop hl
 .endm
 
+.macro DPRINTLN MSG=""
+	push hl
+	jp \@1$
+99$: .string "\MSG"
+\@1$:ld hl,99$
+	call println
+	pop hl
+.endm
+
 
 # address where user programs load
 .include "SERIAL.inc"
@@ -68,9 +77,10 @@
 .equ NEXTPROCESSINFO,23
 .equ GETPROCESSBYID,26
 .equ MULTIPLY8,27
+.equ EXITPROCESS,29
 
 
 
 
-.equ NEXTNUMBER,29
+.equ NEXTNUMBER,30
 

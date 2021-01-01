@@ -57,12 +57,7 @@ loadandrun:
 	
 	ld hl,0
 	call println ;# display a new line
-;	ld hl, cmdlinebuffer ;# load filename of program
-;	ld de, userMemory ;# address where to load program
-;	call loadfile
-;	cp 0
-;	jp nz,loaderr ;# if load returned anything except 0, its an error
-;	jp runuserMemory
+
 
 	ld a,1
 	ld (ignorekeyboard),a

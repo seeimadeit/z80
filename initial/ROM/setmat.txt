@@ -9,13 +9,16 @@ F01:0019
 F01:0020       .macro PRINTLN
 F01:0025       
 F01:0026       
-F01:0027       
-F01:0028       # address where user programs load
-F01:0029       .include "SERIAL.inc"
+F01:0027       .macro DPRINTLN MSG=""
+F01:0034       
+F01:0035       
+F01:0036       
+F01:0037       # address where user programs load
+F01:0038       .include "SERIAL.inc"
 F02:0001       .equ SERIALPORT , 0x01
 F02:0002       .equ SERIALPORT2, 0x02
 F02:0003       
-F01:0030       .include "SDCARD.inc"
+F01:0039       .include "SDCARD.inc"
 F03:0001       .equ SDCARD,0x05
 F03:0002       ; ******* SDCARD *********
 F03:0003       ; z80 out -filenameclear: no return value, will close the previous open file is one already open
@@ -51,53 +54,54 @@ F03:0032       ;z80 - out - opendirectory : will open the root directory for dir
 F03:0033       .equ OPENDIRECTORY,0x31
 F03:0034       ;z80 -out - nextfile: move to the next directory entry, no return value
 F03:0035       .equ NEXTFILE,0x32
-F01:0031       .equ commandMemory, 0x2000
-F01:0032       .equ userMemory,0x3000
-F01:0033       .equ libMemory,0xF000
-F01:0034       
-F01:0035       .equ TRUE, 1
-F01:0036       .equ FALSE, 0
-F01:0037       
-F01:0038       # the only fixed address (i hope), use it to get the address of utilities methods
-F01:0039       # ld a, PRINT
-F01:0040       # call GetAddress
-F01:0041       # address for print loaded into hl
-F01:0042       # the value in hl can change between os versions so do not hard code the values
+F01:0040       .equ commandMemory, 0x2000
+F01:0041       .equ userMemory,0x3000
+F01:0042       .equ libMemory,0xF000
 F01:0043       
-F01:0044       .equ GetAddress, 0x0804
-F01:0045       .equ SETPROCID,28
-F01:0046       .equ PRINT,		1
-F01:0047       .equ PRINTLN,	9
-F01:0048       .equ PRINTHEX,	2
-F01:0049       .equ PRINTHEXL,21
-F01:0050       .equ LOADFILE,	3
-F01:0051       .equ MEMSET,	4
-F01:0052       .equ STRLEN,	5
-F01:0053       .equ STRCPY,24
-F01:0054       .equ STRNCPY,10
-F01:0055       .equ PUTC,		6
-F01:0056       .equ TOUPPERCASE,7
-F01:0057       .equ HEXTOBYTE,	8
-F01:0058       .equ CREATEPROCESS,16
-F01:0059       .equ GETCOMMANDPARAMS,17
-F01:0060       # filesystem - primitive functions, probably going to change 
-F01:0061       .equ DIRECTORYOPEN,13
-F01:0062       .equ DIRECTORYNEXTFILE,14
-F01:0063       .equ GETFILENAME,15
-F01:0064       .equ GETMALLOCTABLE,18
-F01:0065       .equ DIV8,19
-F01:0066       .equ SETRESETPAGE,20
-F01:0067       .equ STARTPROCESSINFO,22
-F01:0068       .equ NEXTPROCESSINFO,23
-F01:0069       .equ GETPROCESSBYID,26
-F01:0070       .equ MULTIPLY8,27
-F01:0071       
-F01:0072       
-F01:0073       
-F01:0074       
-F01:0075       .equ NEXTNUMBER,29
-F01:0076       
-F01:0077       
+F01:0044       .equ TRUE, 1
+F01:0045       .equ FALSE, 0
+F01:0046       
+F01:0047       # the only fixed address (i hope), use it to get the address of utilities methods
+F01:0048       # ld a, PRINT
+F01:0049       # call GetAddress
+F01:0050       # address for print loaded into hl
+F01:0051       # the value in hl can change between os versions so do not hard code the values
+F01:0052       
+F01:0053       .equ GetAddress, 0x0804
+F01:0054       .equ SETPROCID,28
+F01:0055       .equ PRINT,		1
+F01:0056       .equ PRINTLN,	9
+F01:0057       .equ PRINTHEX,	2
+F01:0058       .equ PRINTHEXL,21
+F01:0059       .equ LOADFILE,	3
+F01:0060       .equ MEMSET,	4
+F01:0061       .equ STRLEN,	5
+F01:0062       .equ STRCPY,24
+F01:0063       .equ STRNCPY,10
+F01:0064       .equ PUTC,		6
+F01:0065       .equ TOUPPERCASE,7
+F01:0066       .equ HEXTOBYTE,	8
+F01:0067       .equ CREATEPROCESS,16
+F01:0068       .equ GETCOMMANDPARAMS,17
+F01:0069       # filesystem - primitive functions, probably going to change 
+F01:0070       .equ DIRECTORYOPEN,13
+F01:0071       .equ DIRECTORYNEXTFILE,14
+F01:0072       .equ GETFILENAME,15
+F01:0073       .equ GETMALLOCTABLE,18
+F01:0074       .equ DIV8,19
+F01:0075       .equ SETRESETPAGE,20
+F01:0076       .equ STARTPROCESSINFO,22
+F01:0077       .equ NEXTPROCESSINFO,23
+F01:0078       .equ GETPROCESSBYID,26
+F01:0079       .equ MULTIPLY8,27
+F01:0080       .equ EXITPROCESS,29
+F01:0081       
+F01:0082       
+F01:0083       
+F01:0084       
+F01:0085       .equ NEXTNUMBER,30
+F01:0086       
+F01:0087       
 F00:0002       .include "libs.inc"
 F04:0001       
 F04:0002       
@@ -125,7 +129,7 @@ F04:0023       		.endif
 F04:0024       		.2byte $ ;# load address
                S01:00003000:  00 30
 F04:0025       		.byte ((ENDADDRESS-$)/255)+1 ;# memory required to load (in pages)
-               S01:00003002:  02
+               S01:00003002:  03
 F04:0026       		.ifdef __STACK__
 F04:0027       			.byte __STACK__
 F04:0028       		.else 
@@ -139,348 +143,396 @@ F04:0033       	ld a,PRINT
 F04:0034       	call GetAddress
                S01:00003006:  CD 04 08
 F04:0035       	ld (printadr),hl
-               S01:00003009:  22 E9 30
+               S01:00003009:  22 0D 31
 F04:0036       	ld a,PRINTHEX
                S01:0000300C:  3E 02
 F04:0037       	call GetAddress
                S01:0000300E:  CD 04 08
 F04:0038       	ld (printhexadr),hl
-               S01:00003011:  22 EF 30
+               S01:00003011:  22 13 31
 F04:0039       	ld a,LOADFILE
                S01:00003014:  3E 03
 F04:0040       	call GetAddress
                S01:00003016:  CD 04 08
 F04:0041       	ld (loadfileadr),hl
-               S01:00003019:  22 F2 30
+               S01:00003019:  22 16 31
 F04:0042       	ld a,MEMSET
                S01:0000301C:  3E 04
 F04:0043       	call GetAddress
                S01:0000301E:  CD 04 08
 F04:0044       	ld (memsetadr),hl
-               S01:00003021:  22 F5 30
+               S01:00003021:  22 19 31
 F04:0045       	ld a,STRLEN
                S01:00003024:  3E 05
 F04:0046       	call GetAddress
                S01:00003026:  CD 04 08
 F04:0047       	ld (strlenadr),hl
-               S01:00003029:  22 F8 30
+               S01:00003029:  22 1C 31
 F04:0048       	ld a,PUTC
                S01:0000302C:  3E 06
 F04:0049       	call GetAddress
                S01:0000302E:  CD 04 08
 F04:0050       	ld (putcadr),hl
-               S01:00003031:  22 FB 30
+               S01:00003031:  22 1F 31
 F04:0051       	ld a,TOUPPERCASE
                S01:00003034:  3E 07
 F04:0052       	call GetAddress
                S01:00003036:  CD 04 08
 F04:0053       	ld (touppercaseadr),hl
-               S01:00003039:  22 FE 30
+               S01:00003039:  22 22 31
 F04:0054       	ld a,HEXTOBYTE
                S01:0000303C:  3E 08
 F04:0055       	call GetAddress
                S01:0000303E:  CD 04 08
 F04:0056       	ld (hextobyteadr),hl
-               S01:00003041:  22 01 31
+               S01:00003041:  22 25 31
 F04:0057       	ld a,PRINTLN
                S01:00003044:  3E 09
 F04:0058       	call GetAddress
                S01:00003046:  CD 04 08
 F04:0059       	ld (printlnadr),hl
-               S01:00003049:  22 EC 30
+               S01:00003049:  22 10 31
 F04:0060       	ld a,DIRECTORYOPEN
                S01:0000304C:  3E 0D
 F04:0061       	call GetAddress
                S01:0000304E:  CD 04 08
 F04:0062       	ld (directoryopenadr),hl
-               S01:00003051:  22 04 31
+               S01:00003051:  22 28 31
 F04:0063       	ld a,NEXTFILE
                S01:00003054:  3E 32
 F04:0064       	call GetAddress
                S01:00003056:  CD 04 08
 F04:0065       	ld (directorynextfileadr),hl
-               S01:00003059:  22 07 31
+               S01:00003059:  22 2B 31
 F04:0066       	ld a,GETFILENAME
                S01:0000305C:  3E 0F
 F04:0067       	call GetAddress
                S01:0000305E:  CD 04 08
 F04:0068       	ld (getfilenameadr),hl
-               S01:00003061:  22 0A 31
+               S01:00003061:  22 2E 31
 F04:0069       	ld a,CREATEPROCESS
                S01:00003064:  3E 10
 F04:0070       	call GetAddress
                S01:00003066:  CD 04 08
 F04:0071       	ld (createProcessadr),hl
-               S01:00003069:  22 0D 31
+               S01:00003069:  22 31 31
 F04:0072       	ld a,GETCOMMANDPARAMS
                S01:0000306C:  3E 11
 F04:0073       	call GetAddress
                S01:0000306E:  CD 04 08
 F04:0074       	ld (getcommandparamsadr),hl
-               S01:00003071:  22 10 31
+               S01:00003071:  22 34 31
 F04:0075       	ld a,GETMALLOCTABLE
                S01:00003074:  3E 12
 F04:0076       	call GetAddress
                S01:00003076:  CD 04 08
 F04:0077       	ld (getmalloctableadr),hl
-               S01:00003079:  22 13 31
+               S01:00003079:  22 37 31
 F04:0078       	ld a,DIV8
                S01:0000307C:  3E 13
 F04:0079       	call GetAddress
                S01:0000307E:  CD 04 08
 F04:0080       	ld (div8adr),hl
-               S01:00003081:  22 16 31
+               S01:00003081:  22 3A 31
 F04:0081       	ld a,SETRESETPAGE
                S01:00003084:  3E 14
 F04:0082       	call GetAddress
                S01:00003086:  CD 04 08
 F04:0083       	ld (setresetpageadr),hl
-               S01:00003089:  22 19 31
+               S01:00003089:  22 3D 31
 F04:0084       	ld a,PRINTHEXL
                S01:0000308C:  3E 15
 F04:0085       	call GetAddress
                S01:0000308E:  CD 04 08
 F04:0086       	ld (printhexLadr),hl
-               S01:00003091:  22 1C 31
+               S01:00003091:  22 40 31
 F04:0087       	ld a,STARTPROCESSINFO
                S01:00003094:  3E 16
 F04:0088       	call GetAddress
                S01:00003096:  CD 04 08
 F04:0089       	ld (startprocessinfoadr),hl
-               S01:00003099:  22 1F 31
+               S01:00003099:  22 43 31
 F04:0090       	ld a,NEXTPROCESSINFO
                S01:0000309C:  3E 17
 F04:0091       	call GetAddress
                S01:0000309E:  CD 04 08
 F04:0092       	ld (nextprocessinfoadr),hl
-               S01:000030A1:  22 22 31
+               S01:000030A1:  22 46 31
 F04:0093       	ld a,STRCPY
                S01:000030A4:  3E 18
 F04:0094       	call GetAddress
                S01:000030A6:  CD 04 08
 F04:0095       	ld (strcpyadr),hl
-               S01:000030A9:  22 25 31
+               S01:000030A9:  22 49 31
 F04:0096       	ld a,STRNCPY
                S01:000030AC:  3E 0A
 F04:0097       	call GetAddress
                S01:000030AE:  CD 04 08
 F04:0098       	ld (strncpyadr),hl
-               S01:000030B1:  22 28 31
+               S01:000030B1:  22 4C 31
 F04:0099       	ld a,GETPROCESSBYID
                S01:000030B4:  3E 1A
 F04:0100       	call GetAddress
                S01:000030B6:  CD 04 08
 F04:0101       	ld (getprocessbyidadr),hl
-               S01:000030B9:  22 2B 31
+               S01:000030B9:  22 4F 31
 F04:0102       	ld a,MULTIPLY8
                S01:000030BC:  3E 1B
 F04:0103       	call GetAddress
                S01:000030BE:  CD 04 08
 F04:0104       	ld (Mul8badr),hl
-               S01:000030C1:  22 2E 31
+               S01:000030C1:  22 52 31
 F04:0105       	ld a,SETPROCID
                S01:000030C4:  3E 1C
 F04:0106       	call GetAddress
                S01:000030C6:  CD 04 08
 F04:0107       	ld (getprocidadr),hl
-               S01:000030C9:  22 31 31
+               S01:000030C9:  22 55 31
 F04:0108       	call getprocid
-               S01:000030CC:  CD 30 31
+               S01:000030CC:  CD 54 31
 F04:0109       	ld (processid),a
-               S01:000030CF:  32 E6 30
-F04:0110       	ld hl,(_getprocessid)
-               S01:000030D2:  2A DB 30
-F04:0111       	ld (getprocidadr),hl
-               S01:000030D5:  22 31 31
-F04:0112       
-F04:0113       
-F04:0114       
-F04:0115       	
-F04:0116       
-F04:0117       
+               S01:000030CF:  32 0B 31
+F04:0110       	call printhex
+               S01:000030D2:  CD 12 31
+F04:0111       	ld hl,(_getprocessid)
+               S01:000030D5:  2A 00 31
+F04:0112       	ld (getprocidadr),hl
+               S01:000030D8:  22 55 31
+F04:0113       	call getprocid
+               S01:000030DB:  CD 54 31
+F04:0114       	call printhex
+               S01:000030DE:  CD 12 31
+F04:0115       	ld a,EXITPROCESS
+               S01:000030E1:  3E 1D
+F04:0116       	call GetAddress
+               S01:000030E3:  CD 04 08
+F04:0117       	ld (exitprocessadr),hl
+               S01:000030E6:  22 58 31
 F04:0118       
 F04:0119       
-F04:0120       	jp _main
-               S01:000030D8:  C3 33 31
-F04:0121       	_getprocessid: 
-F04:0122       	DEBUG '$'
+F04:0120       
+F04:0121       
+F04:0122       	
+F04:0123       	.ifdef __LIB__
+F04:0124       		ret
+F04:0125       	.endif
+F04:0126       
+F04:0127       
+F04:0128       	#jp _main
+F04:0129       	call _main
+               S01:000030E9:  CD 5A 31
+F04:0130       
+F04:0131       	exit:
+F04:0132       	DEBUG '^'
 F05:0001       # example : DEBUG '!'
 F05:0002       #      or : DEBUG h
 F05:0003       		push af
-               S01:000030DB:  F5
-F05:0004       		ld a,36
-               S01:000030DC:  3E 24
+               S01:000030EC:  F5
+F05:0004       		ld a,94
+               S01:000030ED:  3E 5E
 F05:0005       		call putc
-               S01:000030DE:  CD FA 30
+               S01:000030EF:  CD 1E 31
 F05:0006       		pop af
-               S01:000030E1:  F1
-F04:0123       	ld a,(processid)
-               S01:000030E2:  3A E6 30
-F04:0124       		ret
-               S01:000030E5:  C9
-F04:0125       	processid: .byte 0
-               S01:000030E6:  00
-F04:0126       	functionlookups:
-F04:0127       	.align 2
-F04:0128       	print: .byte 0xc3
-               S01:000030E8:  C3
-F04:0129       	printadr: .2byte 0
-               S01:000030E9:  00 00
-F04:0130       	println: .byte 0xc3
-               S01:000030EB:  C3
-F04:0131       	printlnadr: .2byte 0
-               S01:000030EC:  00 00
-F04:0132       	printhex: .byte 0xc3
-               S01:000030EE:  C3
-F04:0133       	printhexadr: .2byte 0
-               S01:000030EF:  00 00
-F04:0134       	loadfile: .byte 0xc3
-               S01:000030F1:  C3
-F04:0135       	loadfileadr: .2byte 0
-               S01:000030F2:  00 00
-F04:0136       	memset: .byte 0xc3
-               S01:000030F4:  C3
-F04:0137       	memsetadr: .2byte 0
-               S01:000030F5:  00 00
-F04:0138       	strlen: .byte 0xc3
-               S01:000030F7:  C3
-F04:0139       	strlenadr: .2byte 0
-               S01:000030F8:  00 00
-F04:0140       	putc: .byte 0xc3
-               S01:000030FA:  C3
-F04:0141       	putcadr: .2byte 0
-               S01:000030FB:  00 00
-F04:0142       	touppercase: .byte 0xc3
-               S01:000030FD:  C3
-F04:0143       	touppercaseadr: .2byte 0
-               S01:000030FE:  00 00
-F04:0144       	hextobyte: .byte 0xc3
-               S01:00003100:  C3
-F04:0145       	hextobyteadr: .2byte 0
-               S01:00003101:  00 00
-F04:0146       	directoryopen: .byte 0xc3
-               S01:00003103:  C3
-F04:0147       	directoryopenadr: .2byte 0
-               S01:00003104:  00 00
-F04:0148       	directorynextfile: .byte 0xc3
-               S01:00003106:  C3
-F04:0149       	directorynextfileadr: .2byte 0
-               S01:00003107:  00 00
-F04:0150       	getfilename: .byte 0xc3
-               S01:00003109:  C3
-F04:0151       	getfilenameadr: .2byte 0
-               S01:0000310A:  00 00
-F04:0152       	createProcess: .byte 0xc3
+               S01:000030F2:  F1
+F04:0133       		push af
+               S01:000030F3:  F5
+F04:0134       		ld a,(processid)
+               S01:000030F4:  3A 0B 31
+F04:0135       		ld b,a
+               S01:000030F7:  47
+F04:0136       		call printhex
+               S01:000030F8:  CD 12 31
+F04:0137       		pop af
+               S01:000030FB:  F1
+F04:0138       	
+F04:0139       		call exitprocess
+               S01:000030FC:  CD 57 31
+F04:0140       		ret
+               S01:000030FF:  C9
+F04:0141       	_getprocessid: 
+F04:0142       	DEBUG '$'
+F06:0001       # example : DEBUG '!'
+F06:0002       #      or : DEBUG h
+F06:0003       		push af
+               S01:00003100:  F5
+F06:0004       		ld a,36
+               S01:00003101:  3E 24
+F06:0005       		call putc
+               S01:00003103:  CD 1E 31
+F06:0006       		pop af
+               S01:00003106:  F1
+F04:0143       	ld a,(processid)
+               S01:00003107:  3A 0B 31
+F04:0144       		ret
+               S01:0000310A:  C9
+F04:0145       
+F04:0146       	processid: .byte 0
+               S01:0000310B:  00
+F04:0147       	functionlookups:
+F04:0148       	.align 2
+F04:0149       	print: .byte 0xc3
                S01:0000310C:  C3
-F04:0153       	createProcessadr: .2byte 0
+F04:0150       	printadr: .2byte 0
                S01:0000310D:  00 00
-F04:0154       	getcommandparams: .byte 0xc3
+F04:0151       	println: .byte 0xc3
                S01:0000310F:  C3
-F04:0155       	getcommandparamsadr: .2byte 0
+F04:0152       	printlnadr: .2byte 0
                S01:00003110:  00 00
-F04:0156       	getmalloctable: .byte 0xc3
+F04:0153       	printhex: .byte 0xc3
                S01:00003112:  C3
-F04:0157       	getmalloctableadr: .2byte 0
+F04:0154       	printhexadr: .2byte 0
                S01:00003113:  00 00
-F04:0158       	Div8: .byte 0xc3
+F04:0155       	loadfile: .byte 0xc3
                S01:00003115:  C3
-F04:0159       	div8adr: .2byte 0
+F04:0156       	loadfileadr: .2byte 0
                S01:00003116:  00 00
-F04:0160       	setresetpage: .byte 0xc3
+F04:0157       	memset: .byte 0xc3
                S01:00003118:  C3
-F04:0161       	setresetpageadr: .2byte 0
+F04:0158       	memsetadr: .2byte 0
                S01:00003119:  00 00
-F04:0162       	printhexL: .byte 0xc3
+F04:0159       	strlen: .byte 0xc3
                S01:0000311B:  C3
-F04:0163       	printhexLadr: .2byte 0
+F04:0160       	strlenadr: .2byte 0
                S01:0000311C:  00 00
-F04:0164       	startprocessinfo: .byte 0xc3
+F04:0161       	putc: .byte 0xc3
                S01:0000311E:  C3
-F04:0165       	startprocessinfoadr: .2byte 0
+F04:0162       	putcadr: .2byte 0
                S01:0000311F:  00 00
-F04:0166       	nextprocessinfo: .byte 0xc3
+F04:0163       	touppercase: .byte 0xc3
                S01:00003121:  C3
-F04:0167       	nextprocessinfoadr: .2byte 0
+F04:0164       	touppercaseadr: .2byte 0
                S01:00003122:  00 00
-F04:0168       	strcpy: .byte 0xc3
+F04:0165       	hextobyte: .byte 0xc3
                S01:00003124:  C3
-F04:0169       	strcpyadr: .2byte 0
+F04:0166       	hextobyteadr: .2byte 0
                S01:00003125:  00 00
-F04:0170       	strncpy: .byte 0xc3
+F04:0167       	directoryopen: .byte 0xc3
                S01:00003127:  C3
-F04:0171       	strncpyadr: .2byte 0
+F04:0168       	directoryopenadr: .2byte 0
                S01:00003128:  00 00
-F04:0172       	getprocessbyid: .byte 0xc3
+F04:0169       	directorynextfile: .byte 0xc3
                S01:0000312A:  C3
-F04:0173       	getprocessbyidadr: .2byte 0
+F04:0170       	directorynextfileadr: .2byte 0
                S01:0000312B:  00 00
-F04:0174       	Mul8b: .byte 0xc3
+F04:0171       	getfilename: .byte 0xc3
                S01:0000312D:  C3
-F04:0175       	Mul8badr: .2byte 0
+F04:0172       	getfilenameadr: .2byte 0
                S01:0000312E:  00 00
-F04:0176       	getprocid: .byte 0xc3
+F04:0173       	createProcess: .byte 0xc3
                S01:00003130:  C3
-F04:0177       	getprocidadr: .2byte 0
+F04:0174       	createProcessadr: .2byte 0
                S01:00003131:  00 00
-F04:0178       
-F04:0179       _main:
-F04:0180       .ifdef __DLL__
-F04:0181       	ret
-F04:0182       .endif
+F04:0175       	getcommandparams: .byte 0xc3
+               S01:00003133:  C3
+F04:0176       	getcommandparamsadr: .2byte 0
+               S01:00003134:  00 00
+F04:0177       	getmalloctable: .byte 0xc3
+               S01:00003136:  C3
+F04:0178       	getmalloctableadr: .2byte 0
+               S01:00003137:  00 00
+F04:0179       	Div8: .byte 0xc3
+               S01:00003139:  C3
+F04:0180       	div8adr: .2byte 0
+               S01:0000313A:  00 00
+F04:0181       	setresetpage: .byte 0xc3
+               S01:0000313C:  C3
+F04:0182       	setresetpageadr: .2byte 0
+               S01:0000313D:  00 00
+F04:0183       	printhexL: .byte 0xc3
+               S01:0000313F:  C3
+F04:0184       	printhexLadr: .2byte 0
+               S01:00003140:  00 00
+F04:0185       	startprocessinfo: .byte 0xc3
+               S01:00003142:  C3
+F04:0186       	startprocessinfoadr: .2byte 0
+               S01:00003143:  00 00
+F04:0187       	nextprocessinfo: .byte 0xc3
+               S01:00003145:  C3
+F04:0188       	nextprocessinfoadr: .2byte 0
+               S01:00003146:  00 00
+F04:0189       	strcpy: .byte 0xc3
+               S01:00003148:  C3
+F04:0190       	strcpyadr: .2byte 0
+               S01:00003149:  00 00
+F04:0191       	strncpy: .byte 0xc3
+               S01:0000314B:  C3
+F04:0192       	strncpyadr: .2byte 0
+               S01:0000314C:  00 00
+F04:0193       	getprocessbyid: .byte 0xc3
+               S01:0000314E:  C3
+F04:0194       	getprocessbyidadr: .2byte 0
+               S01:0000314F:  00 00
+F04:0195       	Mul8b: .byte 0xc3
+               S01:00003151:  C3
+F04:0196       	Mul8badr: .2byte 0
+               S01:00003152:  00 00
+F04:0197       	getprocid: .byte 0xc3
+               S01:00003154:  C3
+F04:0198       	getprocidadr: .2byte 0
+               S01:00003155:  00 00
+F04:0199       	exitprocess: .byte 0xc3
+               S01:00003157:  C3
+F04:0200       	exitprocessadr: .2byte 0
+               S01:00003158:  00 00
+F04:0201       
+F04:0202       _main:
+F04:0203       #.ifdef __LIB__
+F04:0204       #	ret
+F04:0205       #.endif
 F00:0003       
 F00:0004       	ld hl,params
-               S01:00003133:  21 AC 31
+               S01:0000315A:  21 D3 31
 F00:0005       	call getcommandparams
-               S01:00003136:  CD 0F 31
+               S01:0000315D:  CD 33 31
 F00:0006       	call touppercase
-               S01:00003139:  CD FD 30
+               S01:00003160:  CD 21 31
 F00:0007       		call strlen
-               S01:0000313C:  CD F7 30
+               S01:00003163:  CD 1B 31
 F00:0008       		ld a,b
-               S01:0000313F:  78
+               S01:00003166:  78
 F00:0009       	
 F00:0010       		cp 3
-               S01:00003140:  FE 03
+               S01:00003167:  FE 03
 F00:0011       		jp nz, error
-               S01:00003142:  C2 5E 31
+               S01:00003169:  C2 85 31
 F00:0012       
 F00:0013       		ld ix,params ;# get the 1st and 2nd characters into the lobyte
-               S01:00003145:  DD 21 AC 31
+               S01:0000316C:  DD 21 D3 31
 F00:0014       		ld a,(ix)
-               S01:00003149:  DD 7E 00
+               S01:00003170:  DD 7E 00
 F00:0015       		sub '0'
-               S01:0000314C:  D6 30
+               S01:00003173:  D6 30
 F00:0016       	
 F00:0017       		ld b,a ;# flag 0 = reset, 1 = set
-               S01:0000314E:  47
+               S01:00003175:  47
 F00:0018       		ld h,(ix+1)
-               S01:0000314F:  DD 66 01
+               S01:00003176:  DD 66 01
 F00:0019       		ld l,(ix+2)
-               S01:00003152:  DD 6E 02
+               S01:00003179:  DD 6E 02
 F00:0020       		call hextobyte
-               S01:00003155:  CD 00 31
+               S01:0000317C:  CD 24 31
 F00:0021       
 F00:0022       		call setresetpage
-               S01:00003158:  CD 18 31
+               S01:0000317F:  CD 3C 31
 F00:0023       		ld a,0
-               S01:0000315B:  3E 00
+               S01:00003182:  3E 00
 F00:0024       		ret
-               S01:0000315D:  C9
+               S01:00003184:  C9
 F00:0025       error:
 F00:0026       	ld hl,errormsg
-               S01:0000315E:  21 67 31
+               S01:00003185:  21 8E 31
 F00:0027       	call println
-               S01:00003161:  CD EB 30
+               S01:00003188:  CD 0F 31
 F00:0028       	ld a,0
-               S01:00003164:  3E 00
+               S01:0000318B:  3E 00
 F00:0029       	ret
-               S01:00003166:  C9
+               S01:0000318D:  C9
 F00:0030       
 F00:0031       
 F00:0032       
 F00:0033         errormsg: .string "syntax: setmat aXX where a = set or reset (1 or 0), XX page (see m*)"
-               S01:00003167:  73 79 6E 74 61 78 3A 20 73 65 74 6D 61 74 20 61
-               S01:00003177:  58 58 20 77 68 65 72 65 20 61 20 3D 20 73 65 74
+               S01:0000318E:  73 79 6E 74 61 78 3A 20 73 65 74 6D 61 74 20 61
+               S01:0000319E:  58 58 20 77 68 65 72 65 20 61 20 3D 20 73 65 74
 F00:0034         
 F00:0035       	params: .space 50
 F00:0036       ENDADDRESS:
@@ -497,69 +549,74 @@ F02  SERIAL.inc
 F03  SDCARD.inc
 F04  libs.inc
 F05  debug
+F06  debug
 
 
 Symbols:
-errormsg EXPR(12647=0x3167) ABS 
-error EXPR(12638=0x315e) ABS 
-params EXPR(12716=0x31ac) ABS 
-Mul8b EXPR(12589=0x312d) UNUSED ABS 
-getprocessbyid EXPR(12586=0x312a) UNUSED ABS 
-strncpy EXPR(12583=0x3127) UNUSED ABS 
-strcpy EXPR(12580=0x3124) UNUSED ABS 
-nextprocessinfo EXPR(12577=0x3121) UNUSED ABS 
-startprocessinfo EXPR(12574=0x311e) UNUSED ABS 
-printhexL EXPR(12571=0x311b) UNUSED ABS 
-setresetpage EXPR(12568=0x3118) ABS 
-Div8 EXPR(12565=0x3115) UNUSED ABS 
-getmalloctable EXPR(12562=0x3112) UNUSED ABS 
-getcommandparams EXPR(12559=0x310f) ABS 
-createProcess EXPR(12556=0x310c) UNUSED ABS 
-getfilename EXPR(12553=0x3109) UNUSED ABS 
-directorynextfile EXPR(12550=0x3106) UNUSED ABS 
-directoryopen EXPR(12547=0x3103) UNUSED ABS 
-hextobyte EXPR(12544=0x3100) ABS 
-touppercase EXPR(12541=0x30fd) ABS 
-strlen EXPR(12535=0x30f7) ABS 
-memset EXPR(12532=0x30f4) UNUSED ABS 
-loadfile EXPR(12529=0x30f1) UNUSED ABS 
-printhex EXPR(12526=0x30ee) UNUSED ABS 
-println EXPR(12523=0x30eb) ABS 
-print EXPR(12520=0x30e8) UNUSED ABS 
-functionlookups EXPR(12519=0x30e7) UNUSED ABS 
-putc EXPR(12538=0x30fa) ABS 
-_main EXPR(12595=0x3133) ABS 
-_getprocessid EXPR(12507=0x30db) ABS 
-processid EXPR(12518=0x30e6) ABS 
-getprocid EXPR(12592=0x3130) ABS 
-getprocidadr EXPR(12593=0x3131) ABS 
-Mul8badr EXPR(12590=0x312e) ABS 
-getprocessbyidadr EXPR(12587=0x312b) ABS 
-strncpyadr EXPR(12584=0x3128) ABS 
-strcpyadr EXPR(12581=0x3125) ABS 
-nextprocessinfoadr EXPR(12578=0x3122) ABS 
-startprocessinfoadr EXPR(12575=0x311f) ABS 
-printhexLadr EXPR(12572=0x311c) ABS 
-setresetpageadr EXPR(12569=0x3119) ABS 
-div8adr EXPR(12566=0x3116) ABS 
-getmalloctableadr EXPR(12563=0x3113) ABS 
-getcommandparamsadr EXPR(12560=0x3110) ABS 
-createProcessadr EXPR(12557=0x310d) ABS 
-getfilenameadr EXPR(12554=0x310a) ABS 
-directorynextfileadr EXPR(12551=0x3107) ABS 
-directoryopenadr EXPR(12548=0x3104) ABS 
-printlnadr EXPR(12524=0x30ec) ABS 
-hextobyteadr EXPR(12545=0x3101) ABS 
-touppercaseadr EXPR(12542=0x30fe) ABS 
-putcadr EXPR(12539=0x30fb) ABS 
-strlenadr EXPR(12536=0x30f8) ABS 
-memsetadr EXPR(12533=0x30f5) ABS 
-loadfileadr EXPR(12530=0x30f2) ABS 
-printhexadr EXPR(12527=0x30ef) ABS 
-printadr EXPR(12521=0x30e9) ABS 
-ENDADDRESS EXPR(12766=0x31de) ABS 
+errormsg EXPR(12686=0x318e) ABS 
+error EXPR(12677=0x3185) ABS 
+params EXPR(12755=0x31d3) ABS 
+Mul8b EXPR(12625=0x3151) UNUSED ABS 
+getprocessbyid EXPR(12622=0x314e) UNUSED ABS 
+strncpy EXPR(12619=0x314b) UNUSED ABS 
+strcpy EXPR(12616=0x3148) UNUSED ABS 
+nextprocessinfo EXPR(12613=0x3145) UNUSED ABS 
+startprocessinfo EXPR(12610=0x3142) UNUSED ABS 
+printhexL EXPR(12607=0x313f) UNUSED ABS 
+setresetpage EXPR(12604=0x313c) ABS 
+Div8 EXPR(12601=0x3139) UNUSED ABS 
+getmalloctable EXPR(12598=0x3136) UNUSED ABS 
+getcommandparams EXPR(12595=0x3133) ABS 
+createProcess EXPR(12592=0x3130) UNUSED ABS 
+getfilename EXPR(12589=0x312d) UNUSED ABS 
+directorynextfile EXPR(12586=0x312a) UNUSED ABS 
+directoryopen EXPR(12583=0x3127) UNUSED ABS 
+hextobyte EXPR(12580=0x3124) ABS 
+touppercase EXPR(12577=0x3121) ABS 
+strlen EXPR(12571=0x311b) ABS 
+memset EXPR(12568=0x3118) UNUSED ABS 
+loadfile EXPR(12565=0x3115) UNUSED ABS 
+println EXPR(12559=0x310f) ABS 
+print EXPR(12556=0x310c) UNUSED ABS 
+functionlookups EXPR(12556=0x310c) UNUSED ABS 
+exitprocess EXPR(12631=0x3157) ABS 
+putc EXPR(12574=0x311e) ABS 
+exit EXPR(12524=0x30ec) UNUSED ABS 
+_main EXPR(12634=0x315a) ABS 
+exitprocessadr EXPR(12632=0x3158) ABS 
+_getprocessid EXPR(12544=0x3100) ABS 
+printhex EXPR(12562=0x3112) ABS 
+processid EXPR(12555=0x310b) ABS 
+getprocid EXPR(12628=0x3154) ABS 
+getprocidadr EXPR(12629=0x3155) ABS 
+Mul8badr EXPR(12626=0x3152) ABS 
+getprocessbyidadr EXPR(12623=0x314f) ABS 
+strncpyadr EXPR(12620=0x314c) ABS 
+strcpyadr EXPR(12617=0x3149) ABS 
+nextprocessinfoadr EXPR(12614=0x3146) ABS 
+startprocessinfoadr EXPR(12611=0x3143) ABS 
+printhexLadr EXPR(12608=0x3140) ABS 
+setresetpageadr EXPR(12605=0x313d) ABS 
+div8adr EXPR(12602=0x313a) ABS 
+getmalloctableadr EXPR(12599=0x3137) ABS 
+getcommandparamsadr EXPR(12596=0x3134) ABS 
+createProcessadr EXPR(12593=0x3131) ABS 
+getfilenameadr EXPR(12590=0x312e) ABS 
+directorynextfileadr EXPR(12587=0x312b) ABS 
+directoryopenadr EXPR(12584=0x3128) ABS 
+printlnadr EXPR(12560=0x3110) ABS 
+hextobyteadr EXPR(12581=0x3125) ABS 
+touppercaseadr EXPR(12578=0x3122) ABS 
+putcadr EXPR(12575=0x311f) ABS 
+strlenadr EXPR(12572=0x311c) ABS 
+memsetadr EXPR(12569=0x3119) ABS 
+loadfileadr EXPR(12566=0x3116) ABS 
+printhexadr EXPR(12563=0x3113) ABS 
+printadr EXPR(12557=0x310d) ABS 
+ENDADDRESS EXPR(12805=0x3205) ABS 
  *current pc dummy* EXPR(12290=0x3002) INTERNAL PROT ABS 
-NEXTNUMBER EXPR(29=0x1d) UNUSED 
+NEXTNUMBER EXPR(30=0x1e) UNUSED 
+EXITPROCESS EXPR(29=0x1d) 
 MULTIPLY8 EXPR(27=0x1b) 
 GETPROCESSBYID EXPR(26=0x1a) 
 NEXTPROCESSINFO EXPR(23=0x17) 

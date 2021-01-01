@@ -107,21 +107,42 @@ initialize:
 	ld (getprocidadr),hl
 	call getprocid
 	ld (processid),a
+	call printhex
 	ld hl,(_getprocessid)
 	ld (getprocidadr),hl
+	call getprocid
+	call printhex
+	ld a,EXITPROCESS
+	call GetAddress
+	ld (exitprocessadr),hl
+
 
 
 
 	
+	.ifdef __LIB__
+		ret
+	.endif
 
 
+	#jp _main
+	call _main
 
-
-	jp _main
+	exit:
+	DEBUG '^'
+		push af
+		ld a,(processid)
+		ld b,a
+		call printhex
+		pop af
+	
+		call exitprocess
+		ret
 	_getprocessid: 
 	DEBUG '$'
 	ld a,(processid)
 		ret
+
 	processid: .byte 0
 	functionlookups:
 	.align 2
@@ -175,8 +196,10 @@ initialize:
 	Mul8badr: .2byte 0
 	getprocid: .byte 0xc3
 	getprocidadr: .2byte 0
+	exitprocess: .byte 0xc3
+	exitprocessadr: .2byte 0
 
 _main:
-.ifdef __DLL__
-	ret
-.endif
+#.ifdef __LIB__
+#	ret
+#.endif
