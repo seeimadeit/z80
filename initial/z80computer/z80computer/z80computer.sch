@@ -1085,7 +1085,7 @@ Wire Wire Line
 Wire Wire Line
 	3550 4700 3800 4700
 Text Label 3600 4600 0    50   ~ 0
-VCC
+VCC5
 Text Label 3600 4700 0    50   ~ 0
 GND
 Wire Wire Line
@@ -1095,7 +1095,7 @@ GND
 Wire Wire Line
 	6100 1550 6450 1550
 Text Label 6200 1550 0    50   ~ 0
-VCC
+VCC5
 Wire Wire Line
 	3200 3750 3200 3850
 Wire Wire Line
@@ -1113,9 +1113,9 @@ GND
 Text Label 2000 3850 0    50   ~ 0
 GND
 Text Label 3300 1550 0    50   ~ 0
-VCC
+VCC5
 Text Label 2000 1500 0    50   ~ 0
-VCC
+VCC5
 Wire Wire Line
 	1900 6500 1900 6750
 Wire Wire Line
@@ -1123,7 +1123,7 @@ Wire Wire Line
 Wire Wire Line
 	1900 4300 2200 4300
 Text Label 1950 4300 0    50   ~ 0
-VCC
+VCC5
 Text Label 2000 6750 0    50   ~ 0
 GND
 Wire Wire Line
@@ -1221,7 +1221,7 @@ Wire Wire Line
 	2950 5150 2950 5100
 Connection ~ 3300 5150
 Text Label 3000 4950 0    50   ~ 0
-VCC
+VCC5
 Text Label 3000 5150 0    50   ~ 0
 GND
 $Comp
@@ -1243,6 +1243,10 @@ Wire Wire Line
 	3950 4750 3800 4750
 Wire Wire Line
 	3800 4750 3800 4700
+Text Label 3600 4500 0    50   ~ 0
+VCC3
+Wire Wire Line
+	3550 4500 3850 4500
 Wire Bus Line
 	3850 1250 3850 2450
 Wire Bus Line

@@ -1,0 +1,24 @@
+Drill report for C:/Users/whiz1/Documents/github/trunk/initial/z80computer/z80computer/z80computer.kicad_pcb
+Created on 02/01/2021 07:50:47
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'z80computer-PTH.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.41mm  0.016"  (233 holes)
+    T2  0.80mm  0.031"  (134 holes)
+    T3  1.00mm  0.039"  (78 holes)
+
+    Total plated holes count 445
+
+
+Drill file 'z80computer-NPTH.drl' contains
+    unplated through holes:
+    =============================================================
+
+    Total unplated holes count 0
