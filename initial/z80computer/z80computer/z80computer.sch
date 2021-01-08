@@ -1247,6 +1247,92 @@ Text Label 3600 4500 0    50   ~ 0
 VCC3
 Wire Wire Line
 	3550 4500 3850 4500
+Wire Wire Line
+	8700 2300 8900 2300
+Wire Wire Line
+	8700 2400 8900 2400
+Text Label 8750 2300 0    50   ~ 0
+42
+Wire Wire Line
+	8700 2500 8900 2500
+Text Label 8750 2400 0    50   ~ 0
+43
+Text Label 8750 2500 0    50   ~ 0
+44
+Wire Wire Line
+	8700 2900 8900 2900
+Wire Wire Line
+	8700 3000 8900 3000
+Wire Wire Line
+	8700 3100 8900 3100
+Wire Wire Line
+	8700 3500 8900 3500
+Wire Wire Line
+	8700 3600 8900 3600
+Wire Wire Line
+	8700 3700 8900 3700
+Wire Wire Line
+	8200 3400 8000 3400
+Wire Wire Line
+	8200 3500 8000 3500
+Wire Wire Line
+	8200 4400 8000 4400
+Wire Wire Line
+	8000 4500 8200 4500
+Entry Bus Bus
+	7900 4300 8000 4400
+Entry Bus Bus
+	8900 4100 9000 4000
+Entry Bus Bus
+	8900 4300 9000 4200
+Entry Bus Bus
+	8900 4200 9000 4100
+Entry Bus Bus
+	8900 4400 9000 4300
+Entry Bus Bus
+	8900 4500 9000 4400
+Entry Bus Bus
+	8900 4600 9000 4500
+Entry Bus Bus
+	8900 4700 9000 4600
+Entry Bus Bus
+	8900 4800 9000 4700
+Entry Bus Bus
+	8900 4900 9000 4800
+Entry Bus Bus
+	8900 5000 9000 4900
+Entry Bus Bus
+	8900 5100 9000 5000
+Entry Bus Bus
+	8900 5200 9000 5100
+Entry Bus Bus
+	8900 5300 9000 5200
+Wire Wire Line
+	8700 4100 8900 4100
+Wire Wire Line
+	8700 4200 8900 4200
+Wire Wire Line
+	8700 4300 8900 4300
+Wire Wire Line
+	8700 4400 8900 4400
+Wire Wire Line
+	8700 4500 8900 4500
+Wire Wire Line
+	8700 4600 8900 4600
+Wire Wire Line
+	8700 4700 8900 4700
+Wire Wire Line
+	8700 4800 8900 4800
+Wire Wire Line
+	8700 4900 8900 4900
+Wire Wire Line
+	8700 5000 8900 5000
+Wire Wire Line
+	8700 5100 8900 5100
+Wire Wire Line
+	8700 5200 8900 5200
+Wire Wire Line
+	8700 5300 8900 5300
 Wire Bus Line
 	3850 1250 3850 2450
 Wire Bus Line
@@ -1262,7 +1348,53 @@ Wire Bus Line
 Wire Bus Line
 	7100 1250 7100 4300
 Wire Bus Line
-	9000 1250 9000 4050
+	9000 1250 9000 5300
 Wire Bus Line
 	7900 1250 7900 5600
+Text Label 8750 2900 0    50   ~ 0
+48
+Text Label 8750 3000 0    50   ~ 0
+49
+Text Label 8750 3100 0    50   ~ 0
+50
+Text Label 8750 3500 0    50   ~ 0
+54
+Text Label 8750 3600 0    50   ~ 0
+55
+Text Label 8750 3700 0    50   ~ 0
+56
+Text Label 8750 4100 0    50   ~ 0
+60
+Text Label 8750 4200 0    50   ~ 0
+61
+Text Label 8750 4300 0    50   ~ 0
+62
+Text Label 8750 4400 0    50   ~ 0
+63
+Text Label 8750 4500 0    50   ~ 0
+64
+Text Label 8750 4600 0    50   ~ 0
+65
+Text Label 8750 4700 0    50   ~ 0
+66
+Text Label 8750 4800 0    50   ~ 0
+67
+Text Label 8750 4900 0    50   ~ 0
+68
+Text Label 8750 5000 0    50   ~ 0
+69
+Text Label 8750 5100 0    50   ~ 0
+70
+Text Label 8750 5200 0    50   ~ 0
+71
+Text Label 8750 5300 0    50   ~ 0
+72
+Text Label 8100 4400 0    50   ~ 0
+27
+Text Label 8100 4500 0    50   ~ 0
+28
+Text Label 8100 3400 0    50   ~ 0
+17
+Text Label 8100 3500 0    50   ~ 0
+18
 $EndSCHEMATC

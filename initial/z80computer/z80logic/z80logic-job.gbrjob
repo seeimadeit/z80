@@ -7,19 +7,19 @@
       "Application": "Pcbnew",
       "Version":     "(5.1.8)-1"
     },
-    "CreationDate":  "2021-01-08T15:23:10-05:00"
+    "CreationDate":  "2021-01-08T14:24:18-05:00"
   },
   "GeneralSpecs":
   {
     "ProjectId":
     {
-      "Name": "z80computer",
-      "GUID": "7a383063-6f6d-4707-9574-65722e6b6963",
-      "Revision": "rev?"
+      "Name": "z80logic",
+      "GUID": "7a38306c-6f67-4696-932e-6b696361645f",
+      "Revision": "1"
     },
     "Size":
     {
-      "X": 122.528,
+      "X": 124.280,
       "Y": 113.384
     },
     "LayerNumber": 2,
@@ -40,37 +40,47 @@
   "FilesAttributes":
   [
     {
-      "Path":  "z80computer-F_Cu.gbr",
+      "Path":  "z80logic-F_Cu.gbr",
       "FileFunction":  "Copper,L1,Top",
       "FilePolarity":  "Positive"
     },
     {
-      "Path":  "z80computer-B_Cu.gbr",
+      "Path":  "z80logic-B_Cu.gbr",
       "FileFunction":  "Copper,L2,Bot",
       "FilePolarity":  "Positive"
     },
     {
-      "Path":  "z80computer-F_SilkS.gbr",
+      "Path":  "z80logic-F_Paste.gbr",
+      "FileFunction":  "SolderPaste,Top",
+      "FilePolarity":  "Positive"
+    },
+    {
+      "Path":  "z80logic-B_Paste.gbr",
+      "FileFunction":  "SolderPaste,Bot",
+      "FilePolarity":  "Positive"
+    },
+    {
+      "Path":  "z80logic-F_SilkS.gbr",
       "FileFunction":  "Legend,Top",
       "FilePolarity":  "Positive"
     },
     {
-      "Path":  "z80computer-B_SilkS.gbr",
+      "Path":  "z80logic-B_SilkS.gbr",
       "FileFunction":  "Legend,Bot",
       "FilePolarity":  "Positive"
     },
     {
-      "Path":  "z80computer-F_Mask.gbr",
+      "Path":  "z80logic-F_Mask.gbr",
       "FileFunction":  "SolderMask,Top",
       "FilePolarity":  "Negative"
     },
     {
-      "Path":  "z80computer-B_Mask.gbr",
+      "Path":  "z80logic-B_Mask.gbr",
       "FileFunction":  "SolderMask,Bot",
       "FilePolarity":  "Negative"
     },
     {
-      "Path":  "z80computer-Edge_Cuts.gbr",
+      "Path":  "z80logic-Edge_Cuts.gbr",
       "FileFunction":  "Profile",
       "FilePolarity":  "Positive"
     }
@@ -80,6 +90,10 @@
     {
       "Type":  "Legend",
       "Notes":  "Layer F.SilkS"
+    },
+    {
+      "Type":  "SolderPaste",
+      "Notes":  "Layer F.Paste"
     },
     {
       "Type":  "SolderMask",
@@ -101,6 +115,10 @@
     {
       "Type":  "SolderMask",
       "Notes":  "Layer B.Mask"
+    },
+    {
+      "Type":  "SolderPaste",
+      "Notes":  "Layer B.Paste"
     },
     {
       "Type":  "Legend",
